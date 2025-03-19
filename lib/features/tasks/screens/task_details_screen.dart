@@ -42,7 +42,9 @@ class _TaskDetailsScreenState extends mat.State<TaskDetailsScreen> {
     });
     
     try {
-      final category = await _categoryRepository.getCategory(widget.task.categoryId);
+      final category = widget.task.categoryId != null
+          ? await _categoryRepository.getCategory(widget.task.categoryId!)
+          : null;
       final notificationSettings = await _notificationRepository.getNotificationSettingsForTask(widget.task.id!);
       
       setState(() {

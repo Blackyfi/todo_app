@@ -33,7 +33,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
   final _notificationService = notification_service.NotificationService();
   
   List<category_model.Category> _categories = [];
-  int? _selectedCategoryId;
+  int? _selectedCategoryId; // Can be null now
   DateTime? _dueDate;
   TimeOfDay? _dueTime;
   task_model.Priority _priority = task_model.Priority.medium;
@@ -72,7 +72,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
           final task = widget.task!;
           _titleController.text = task.title;
           _descriptionController.text = task.description;
-          _selectedCategoryId = task.categoryId;
+          _selectedCategoryId = task.categoryId; // Can be null
           _priority = task.priority;
           
           if (task.dueDate != null) {
@@ -85,8 +85,9 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
           }
           
           _loadNotificationSettings();
-        } else if (categories.isNotEmpty) {
-          _selectedCategoryId = categories.first.id;
+        } else {
+          // No default category selected - leave as null
+          _selectedCategoryId = null;
         }
         
         _isLoading = false;
@@ -212,14 +213,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
   Future<void> _saveTask() async {
     if (!_formKey.currentState!.validate()) return;
     
-    if (_selectedCategoryId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a category'),
-        ),
-      );
-      return;
-    }
+    // Category is now optional, no need to check if it's null
     
     final title = _titleController.text.trim();
     final description = _descriptionController.text.trim();
@@ -247,7 +241,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
           title: title,
           description: description,
           dueDate: dueDateTime,
-          categoryId: _selectedCategoryId!,
+          categoryId: _selectedCategoryId, // Can be null now
           priority: _priority,
         );
         
@@ -274,7 +268,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
               title: title,
               description: description,
               dueDate: dueDateTime,
-              categoryId: _selectedCategoryId!,
+              categoryId: _selectedCategoryId, // Can be null
             ),
             setting.copyWith(id: settingId),
           );
@@ -427,9 +421,22 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                     
                     const SizedBox(height: 16),
                     
-                    Text(
-                      'Category',
-                      style: theme.textTheme.titleMedium,
+                    Row(
+                      children: [
+                        Text(
+                          'Category (Optional)',
+                          style: theme.textTheme.titleMedium,
+                        ),
+                        const SizedBox(width: 8),
+                        TextButton(
+                          onPressed: () {
+                            setState(() {
+                              _selectedCategoryId = null;
+                            });
+                          },
+                          child: const Text('Clear Selection'),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 8),
                     Wrap(
@@ -459,42 +466,6 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                       segments: [
                         ButtonSegment<task_model.Priority>(
                           value: task_model.Priority.low,
-                          label: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                width: 12,
-                                height: 12,
-                                decoration: const BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.green,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              const Text('Low'),
-                            ],
-                          ),
-                        ),
-                        ButtonSegment<task_model.Priority>(
-                          value: task_model.Priority.medium,
-                          label: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                width: 12,
-                                height: 12,
-                                decoration: const BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.orange,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              const Text('Medium'),
-                            ],
-                          ),
-                        ),
-                        ButtonSegment<task_model.Priority>(
-                          value: task_model.Priority.high,
                           label: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [

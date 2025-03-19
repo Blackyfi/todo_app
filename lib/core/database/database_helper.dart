@@ -37,7 +37,7 @@ class DatabaseHelper {
       )
     ''');
 
-    // Create tasks table
+    // Create tasks table with optional categoryId
     await db.execute('''
       CREATE TABLE tasks(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -45,7 +45,7 @@ class DatabaseHelper {
         description TEXT,
         dueDate INTEGER,
         isCompleted INTEGER NOT NULL DEFAULT 0,
-        categoryId INTEGER NOT NULL,
+        categoryId INTEGER,
         priority INTEGER NOT NULL DEFAULT 1,
         FOREIGN KEY (categoryId) REFERENCES categories (id) ON DELETE CASCADE
       )

@@ -7,7 +7,7 @@ import 'package:intl/intl.dart' as intl;
 
 class TaskCard extends mat.StatelessWidget {
   final task_model.Task task;
-  final category_model.Category category;
+  final category_model.Category? category; // Now nullable
   final VoidCallback onTap;
   final Function(bool?) onCompletedChanged;
   final VoidCallback? onDelete;
@@ -15,7 +15,7 @@ class TaskCard extends mat.StatelessWidget {
   const TaskCard({
     mat.Key? key,
     required this.task,
-    required this.category,
+    this.category, // Now optional
     required this.onTap,
     required this.onCompletedChanged,
     this.onDelete,
@@ -25,6 +25,9 @@ class TaskCard extends mat.StatelessWidget {
   mat.Widget build(mat.BuildContext context) {
     final theme = mat.Theme.of(context);
     final colorScheme = theme.colorScheme;
+    
+    // Use theme primary color if no category is selected
+    final categoryColor = category?.color ?? theme.colorScheme.primary;
     
     return mat.Dismissible(
       key: mat.Key('task-${task.id}'),
@@ -79,7 +82,7 @@ class TaskCard extends mat.StatelessWidget {
                   value: task.isCompleted,
                   onChanged: onCompletedChanged,
                   shape: const mat.CircleBorder(),
-                  activeColor: category.color,
+                  activeColor: categoryColor, // Use category color or default
                 ),
                 mat.SizedBox(width: 8),
                 mat.Expanded(
@@ -126,23 +129,26 @@ class TaskCard extends mat.StatelessWidget {
                       const mat.SizedBox(height: 8),
                       mat.Row(
                         children: [
-                          mat.Container(
-                            padding: const mat.EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: mat.BoxDecoration(
-                              color: category.color.withOpacity(0.2),
-                              borderRadius: mat.BorderRadius.circular(8),
-                            ),
-                            child: mat.Text(
-                              category.name,
-                              style: mat.TextStyle(
-                                color: category.color,
-                                fontSize: 12,
-                                fontWeight: mat.FontWeight.bold,
+                          // Only show category if one is assigned
+                          if (category != null) 
+                            mat.Container(
+                              padding: const mat.EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: mat.BoxDecoration(
+                                color: category!.color.withOpacity(0.2),
+                                borderRadius: mat.BorderRadius.circular(8),
+                              ),
+                              child: mat.Text(
+                                category!.name,
+                                style: mat.TextStyle(
+                                  color: category!.color,
+                                  fontSize: 12,
+                                  fontWeight: mat.FontWeight.bold,
+                                ),
                               ),
                             ),
-                          ),
-                          if (task.dueDate != null) ...[
+                          if (category != null && task.dueDate != null)
                             const mat.SizedBox(width: 8),
+                          if (task.dueDate != null) ...[
                             mat.Icon(
                               mat.Icons.access_time,
                               size: 14,

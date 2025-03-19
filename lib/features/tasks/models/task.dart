@@ -6,7 +6,7 @@ class Task {
   final String description;
   final DateTime? dueDate;
   final bool isCompleted;
-  final int categoryId;
+  final int? categoryId; // Changed to nullable
   final Priority priority;
 
   Task({
@@ -15,7 +15,7 @@ class Task {
     this.description = '',
     this.dueDate,
     this.isCompleted = false,
-    required this.categoryId,
+    this.categoryId, // Made optional
     this.priority = Priority.medium,
   });
 
@@ -34,7 +34,7 @@ class Task {
       description: description ?? this.description,
       dueDate: dueDate ?? this.dueDate,
       isCompleted: isCompleted ?? this.isCompleted,
-      categoryId: categoryId ?? this.categoryId,
+      categoryId: categoryId, // Will be set to null if explicitly passed as null
       priority: priority ?? this.priority,
     );
   }

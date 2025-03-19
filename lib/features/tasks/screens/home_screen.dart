@@ -144,7 +144,10 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
     }
   }
   
-  category_model.Category _getCategoryForTask(task_model.Task task) {
+  category_model.Category? _getCategoryForTask(task_model.Task task) {
+    // If task has no category, return null
+    if (task.categoryId == null) return null;
+    
     return _categories.firstWhere(
       (category) => category.id == task.categoryId,
       orElse: () => category_model.Category(
@@ -224,7 +227,7 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
                           
                           return task_card.TaskCard(
                             task: task,
-                            category: category,
+                            category: category, // Can be null now
                             onTap: () => _navigateToTaskDetails(task),
                             onCompletedChanged: (_) => _toggleTaskCompletion(task),
                             onDelete: () => _deleteTask(task.id!),

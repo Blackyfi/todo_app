@@ -23,7 +23,7 @@ This table stores all task information including completion status and metadata.
 | description | TEXT      |             | Description of the task (optional) |
 | dueDate     | INTEGER   |             | Due date and time of the task in milliseconds since epoch (optional) |
 | isCompleted | INTEGER   | NOT NULL DEFAULT 0 | Task completion status (0 = incomplete, 1 = complete) |
-| categoryId  | INTEGER   | NOT NULL, FOREIGN KEY | Reference to categories.id |
+| categoryId  | INTEGER   |             | Reference to categories.id (optional) |
 | priority    | INTEGER   | NOT NULL DEFAULT 1 | Priority level (0 = high, 1 = medium, 2 = low) |
 
 ### notificationSettings
@@ -41,7 +41,7 @@ This table stores notification preferences for each task with flexible timing op
 
 ### One-to-Many: categories to tasks
 - Each category can have multiple tasks
-- Each task belongs to exactly one category
+- Each task may belong to one category or have no category
 - Foreign key: `tasks.categoryId` references `categories.id`
 - ON DELETE CASCADE: When a category is deleted, all associated tasks are also deleted
 

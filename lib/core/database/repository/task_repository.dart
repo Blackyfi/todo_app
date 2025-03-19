@@ -63,6 +63,19 @@ class TaskRepository {
       return task_model.Task.fromMap(maps[i]);
     });
   }
+  
+  // New method to get tasks without a category
+  Future<List<task_model.Task>> getTasksWithoutCategory() async {
+    final db = await _databaseHelper.database;
+    final maps = await db.query(
+      'tasks',
+      where: 'categoryId IS NULL',
+    );
+
+    return List.generate(maps.length, (i) {
+      return task_model.Task.fromMap(maps[i]);
+    });
+  }
 
   Future<List<task_model.Task>> getTasksByPriority(task_model.Priority priority) async {
     final db = await _databaseHelper.database;

@@ -12,10 +12,11 @@
 ## Organization & Categorization
 
 ### Task Classification
-- **Categories**: Organize tasks into customizable categories:
+- **Categories**: Organize tasks into customizable categories (optional):
   - Work, Personal, Shopping, Health, Education (default)
   - Create custom categories with personalized names
   - Assign color coding to categories for visual organization
+  - Tasks can be created without assigning a category
 - **Priority Levels**: Assign importance using a three-tier system:
   - High Priority (Red)
   - Medium Priority (Orange)

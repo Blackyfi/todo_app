@@ -101,17 +101,31 @@ class _StatisticsScreenState extends mat.State<StatisticsScreen> {
   Map<String, int> _getCategoryStats() {
     final stats = <String, int>{};
     
+    // Add a special entry for uncategorized tasks
+    stats['No Category'] = 0;
+    
     for (final task in _tasks) {
-      final category = _categories.firstWhere(
-        (cat) => cat.id == task.categoryId,
-        orElse: () => category_model.Category(
-          id: 0,
-          name: 'Unknown',
-          color: mat.Colors.grey,
-        ),
-      );
-      
-      stats[category.name] = (stats[category.name] ?? 0) + 1;
+      if (task.categoryId == null) {
+        // Count tasks without categories
+        stats['No Category'] = (stats['No Category'] ?? 0) + 1;
+      } else {
+        // For tasks with categories
+        final category = _categories.firstWhere(
+          (cat) => cat.id == task.categoryId,
+          orElse: () => category_model.Category(
+            id: 0,
+            name: 'Unknown',
+            color: mat.Colors.grey,
+          ),
+        );
+        
+        stats[category.name] = (stats[category.name] ?? 0) + 1;
+      }
+    }
+    
+    // Remove the "No Category" entry if there are no uncategorized tasks
+    if (stats['No Category'] == 0) {
+      stats.remove('No Category');
     }
     
     return stats;
