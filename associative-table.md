@@ -4,17 +4,17 @@
 
 ### categories
 
-This table stores the task categories.
+This table stores the task categories with customizable names and colors.
 
 | Column Name | Data Type | Constraints | Description |
 |-------------|-----------|-------------|-------------|
 | id          | INTEGER   | PRIMARY KEY AUTOINCREMENT | Unique identifier for each category |
 | name        | TEXT      | NOT NULL    | Name of the category |
-| color       | INTEGER   | NOT NULL    | Color value of the category (stored as an integer) |
+| color       | INTEGER   | NOT NULL    | Color value of the category (stored as an integer representing a color) |
 
 ### tasks
 
-This table stores the task information.
+This table stores all task information including completion status and metadata.
 
 | Column Name | Data Type | Constraints | Description |
 |-------------|-----------|-------------|-------------|
@@ -28,7 +28,7 @@ This table stores the task information.
 
 ### notificationSettings
 
-This table stores notification settings for tasks.
+This table stores notification preferences for each task with flexible timing options.
 
 | Column Name | Data Type | Constraints | Description |
 |-------------|-----------|-------------|-------------|
@@ -54,26 +54,66 @@ This table stores notification settings for tasks.
 ## Enum Values
 
 ### Priority (tasks.priority)
-- 0: HIGH
-- 1: MEDIUM
-- 2: LOW
+- 0: HIGH - Represented with red color
+- 1: MEDIUM - Represented with orange color
+- 2: LOW - Represented with green color
 
 ### NotificationTimeOption (notificationSettings.timeOption)
-- 0: EXACT_TIME (At exact task time)
-- 1: FIFTEEN_MINUTES_BEFORE (15 minutes before)
-- 2: THIRTY_MINUTES_BEFORE (30 minutes before)
-- 3: ONE_HOUR_BEFORE (1 hour before)
-- 4: ONE_DAY_BEFORE (1 day before)
-- 5: PREVIOUS_SUNDAY (Previous Sunday)
-- 6: CUSTOM (Custom time specified in customTime field)
+- 0: EXACT_TIME - Notify at the exact task due time
+- 1: FIFTEEN_MINUTES_BEFORE - Notify 15 minutes before due time
+- 2: THIRTY_MINUTES_BEFORE - Notify 30 minutes before due time
+- 3: ONE_HOUR_BEFORE - Notify 1 hour before due time
+- 4: ONE_DAY_BEFORE - Notify 1 day before due time
+- 5: PREVIOUS_SUNDAY - Notify on the Sunday before the task's due date
+- 6: CUSTOM - Notify at a custom time specified in the customTime field
 
 ## Default Data
 
 ### Default Categories
 The database is initialized with the following default categories:
 
-1. Work (Color: Blue)
-2. Personal (Color: Green)
-3. Shopping (Color: Orange)
-4. Health (Color: Red)
-5. Education (Color: Purple)
+1. Work (Color: Blue - 0xFF2196F3)
+2. Personal (Color: Green - 0xFF4CAF50)
+3. Shopping (Color: Orange - 0xFFFF9800)
+4. Health (Color: Red - 0xFFF44336)
+5. Education (Color: Purple - 0xFF9C27B0)
+
+## Database Initialization
+
+Database creation includes:
+- Table creation with proper constraints
+- Default category insertion
+- Foreign key support enabling
+- Database version management (current version: 1)
+
+## Query Examples
+
+### Tasks by Category
+```sql
+SELECT * FROM tasks WHERE categoryId = ?
+```
+
+### Tasks by Priority
+```sql
+SELECT * FROM tasks WHERE priority = ?
+```
+
+### Tasks by Completion Status
+```sql
+SELECT * FROM tasks WHERE isCompleted = ?
+```
+
+### Tasks by Due Date
+```sql
+SELECT * FROM tasks WHERE dueDate >= ? AND dueDate <= ?
+```
+
+### Upcoming Tasks
+```sql
+SELECT * FROM tasks WHERE dueDate >= ? AND isCompleted = 0 ORDER BY dueDate ASC
+```
+
+### Notification Settings for Task
+```sql
+SELECT * FROM notificationSettings WHERE taskId = ?
+```

@@ -3,31 +3,38 @@
 ## Task Management
 
 ### Core Functionality
-- **Create Tasks**: Add new tasks with title and description
-- **Schedule Tasks**: Set due date and time for each task
-- **Track Completion**: Mark tasks as complete when finished
-- **Delete Tasks**: Remove unwanted tasks from the system
-- **Edit Tasks**: Modify existing task details as needed
+- **Create Tasks**: Add new tasks with title, description, due date, and time
+- **Schedule Tasks**: Set specific date and time for task deadlines
+- **Track Completion**: Mark tasks as complete or incomplete with visual indicators
+- **Delete Tasks**: Remove unwanted tasks with swipe-to-delete gesture
+- **Edit Tasks**: Modify all task properties at any time
 
 ## Organization & Categorization
 
 ### Task Classification
-- **Categories**: Organize tasks by type (Work, Personal, Shopping, etc.)
-- **Priority Levels**: Assign importance using three-tier system:
+- **Categories**: Organize tasks into customizable categories:
+  - Work, Personal, Shopping, Health, Education (default)
+  - Create custom categories with personalized names
+  - Assign color coding to categories for visual organization
+- **Priority Levels**: Assign importance using a three-tier system:
   - High Priority (Red)
   - Medium Priority (Orange)
   - Low Priority (Green)
 
 ### Task Views
-- **Filtering**: View tasks by category, priority, or completion status
-- **Sorting**: Arrange tasks by date, priority level, or alphabetical order
+- **Filtering**: View tasks by:
+  - All tasks
+  - Completion status (completed/incomplete)
+  - Due date (today, upcoming)
+  - Category
+  - Priority level
+- **Sorting**: Tasks are automatically sorted by due date
 
 ## Notification System
 
 ### Alert Types
-- Push notifications
-- In-app notifications
-- Email reminders (optional feature)
+- Push notifications for task reminders
+- In-app visual indicators for upcoming and overdue tasks
 
 ### Notification Scheduling
 - Customizable reminder timing:
@@ -39,34 +46,39 @@
   - Previous Sunday (for tasks in the upcoming week)
   - Custom time on the day of the task
 - Support for multiple notification options per task
-- Recurring reminders for incomplete tasks
+- Visual color-coding for overdue and upcoming tasks
 
 ## User Interface
 
 ### Design Elements
-- Clean, intuitive interface
-- Dark/light mode toggle
-- Home screen widget for quick task access
+- Material Design 3 implementation with:
+  - Clean, intuitive interface
+  - System-based dark/light mode support
+  - Consistent color theming throughout the app
 
 ### View Options
-- Calendar view for date-based task visualization
-- List view for comprehensive task overview
-- Dashboard with task completion statistics
+- Tab-based navigation with:
+  - Tasks list view
+  - Categories management
+  - Statistics and analytics dashboard
 
-### Navigation
-- Persistent right panel showing upcoming/urgent tasks
+### Interactive Elements
+- Swipe-to-delete functionality for tasks
+- Checkbox toggles for task completion
+- Dismissible cards for efficient task management
 
 ## Data Management
 
 ### Storage
-- Local storage for offline access
-- Real-time updates after task creation or deletion
+- Local SQLite database for persistent storage
+- Automatic data saving for all changes
+- Predefined default categories on first launch
 
-## User Experience
+## Statistics & Analytics
 
-### Productivity Features
-- Quick-add task functionality
-- Gesture controls:
-  - Swipe to complete or delete tasks
-  - Drag and drop for task reordering
-- Comprehensive search functionality
+### Productivity Tracking
+- Task completion rate visualization
+- Distribution of tasks by priority level
+- Category-based task distribution
+- Weekly task completion trends
+- Visual summary of task statistics
