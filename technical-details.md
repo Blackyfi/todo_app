@@ -37,6 +37,12 @@ import 'dart:async' as async;
   - Priority
   - Notification
 
+### Database Schema Documentation
+- An `associative_table.md` file is maintained in the project root
+- This file is always kept up-to-date with the current database schema
+- Contains complete documentation of all tables, relationships, and constraints
+- Serves as the authoritative reference for database structure
+
 ## Performance Considerations
 
 ### Memory Management
