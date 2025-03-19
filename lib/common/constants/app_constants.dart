@@ -44,3 +44,4 @@ class AppConstants {
   static const String incompleteTasks = 'Incomplete';
   static const String todayTasks = 'Today';
   static const String upcomingTasks = 'Upcoming';
+}
