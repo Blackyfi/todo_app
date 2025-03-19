@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart' as mat;
+import 'package:flutter/material.dart';
 import 'package:todo_app/common/constants/app_constants.dart' as app_constants;
 import 'package:todo_app/common/widgets/category_chip.dart' as category_chip;
 import 'package:todo_app/features/tasks/models/task.dart' as task_model;
@@ -10,22 +10,22 @@ import 'package:todo_app/core/notifications/models/notification_settings.dart' a
 import 'package:todo_app/core/notifications/notification_service.dart' as notification_service;
 import 'package:intl/intl.dart' as intl;
 
-class AddEditTaskScreen extends mat.StatefulWidget {
+class AddEditTaskScreen extends StatefulWidget {
   final task_model.Task? task;
 
   const AddEditTaskScreen({
-    mat.Key? key,
+    Key? key,
     this.task,
   }) : super(key: key);
 
   @override
-  mat.State<AddEditTaskScreen> createState() => _AddEditTaskScreenState();
+  State<AddEditTaskScreen> createState() => _AddEditTaskScreenState();
 }
 
-class _AddEditTaskScreenState extends mat.State<AddEditTaskScreen> {
-  final _formKey = mat.GlobalKey<mat.FormState>();
-  final _titleController = mat.TextEditingController();
-  final _descriptionController = mat.TextEditingController();
+class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _titleController = TextEditingController();
+  final _descriptionController = TextEditingController();
   
   final _taskRepository = task_repository.TaskRepository();
   final _categoryRepository = category_repository.CategoryRepository();
@@ -97,9 +97,9 @@ class _AddEditTaskScreenState extends mat.State<AddEditTaskScreen> {
       });
       
       if (mounted) {
-        mat.ScaffoldMessenger.of(context).showSnackBar(
-          mat.SnackBar(
-            content: mat.Text(app_constants.AppConstants.databaseErrorMessage),
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(app_constants.AppConstants.databaseErrorMessage),
           ),
         );
       }
@@ -122,9 +122,9 @@ class _AddEditTaskScreenState extends mat.State<AddEditTaskScreen> {
       });
     } catch (e) {
       if (mounted) {
-        mat.ScaffoldMessenger.of(context).showSnackBar(
-          mat.SnackBar(
-            content: mat.Text(app_constants.AppConstants.databaseErrorMessage),
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(app_constants.AppConstants.databaseErrorMessage),
           ),
         );
       }
@@ -132,7 +132,7 @@ class _AddEditTaskScreenState extends mat.State<AddEditTaskScreen> {
   }
   
   Future<void> _selectDueDate() async {
-    final pickedDate = await mat.showDatePicker(
+    final pickedDate = await showDatePicker(
       context: context,
       initialDate: _dueDate ?? DateTime.now(),
       firstDate: DateTime.now().subtract(const Duration(days: 365)),
@@ -147,7 +147,7 @@ class _AddEditTaskScreenState extends mat.State<AddEditTaskScreen> {
   }
   
   Future<void> _selectDueTime() async {
-    final pickedTime = await mat.showTimePicker(
+    final pickedTime = await showTimePicker(
       context: context,
       initialTime: _dueTime ?? TimeOfDay.now(),
     );
@@ -160,7 +160,7 @@ class _AddEditTaskScreenState extends mat.State<AddEditTaskScreen> {
   }
   
   Future<void> _selectCustomNotificationTime() async {
-    final pickedTime = await mat.showTimePicker(
+    final pickedTime = await showTimePicker(
       context: context,
       initialTime: _customNotificationTime != null
           ? TimeOfDay.fromDateTime(_customNotificationTime!)
@@ -213,9 +213,9 @@ class _AddEditTaskScreenState extends mat.State<AddEditTaskScreen> {
     if (!_formKey.currentState!.validate()) return;
     
     if (_selectedCategoryId == null) {
-      mat.ScaffoldMessenger.of(context).showSnackBar(
-        const mat.SnackBar(
-          content: mat.Text('Please select a category'),
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a category'),
         ),
       );
       return;
@@ -282,13 +282,13 @@ class _AddEditTaskScreenState extends mat.State<AddEditTaskScreen> {
       }
       
       if (mounted) {
-        mat.Navigator.of(context).pop();
+        Navigator.of(context).pop();
       }
     } catch (e) {
       if (mounted) {
-        mat.ScaffoldMessenger.of(context).showSnackBar(
-          mat.SnackBar(
-            content: mat.Text(app_constants.AppConstants.databaseErrorMessage),
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(app_constants.AppConstants.databaseErrorMessage),
           ),
         );
       }
@@ -296,28 +296,28 @@ class _AddEditTaskScreenState extends mat.State<AddEditTaskScreen> {
   }
   
   @override
-  mat.Widget build(mat.BuildContext context) {
-    final theme = mat.Theme.of(context);
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     
-    return mat.Scaffold(
-      appBar: mat.AppBar(
-        title: mat.Text(_isEditMode ? 'Edit Task' : 'Add Task'),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(_isEditMode ? 'Edit Task' : 'Add Task'),
       ),
       body: _isLoading
-          ? const mat.Center(child: mat.CircularProgressIndicator())
-          : mat.Form(
+          ? const Center(child: CircularProgressIndicator())
+          : Form(
               key: _formKey,
-              child: mat.SingleChildScrollView(
-                padding: const mat.EdgeInsets.all(16),
-                child: mat.Column(
-                  crossAxisAlignment: mat.CrossAxisAlignment.start,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    mat.TextFormField(
+                    TextFormField(
                       controller: _titleController,
-                      decoration: const mat.InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: 'Title',
                         hintText: 'Enter task title',
-                        prefixIcon: mat.Icon(mat.Icons.title),
+                        prefixIcon: Icon(Icons.title),
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
@@ -327,54 +327,54 @@ class _AddEditTaskScreenState extends mat.State<AddEditTaskScreen> {
                       },
                     ),
                     
-                    const mat.SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     
-                    mat.TextFormField(
+                    TextFormField(
                       controller: _descriptionController,
-                      decoration: const mat.InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: 'Description',
                         hintText: 'Enter task description (optional)',
-                        prefixIcon: mat.Icon(mat.Icons.description),
+                        prefixIcon: Icon(Icons.description),
                         alignLabelWithHint: true,
                       ),
                       maxLines: 3,
                     ),
                     
-                    const mat.SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     
-                    mat.Text(
+                    Text(
                       'Due Date & Time',
                       style: theme.textTheme.titleMedium,
                     ),
-                    const mat.SizedBox(height: 8),
-                    mat.Row(
+                    const SizedBox(height: 8),
+                    Row(
                       children: [
-                        mat.Expanded(
-                          child: mat.InkWell(
+                        Expanded(
+                          child: InkWell(
                             onTap: _selectDueDate,
-                            borderRadius: mat.BorderRadius.circular(12),
-                            child: mat.Container(
-                              padding: const mat.EdgeInsets.symmetric(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
                                 horizontal: 16,
                                 vertical: 12,
                               ),
-                              decoration: mat.BoxDecoration(
+                              decoration: BoxDecoration(
                                 color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
-                                borderRadius: mat.BorderRadius.circular(12),
-                                border: mat.Border.all(
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
                                   color: theme.colorScheme.outline.withOpacity(0.5),
                                 ),
                               ),
-                              child: mat.Row(
+                              child: Row(
                                 children: [
-                                  mat.Icon(
-                                    mat.Icons.calendar_today,
+                                  Icon(
+                                    Icons.calendar_today,
                                     size: 20,
                                     color: theme.colorScheme.primary,
                                   ),
-                                  const mat.SizedBox(width: 8),
-                                  mat.Expanded(
-                                    child: mat.Text(
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
                                       _dueDate != null
                                           ? intl.DateFormat('MMM d, yyyy').format(_dueDate!)
                                           : 'Select Date',
@@ -385,33 +385,33 @@ class _AddEditTaskScreenState extends mat.State<AddEditTaskScreen> {
                             ),
                           ),
                         ),
-                        const mat.SizedBox(width: 8),
-                        mat.Expanded(
-                          child: mat.InkWell(
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: InkWell(
                             onTap: _selectDueTime,
-                            borderRadius: mat.BorderRadius.circular(12),
-                            child: mat.Container(
-                              padding: const mat.EdgeInsets.symmetric(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
                                 horizontal: 16,
                                 vertical: 12,
                               ),
-                              decoration: mat.BoxDecoration(
+                              decoration: BoxDecoration(
                                 color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
-                                borderRadius: mat.BorderRadius.circular(12),
-                                border: mat.Border.all(
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
                                   color: theme.colorScheme.outline.withOpacity(0.5),
                                 ),
                               ),
-                              child: mat.Row(
+                              child: Row(
                                 children: [
-                                  mat.Icon(
-                                    mat.Icons.access_time,
+                                  Icon(
+                                    Icons.access_time,
                                     size: 20,
                                     color: theme.colorScheme.primary,
                                   ),
-                                  const mat.SizedBox(width: 8),
-                                  mat.Expanded(
-                                    child: mat.Text(
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
                                       _dueTime != null
                                           ? _dueTime!.format(context)
                                           : 'Select Time',
@@ -425,14 +425,14 @@ class _AddEditTaskScreenState extends mat.State<AddEditTaskScreen> {
                       ],
                     ),
                     
-                    const mat.SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     
-                    mat.Text(
+                    Text(
                       'Category',
                       style: theme.textTheme.titleMedium,
                     ),
-                    const mat.SizedBox(height: 8),
-                    mat.Wrap(
+                    const SizedBox(height: 8),
+                    Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: _categories.map((category) {
@@ -448,66 +448,66 @@ class _AddEditTaskScreenState extends mat.State<AddEditTaskScreen> {
                       }).toList(),
                     ),
                     
-                    const mat.SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     
-                    mat.Text(
+                    Text(
                       'Priority',
                       style: theme.textTheme.titleMedium,
                     ),
-                    const mat.SizedBox(height: 8),
-                    mat.SegmentedButton<task_model.Priority>(
+                    const SizedBox(height: 8),
+                    SegmentedButton<task_model.Priority>(
                       segments: [
-                        mat.ButtonSegment<task_model.Priority>(
+                        ButtonSegment<task_model.Priority>(
                           value: task_model.Priority.low,
-                          label: mat.Row(
-                            mainAxisSize: mat.MainAxisSize.min,
+                          label: Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              mat.Container(
+                              Container(
                                 width: 12,
                                 height: 12,
-                                decoration: const mat.BoxDecoration(
-                                  shape: mat.BoxShape.circle,
-                                  color: mat.Colors.green,
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.green,
                                 ),
                               ),
-                              const mat.SizedBox(width: 4),
-                              const mat.Text('Low'),
+                              const SizedBox(width: 4),
+                              const Text('Low'),
                             ],
                           ),
                         ),
-                        mat.ButtonSegment<task_model.Priority>(
+                        ButtonSegment<task_model.Priority>(
                           value: task_model.Priority.medium,
-                          label: mat.Row(
-                            mainAxisSize: mat.MainAxisSize.min,
+                          label: Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              mat.Container(
+                              Container(
                                 width: 12,
                                 height: 12,
-                                decoration: const mat.BoxDecoration(
-                                  shape: mat.BoxShape.circle,
-                                  color: mat.Colors.orange,
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.orange,
                                 ),
                               ),
-                              const mat.SizedBox(width: 4),
-                              const mat.Text('Medium'),
+                              const SizedBox(width: 4),
+                              const Text('Medium'),
                             ],
                           ),
                         ),
-                        mat.ButtonSegment<task_model.Priority>(
+                        ButtonSegment<task_model.Priority>(
                           value: task_model.Priority.high,
-                          label: mat.Row(
-                            mainAxisSize: mat.MainAxisSize.min,
+                          label: Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              mat.Container(
+                              Container(
                                 width: 12,
                                 height: 12,
-                                decoration: const mat.BoxDecoration(
-                                  shape: mat.BoxShape.circle,
-                                  color: mat.Colors.red,
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.red,
                                 ),
                               ),
-                              const mat.SizedBox(width: 4),
-                              const mat.Text('High'),
+                              const SizedBox(width: 4),
+                              const Text('High'),
                             ],
                           ),
                         ),
@@ -521,60 +521,60 @@ class _AddEditTaskScreenState extends mat.State<AddEditTaskScreen> {
                     ),
                     
                     if (_dueDate != null && _dueTime != null) ...[
-                      const mat.SizedBox(height: 16),
-                      mat.Text(
+                      const SizedBox(height: 16),
+                      Text(
                         'Reminders',
                         style: theme.textTheme.titleMedium,
                       ),
-                      const mat.SizedBox(height: 8),
-                      mat.Wrap(
+                      const SizedBox(height: 8),
+                      Wrap(
                         spacing: 8,
                         runSpacing: 8,
                         children: notification_model.NotificationTimeOption.values.map((option) {
                           final isSelected = _selectedNotificationOptions.contains(option);
-                          return mat.FilterChip(
-                            label: mat.Text(option.label),
+                          return FilterChip(
+                            label: Text(option.label),
                             selected: isSelected,
                             onSelected: (_) => _toggleNotificationOption(option),
                             avatar: isSelected
-                                ? const mat.Icon(mat.Icons.notifications_active, size: 18)
-                                : const mat.Icon(mat.Icons.notifications_none, size: 18),
+                                ? const Icon(Icons.notifications_active, size: 18)
+                                : const Icon(Icons.notifications_none, size: 18),
                           );
                         }).toList(),
                       ),
                       
                       if (_selectedNotificationOptions.contains(notification_model.NotificationTimeOption.custom) &&
                           _customNotificationTime != null) ...[
-                        const mat.SizedBox(height: 8),
-                        mat.InkWell(
+                        const SizedBox(height: 8),
+                        InkWell(
                           onTap: _selectCustomNotificationTime,
-                          borderRadius: mat.BorderRadius.circular(12),
-                          child: mat.Container(
-                            padding: const mat.EdgeInsets.symmetric(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 12,
                             ),
-                            decoration: mat.BoxDecoration(
+                            decoration: BoxDecoration(
                               color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
-                              borderRadius: mat.BorderRadius.circular(12),
-                              border: mat.Border.all(
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
                                 color: theme.colorScheme.outline.withOpacity(0.5),
                               ),
                             ),
-                            child: mat.Row(
+                            child: Row(
                               children: [
-                                mat.Icon(
-                                  mat.Icons.access_time,
+                                Icon(
+                                  Icons.access_time,
                                   size: 20,
                                   color: theme.colorScheme.primary,
                                 ),
-                                const mat.SizedBox(width: 8),
-                                mat.Text(
+                                const SizedBox(width: 8),
+                                Text(
                                   'Custom Time: ${intl.DateFormat('h:mm a').format(_customNotificationTime!)}',
                                 ),
-                                const mat.Spacer(),
-                                mat.Icon(
-                                  mat.Icons.edit,
+                                const Spacer(),
+                                Icon(
+                                  Icons.edit,
                                   size: 18,
                                   color: theme.colorScheme.primary,
                                 ),
@@ -588,20 +588,20 @@ class _AddEditTaskScreenState extends mat.State<AddEditTaskScreen> {
                 ),
               ),
             ),
-      bottomNavigationBar: mat.SafeArea(
-        child: mat.Padding(
-          padding: const mat.EdgeInsets.all(16),
-          child: mat.FilledButton(
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: FilledButton(
             onPressed: _saveTask,
-            style: mat.FilledButton.styleFrom(
-              padding: const mat.EdgeInsets.all(16),
-              shape: mat.RoundedRectangleBorder(
-                borderRadius: mat.BorderRadius.circular(16),
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.all(16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
               ),
             ),
-            child: mat.Text(
+            child: Text(
               _isEditMode ? 'Update Task' : 'Create Task',
-              style: const mat.TextStyle(fontSize: 16),
+              style: const TextStyle(fontSize: 16),
             ),
           ),
         ),
@@ -609,4 +609,3 @@ class _AddEditTaskScreenState extends mat.State<AddEditTaskScreen> {
     );
   }
 }
-                

@@ -309,7 +309,7 @@ class _StatisticsScreenState extends mat.State<StatisticsScreen> {
               style: mat.Theme.of(context).textTheme.titleLarge,
             ),
             const mat.SizedBox(height: 8),
-            SizedBox(
+            mat.SizedBox(
               height: 200,
               child: completedCount == 0 && incompleteCount == 0
                   ? const mat.Center(child: mat.Text('No data available'))
@@ -367,7 +367,7 @@ class _StatisticsScreenState extends mat.State<StatisticsScreen> {
               style: mat.Theme.of(context).textTheme.titleLarge,
             ),
             const mat.SizedBox(height: 16),
-            SizedBox(
+            mat.SizedBox(
               height: 200,
               child: highCount == 0 && mediumCount == 0 && lowCount == 0
                   ? const mat.Center(child: mat.Text('No data available'))
@@ -566,7 +566,7 @@ class _StatisticsScreenState extends mat.State<StatisticsScreen> {
               style: mat.Theme.of(context).textTheme.titleLarge,
             ),
             const mat.SizedBox(height: 16),
-            SizedBox(
+            mat.SizedBox(
               height: 250,
               child: fl_chart.PieChart(
                 fl_chart.PieChartData(
@@ -692,7 +692,7 @@ class _StatisticsScreenState extends mat.State<StatisticsScreen> {
               style: mat.Theme.of(context).textTheme.titleLarge,
             ),
             const mat.SizedBox(height: 16),
-            SizedBox(
+            mat.SizedBox(
               height: 200,
               child: fl_chart.BarChart(
                 fl_chart.BarChartData(

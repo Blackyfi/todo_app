@@ -4,14 +4,14 @@ import 'package:todo_app/features/categories/models/category.dart' as category_m
 class CategoryChip extends mat.StatelessWidget {
   final category_model.Category category;
   final bool isSelected;
-  final VoidCallback? onTap;
+  final mat.VoidCallback? onTap;
 
   const CategoryChip({
-    mat.Key? key,
+    super.key,
     required this.category,
     this.isSelected = false,
     this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   mat.Widget build(mat.BuildContext context) {

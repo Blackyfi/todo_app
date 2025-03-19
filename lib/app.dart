@@ -5,7 +5,7 @@ import 'package:todo_app/routes.dart' as routes;
 import 'package:todo_app/core/notifications/notification_service.dart' as notification_service;
 
 class TodoApp extends mat.StatefulWidget {
-  const TodoApp({mat.Key? key}) : super(key: key);
+  const TodoApp({super.key});
 
   @override
   mat.State<TodoApp> createState() => _TodoAppState();
@@ -25,17 +25,6 @@ class _TodoAppState extends mat.State<TodoApp> {
     await _notificationService.init();
     // Initialize theme preference from SharedPreferences if needed
     // You can add that functionality later
-  }
-
-  void _toggleThemeMode() {
-    setState(() {
-      if (_themeMode == mat.ThemeMode.light) {
-        _themeMode = mat.ThemeMode.dark;
-      } else {
-        _themeMode = mat.ThemeMode.light;
-      }
-      // Save theme preference to SharedPreferences if needed
-    });
   }
 
   @override

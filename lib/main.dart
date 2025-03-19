@@ -20,5 +20,5 @@ void main() async {
     ),
   );
   
-  runApp(const app.TodoApp());
+  mat.runApp(const app.TodoApp());
 }
