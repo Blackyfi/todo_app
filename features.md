@@ -1,66 +1,72 @@
-Core Functionalities
+# ToDo App - Feature Specification
 
-Task Management
+## Task Management
 
-Create new tasks with title and description
-Set due date and time for tasks
-Mark tasks as complete
-Delete tasks
-Edit existing tasks
+### Core Functionality
+- **Create Tasks**: Add new tasks with title and description
+- **Schedule Tasks**: Set due date and time for each task
+- **Track Completion**: Mark tasks as complete when finished
+- **Delete Tasks**: Remove unwanted tasks from the system
+- **Edit Tasks**: Modify existing task details as needed
 
+## Organization & Categorization
 
-Task Organization
+### Task Classification
+- **Categories**: Organize tasks by type (Work, Personal, Shopping, etc.)
+- **Priority Levels**: Assign importance using three-tier system:
+  - High Priority (Red)
+  - Medium Priority (Orange)
+  - Low Priority (Green)
 
-Categorize tasks (work, personal, shopping, etc.)
-Priority levels (high, medium, low) - add/remove a color (red , orange and green)
-Filter tasks by category, priority, or completion status
-Sort tasks by date, priority, or alphabetically
+### Task Views
+- **Filtering**: View tasks by category, priority, or completion status
+- **Sorting**: Arrange tasks by date, priority level, or alphabetical order
 
+## Notification System
 
-Reminder System
+### Alert Types
+- Push notifications
+- In-app notifications
+- Email reminders (optional feature)
 
-Multiple notification types:
+### Notification Scheduling
+- Customizable reminder timing:
+  - At exact task time
+  - 15 minutes before
+  - 30 minutes before
+  - 1 hour before
+  - 1 day before
+  - Previous Sunday (for tasks in the upcoming week)
+  - Custom time on the day of the task
+- Support for multiple notification options per task
+- Recurring reminders for incomplete tasks
 
-Push notifications
-In-app notifications
-Email reminders (optional)
+## User Interface
 
+### Design Elements
+- Clean, intuitive interface
+- Dark/light mode toggle
+- Home screen widget for quick task access
 
-Customizable notification timing:
+### View Options
+- Calendar view for date-based task visualization
+- List view for comprehensive task overview
+- Dashboard with task completion statistics
 
-At the exact time
-15 minutes before
-30 minutes before
-1 hour before
-1 day before
-the Sunday of the week previous to the actual week the day is in (if it is monday, and the task is in the current week, the option doesn t appear)
+### Navigation
+- Persistent right panel showing upcoming/urgent tasks
 
-the day of the task at a precise time
-(can select multiple notification options)
+## Data Management
 
-Recurring reminders for incomplete tasks
+### Storage
+- Local storage for offline access
+- Real-time updates after task creation or deletion
 
+## User Experience
 
-User Interface
-
-Clean, intuitive design
-Dark/light mode toggle
-Home screen widget for quick access to upcoming tasks
-Calendar view to see tasks by date
-List view for all tasks
-Dashboard with task statistics (completed vs. pending)
-Right panel (always displayed) showing the closest tasks to do
-
-
-Data Management
-
-Local storage for offline access
-after a creation or deletion, storage is updated
-
-
-User Experience
-
-Quick add task feature
-Swipe gestures (swipe to complete, delete)
-Drag and drop for reordering tasks
-Search functionality
+### Productivity Features
+- Quick-add task functionality
+- Gesture controls:
+  - Swipe to complete or delete tasks
+  - Drag and drop for task reordering
+- Comprehensive search functionality
