@@ -11,6 +11,7 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.8
   sqflite: ^2.3.2
+  sqflite_common_ffi: ^2.3.2+1  # Added this line
   path: ^1.9.0
   intl: ^0.19.0
   flutter_local_notifications: ^16.0.1

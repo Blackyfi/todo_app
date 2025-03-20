@@ -1,6 +1,7 @@
 import 'package:sqflite/sqflite.dart' as sql;
 import 'package:path/path.dart' as path;
 import 'package:todo_app/core/logger/logger_service.dart';
+import 'package:todo_app/core/database/database_config.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
@@ -15,6 +16,8 @@ class DatabaseHelper {
   Future<sql.Database> get database async {
     if (_database != null) return _database!;
     try {
+      // Ensure database factory is initialized
+      await DatabaseConfig.initDatabaseFactory();
       _database = await _initDatabase();
       return _database!;
     } catch (e, stackTrace) {

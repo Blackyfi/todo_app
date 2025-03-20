@@ -4,6 +4,7 @@ import 'package:flutter/services.dart' as services;
 import 'package:flutter/foundation.dart' show FlutterError, FlutterErrorDetails;
 import 'package:todo_app/app.dart' as app;
 import 'package:todo_app/core/logger/logger_service.dart';
+import 'package:todo_app/core/database/database_config.dart';
 
 void main() async {
   // Capture Flutter errors
@@ -19,6 +20,9 @@ void main() async {
     // Initialize logger
     final logger = LoggerService();
     await logger.init();
+    
+    // Initialize database factory for the appropriate platform
+    await DatabaseConfig.initDatabaseFactory();
     
     // Set preferred orientations
     await services.SystemChrome.setPreferredOrientations([
