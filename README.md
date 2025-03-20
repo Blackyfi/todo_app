@@ -59,3 +59,9 @@ The app follows a feature-based architecture with clear separation of concerns:
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Commands
+
+flutter build apk --release
+
+flutter build windows --release
