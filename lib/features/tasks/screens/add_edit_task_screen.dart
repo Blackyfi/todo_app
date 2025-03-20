@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:todo_app/common/constants/app_constants.dart' as app_constants;
-import 'package:todo_app/common/widgets/category_chip.dart' as category_chip;
 import 'package:todo_app/features/tasks/models/task.dart' as task_model;
 import 'package:todo_app/features/categories/models/category.dart' as category_model;
 import 'package:todo_app/core/database/repository/task_repository.dart' as task_repository;
@@ -8,7 +7,9 @@ import 'package:todo_app/core/database/repository/category_repository.dart' as c
 import 'package:todo_app/core/database/repository/notification_repository.dart' as notification_repository;
 import 'package:todo_app/core/notifications/models/notification_settings.dart' as notification_model;
 import 'package:todo_app/core/notifications/notification_service.dart' as notification_service;
-import 'package:intl/intl.dart' as intl;
+import 'package:todo_app/features/tasks/widgets/task_form_fields.dart';
+import 'package:todo_app/features/tasks/widgets/notification_option_picker.dart';
+import 'package:todo_app/features/tasks/utils/task_form_helpers.dart';
 
 class AddEditTaskScreen extends StatefulWidget {
   final task_model.Task? task;
@@ -33,7 +34,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
   final _notificationService = notification_service.NotificationService();
   
   List<category_model.Category> _categories = [];
-  int? _selectedCategoryId; // Can be null now
+  int? _selectedCategoryId;
   DateTime? _dueDate;
   TimeOfDay? _dueTime;
   task_model.Priority _priority = task_model.Priority.medium;
@@ -72,7 +73,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
           final task = widget.task!;
           _titleController.text = task.title;
           _descriptionController.text = task.description;
-          _selectedCategoryId = task.categoryId; // Can be null
+          _selectedCategoryId = task.categoryId;
           _priority = task.priority;
           
           if (task.dueDate != null) {
@@ -86,7 +87,6 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
           
           _loadNotificationSettings();
         } else {
-          // No default category selected - leave as null
           _selectedCategoryId = null;
         }
         
@@ -132,92 +132,12 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
     }
   }
   
-  Future<void> _selectDueDate() async {
-    final pickedDate = await showDatePicker(
-      context: context,
-      initialDate: _dueDate ?? DateTime.now(),
-      firstDate: DateTime.now().subtract(const Duration(days: 365)),
-      lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
-    );
-    
-    if (pickedDate != null && pickedDate != _dueDate) {
-      setState(() {
-        _dueDate = pickedDate;
-      });
-    }
-  }
-  
-  Future<void> _selectDueTime() async {
-    final pickedTime = await showTimePicker(
-      context: context,
-      initialTime: _dueTime ?? TimeOfDay.now(),
-    );
-    
-    if (pickedTime != null && pickedTime != _dueTime) {
-      setState(() {
-        _dueTime = pickedTime;
-      });
-    }
-  }
-  
-  Future<void> _selectCustomNotificationTime() async {
-    final pickedTime = await showTimePicker(
-      context: context,
-      initialTime: _customNotificationTime != null
-          ? TimeOfDay.fromDateTime(_customNotificationTime!)
-          : TimeOfDay.now(),
-    );
-    
-    if (pickedTime != null) {
-      final now = DateTime.now();
-      setState(() {
-        _customNotificationTime = DateTime(
-          now.year,
-          now.month,
-          now.day,
-          pickedTime.hour,
-          pickedTime.minute,
-        );
-      });
-    }
-  }
-  
-  void _toggleNotificationOption(notification_model.NotificationTimeOption option) {
-    setState(() {
-      if (_selectedNotificationOptions.contains(option)) {
-        _selectedNotificationOptions.remove(option);
-        if (option == notification_model.NotificationTimeOption.custom) {
-          _customNotificationTime = null;
-        }
-      } else {
-        _selectedNotificationOptions.add(option);
-        if (option == notification_model.NotificationTimeOption.custom && _customNotificationTime == null) {
-          _selectCustomNotificationTime();
-        }
-      }
-    });
-  }
-  
-  DateTime? _combineDateAndTime() {
-    if (_dueDate == null) return null;
-    final time = _dueTime ?? TimeOfDay.now();
-    return DateTime(
-      _dueDate!.year,
-      _dueDate!.month,
-      _dueDate!.day,
-      time.hour,
-      time.minute,
-    );
-  }
-  
   Future<void> _saveTask() async {
     if (!_formKey.currentState!.validate()) return;
     
-    // Category is now optional, no need to check if it's null
-    
     final title = _titleController.text.trim();
     final description = _descriptionController.text.trim();
-    final dueDateTime = _combineDateAndTime();
+    final dueDateTime = TaskFormHelpers.combineDateAndTime(_dueDate, _dueTime);
     
     try {
       int taskId;
@@ -241,7 +161,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
           title: title,
           description: description,
           dueDate: dueDateTime,
-          categoryId: _selectedCategoryId, // Can be null now
+          categoryId: _selectedCategoryId,
           priority: _priority,
         );
         
@@ -268,7 +188,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
               title: title,
               description: description,
               dueDate: dueDateTime,
-              categoryId: _selectedCategoryId, // Can be null
+              categoryId: _selectedCategoryId,
             ),
             setting.copyWith(id: settingId),
           );
@@ -291,8 +211,6 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
   
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    
     return Scaffold(
       appBar: AppBar(
         title: Text(_isEditMode ? 'Edit Task' : 'Add Task'),
@@ -306,255 +224,47 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    TextFormField(
-                      controller: _titleController,
-                      decoration: const InputDecoration(
-                        labelText: 'Title',
-                        hintText: 'Enter task title',
-                        prefixIcon: Icon(Icons.title),
+                    // Basic task information
+                    TaskFormFields(
+                      titleController: _titleController,
+                      descriptionController: _descriptionController,
+                      dueDate: _dueDate,
+                      dueTime: _dueTime,
+                      onDateSelected: (date) => setState(() => _dueDate = date),
+                      onTimeSelected: (time) => setState(() => _dueTime = time),
+                      categories: _categories,
+                      selectedCategoryId: _selectedCategoryId,
+                      onCategorySelected: (categoryId) => setState(() => _selectedCategoryId = categoryId),
+                      priority: _priority,
+                      onPriorityChanged: (priority) => setState(() => _priority = priority),
+                    ),
+                    
+                    // Notification options
+                    if (_dueDate != null && _dueTime != null)
+                      NotificationOptionPicker(
+                        selectedOptions: _selectedNotificationOptions,
+                        customTime: _customNotificationTime,
+                        onOptionToggled: (option) {
+                          setState(() {
+                            if (_selectedNotificationOptions.contains(option)) {
+                              _selectedNotificationOptions.remove(option);
+                              if (option == notification_model.NotificationTimeOption.custom) {
+                                _customNotificationTime = null;
+                              }
+                            } else {
+                              _selectedNotificationOptions.add(option);
+                              if (option == notification_model.NotificationTimeOption.custom) {
+                                TaskFormHelpers.selectCustomNotificationTime(context).then((time) {
+                                  if (time != null) {
+                                    setState(() => _customNotificationTime = time);
+                                  }
+                                });
+                              }
+                            }
+                          });
+                        },
+                        onCustomTimeChanged: (dateTime) => setState(() => _customNotificationTime = dateTime),
                       ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Please enter a title';
-                        }
-                        return null;
-                      },
-                    ),
-                    
-                    const SizedBox(height: 16),
-                    
-                    TextFormField(
-                      controller: _descriptionController,
-                      decoration: const InputDecoration(
-                        labelText: 'Description',
-                        hintText: 'Enter task description (optional)',
-                        prefixIcon: Icon(Icons.description),
-                        alignLabelWithHint: true,
-                      ),
-                      maxLines: 3,
-                    ),
-                    
-                    const SizedBox(height: 16),
-                    
-                    Text(
-                      'Due Date & Time',
-                      style: theme.textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: InkWell(
-                            onTap: _selectDueDate,
-                            borderRadius: BorderRadius.circular(12),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 12,
-                              ),
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: theme.colorScheme.outline.withOpacity(0.5),
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.calendar_today,
-                                    size: 20,
-                                    color: theme.colorScheme.primary,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      _dueDate != null
-                                          ? intl.DateFormat('MMM d, yyyy').format(_dueDate!)
-                                          : 'Select Date',
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: InkWell(
-                            onTap: _selectDueTime,
-                            borderRadius: BorderRadius.circular(12),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 12,
-                              ),
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: theme.colorScheme.outline.withOpacity(0.5),
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.access_time,
-                                    size: 20,
-                                    color: theme.colorScheme.primary,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      _dueTime != null
-                                          ? _dueTime!.format(context)
-                                          : 'Select Time',
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    
-                    const SizedBox(height: 16),
-                    
-                    Row(
-                      children: [
-                        Text(
-                          'Category (Optional)',
-                          style: theme.textTheme.titleMedium,
-                        ),
-                        const SizedBox(width: 8),
-                        TextButton(
-                          onPressed: () {
-                            setState(() {
-                              _selectedCategoryId = null;
-                            });
-                          },
-                          child: const Text('Clear Selection'),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: _categories.map((category) {
-                        return category_chip.CategoryChip(
-                          category: category,
-                          isSelected: _selectedCategoryId == category.id,
-                          onTap: () {
-                            setState(() {
-                              _selectedCategoryId = category.id;
-                            });
-                          },
-                        );
-                      }).toList(),
-                    ),
-                    
-                    const SizedBox(height: 16),
-                    
-                    Text(
-                      'Priority',
-                      style: theme.textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 8),
-                    SegmentedButton<task_model.Priority>(
-                      segments: [
-                        ButtonSegment<task_model.Priority>(
-                          value: task_model.Priority.low,
-                          label: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                width: 12,
-                                height: 12,
-                                decoration: const BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.red,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              const Text('High'),
-                            ],
-                          ),
-                        ),
-                      ],
-                      selected: {_priority},
-                      onSelectionChanged: (Set<task_model.Priority> selection) {
-                        setState(() {
-                          _priority = selection.first;
-                        });
-                      },
-                    ),
-                    
-                    if (_dueDate != null && _dueTime != null) ...[
-                      const SizedBox(height: 16),
-                      Text(
-                        'Reminders',
-                        style: theme.textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: notification_model.NotificationTimeOption.values.map((option) {
-                          final isSelected = _selectedNotificationOptions.contains(option);
-                          return FilterChip(
-                            label: Text(option.label),
-                            selected: isSelected,
-                            onSelected: (_) => _toggleNotificationOption(option),
-                            avatar: isSelected
-                                ? const Icon(Icons.notifications_active, size: 18)
-                                : const Icon(Icons.notifications_none, size: 18),
-                          );
-                        }).toList(),
-                      ),
-                      
-                      if (_selectedNotificationOptions.contains(notification_model.NotificationTimeOption.custom) &&
-                          _customNotificationTime != null) ...[
-                        const SizedBox(height: 8),
-                        InkWell(
-                          onTap: _selectCustomNotificationTime,
-                          borderRadius: BorderRadius.circular(12),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: theme.colorScheme.outline.withOpacity(0.5),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.access_time,
-                                  size: 20,
-                                  color: theme.colorScheme.primary,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Custom Time: ${intl.DateFormat('h:mm a').format(_customNotificationTime!)}',
-                                ),
-                                const Spacer(),
-                                Icon(
-                                  Icons.edit,
-                                  size: 18,
-                                  color: theme.colorScheme.primary,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
                   ],
                 ),
               ),
