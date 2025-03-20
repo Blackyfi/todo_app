@@ -13,7 +13,7 @@ class TodoApp extends mat.StatefulWidget {
 
 class _TodoAppState extends mat.State<TodoApp> {
   final _notificationService = notification_service.NotificationService();
-  mat.ThemeMode _themeMode = mat.ThemeMode.system;
+  final mat.ThemeMode _themeMode = mat.ThemeMode.system;
 
   @override
   void initState() {
