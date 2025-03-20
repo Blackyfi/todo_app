@@ -116,7 +116,7 @@ mat.Widget _buildColorPicker({
             boxShadow: selectedColor == color
                 ? [
                     mat.BoxShadow(
-                      color: color.withOpacity(0.7),
+                      color: color.withAlpha((0.7 * 255).toInt()),
                       blurRadius: 8,
                       spreadRadius: 2,
                     ),

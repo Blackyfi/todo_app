@@ -308,7 +308,7 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
                               child: Text('Select a log file to view'),
                             )
                           : Container(
-                              color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                              color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                               child: SingleChildScrollView(
                                 padding: const EdgeInsets.all(16),
                                 child: SelectableText(

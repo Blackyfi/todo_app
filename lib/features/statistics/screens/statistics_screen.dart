@@ -50,7 +50,7 @@ class _StatisticsScreenState extends mat.State<StatisticsScreen> {
       
       if (mounted) {
         mat.ScaffoldMessenger.of(context).showSnackBar(
-          mat.SnackBar(
+          const mat.SnackBar(
             content: mat.Text(app_constants.AppConstants.databaseErrorMessage),
           ),
         );
