@@ -188,29 +188,39 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
       if (dueDateTime != null && _selectedNotificationOptions.isNotEmpty) {
         await _logger.logInfo('Setting up ${_selectedNotificationOptions.length} notifications for task: ID=$taskId');
         
-        for (final option in _selectedNotificationOptions) {
-          final setting = notification_model.NotificationSetting(
-            taskId: taskId,
-            timeOption: option,
-            customTime: option == notification_model.NotificationTimeOption.custom
-                ? _customNotificationTime
-                : null,
-          );
-          
-          final settingId = await _notificationRepository.insertNotificationSetting(setting);
-          await _logger.logInfo('Created notification setting: ID=$settingId, TaskID=$taskId, TimeOption=${option.name}');
-          
-          // Schedule notification
-          await _notificationService.scheduleTaskNotification(
-            task_model.Task(
-              id: taskId,
-              title: title,
-              description: description,
-              dueDate: dueDateTime,
-              categoryId: _selectedCategoryId,
-            ),
-            setting.copyWith(id: settingId),
-          );
+        try {
+          for (final option in _selectedNotificationOptions) {
+            final setting = notification_model.NotificationSetting(
+              taskId: taskId,
+              timeOption: option,
+              customTime: option == notification_model.NotificationTimeOption.custom
+                  ? _customNotificationTime
+                  : null,
+            );
+            
+            final settingId = await _notificationRepository.insertNotificationSetting(setting);
+            await _logger.logInfo('Created notification setting: ID=$settingId, TaskID=$taskId, TimeOption=${option.name}');
+            
+            // Schedule notification - try to schedule but continue even if it fails
+            try {
+              await _notificationService.scheduleTaskNotification(
+                task_model.Task(
+                  id: taskId,
+                  title: title,
+                  description: description,
+                  dueDate: dueDateTime,
+                  categoryId: _selectedCategoryId,
+                ),
+                setting.copyWith(id: settingId),
+              );
+            } catch (notifyError, notifyStackTrace) {
+              // Log the error but continue with task saving
+              await _logger.logError('Error scheduling notification but continuing', notifyError, notifyStackTrace);
+            }
+          }
+        } catch (e, stackTrace) {
+          // Log notification errors but don't prevent task from being saved
+          await _logger.logError('Error with notifications but task was saved', e, stackTrace);
         }
       } else {
         await _logger.logInfo('No notifications set for task: ID=$taskId');
