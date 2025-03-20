@@ -130,7 +130,7 @@ class TaskDetailContent extends mat.StatelessWidget {
               : mat.Icons.radio_button_unchecked,
           color: task.isCompleted
               ? theme.colorScheme.primary
-              : theme.colorScheme.onSurface.withOpacity(0.6),
+              : theme.colorScheme.onSurface.withAlpha(153), // 0.6 * 255 ≈ 153
           size: 20,
         ),
         const mat.SizedBox(width: 8),
@@ -155,7 +155,7 @@ class TaskDetailContent extends mat.StatelessWidget {
           width: double.infinity,
           padding: const mat.EdgeInsets.all(16),
           decoration: mat.BoxDecoration(
-            color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+            color: theme.colorScheme.surfaceContainerHighest.withAlpha(77), // 0.3 * 255 ≈ 77
             borderRadius: mat.BorderRadius.circular(16),
           ),
           child: mat.Text(
@@ -164,7 +164,7 @@ class TaskDetailContent extends mat.StatelessWidget {
                 : task.description,
             style: theme.textTheme.bodyLarge?.copyWith(
               color: task.description.isEmpty
-                  ? theme.colorScheme.onSurface.withOpacity(0.6)
+                  ? theme.colorScheme.onSurface.withAlpha(153) // 0.6 * 255 ≈ 153
                   : null,
             ),
           ),
@@ -189,7 +189,7 @@ class TaskDetailContent extends mat.StatelessWidget {
             child: mat.Container(
               padding: const mat.EdgeInsets.all(12),
               decoration: mat.BoxDecoration(
-                color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                color: theme.colorScheme.surfaceContainerHighest.withAlpha(77), // 0.3 * 255 ≈ 77
                 borderRadius: mat.BorderRadius.circular(12),
               ),
               child: mat.Row(

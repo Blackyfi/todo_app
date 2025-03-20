@@ -131,10 +131,10 @@ class TaskFormFields extends StatelessWidget {
           vertical: 12,
         ),
         decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+          color: theme.colorScheme.surfaceContainerHighest.withAlpha(77), // 0.3 * 255 = 77
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: theme.colorScheme.outline.withOpacity(0.5),
+            color: theme.colorScheme.outline.withAlpha(128), // 0.5 * 255 = 128
           ),
         ),
         child: Row(
@@ -168,10 +168,10 @@ class TaskFormFields extends StatelessWidget {
           vertical: 12,
         ),
         decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+          color: theme.colorScheme.surfaceContainerHighest.withAlpha(77), // Updated here
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: theme.colorScheme.outline.withOpacity(0.5),
+            color: theme.colorScheme.outline.withAlpha(128), // 0.5 * 255 = 128
           ),
         ),
         child: Row(
@@ -211,20 +211,20 @@ class TaskFormFields extends StatelessWidget {
 
   Widget _buildPrioritySelector() {
     return SegmentedButton<task_model.Priority>(
-      segments: [
+      segments: const [
         ButtonSegment<task_model.Priority>(
           value: task_model.Priority.high,
-          label: const Text('High'),
+          label: Text('High'),
           icon: Icon(Icons.flag, color: Colors.red),
         ),
         ButtonSegment<task_model.Priority>(
           value: task_model.Priority.medium,
-          label: const Text('Medium'),
+          label: Text('Medium'),
           icon: Icon(Icons.flag, color: Colors.orange),
         ),
         ButtonSegment<task_model.Priority>(
           value: task_model.Priority.low,
-          label: const Text('Low'),
+          label: Text('Low'),
           icon: Icon(Icons.flag, color: Colors.green),
         ),
       ],
