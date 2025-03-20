@@ -11,6 +11,7 @@ class AppConstants {
   static const String categoriesRoute = '/categories';
   static const String statisticsRoute = '/statistics';
   static const String settingsRoute = '/settings';
+  static const String logViewerRoute = '/log-viewer';
   
   // Database
   static const String databaseName = 'todo_app.db';
@@ -44,4 +45,8 @@ class AppConstants {
   static const String incompleteTasks = 'Incomplete';
   static const String todayTasks = 'Today';
   static const String upcomingTasks = 'Upcoming';
+  
+  // Logging
+  static const String logDirectoryName = 'logs';
+  static const String logFilePrefix = 'app_log_';
 }

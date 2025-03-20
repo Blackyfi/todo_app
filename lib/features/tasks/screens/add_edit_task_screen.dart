@@ -10,6 +10,7 @@ import 'package:todo_app/core/notifications/notification_service.dart' as notifi
 import 'package:todo_app/features/tasks/widgets/task_form_fields.dart';
 import 'package:todo_app/features/tasks/widgets/notification_option_picker.dart';
 import 'package:todo_app/features/tasks/utils/task_form_helpers.dart';
+import 'package:todo_app/core/logger/logger_service.dart';
 
 class AddEditTaskScreen extends StatefulWidget {
   final task_model.Task? task;
@@ -32,6 +33,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
   final _categoryRepository = category_repository.CategoryRepository();
   final _notificationRepository = notification_repository.NotificationRepository();
   final _notificationService = notification_service.NotificationService();
+  final _logger = LoggerService();
   
   List<category_model.Category> _categories = [];
   int? _selectedCategoryId;
@@ -64,6 +66,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
     });
     
     try {
+      await _logger.logInfo('Loading categories in AddEditTaskScreen');
       final categories = await _categoryRepository.getAllCategories();
       
       setState(() {
@@ -85,14 +88,18 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
             _dueTime = TimeOfDay.fromDateTime(task.dueDate!);
           }
           
+          _logger.logInfo('Editing task: ID=${task.id}, Title=${task.title}');
           _loadNotificationSettings();
         } else {
           _selectedCategoryId = null;
+          _logger.logInfo('Creating new task');
         }
         
         _isLoading = false;
       });
-    } catch (e) {
+    } catch (e, stackTrace) {
+      await _logger.logError('Error loading data in AddEditTaskScreen', e, stackTrace);
+      
       setState(() {
         _isLoading = false;
       });
@@ -111,6 +118,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
     if (!_isEditMode || widget.task?.id == null) return;
     
     try {
+      await _logger.logInfo('Loading notification settings for task: ID=${widget.task!.id}');
       final settings = await _notificationRepository.getNotificationSettingsForTask(widget.task!.id!);
       
       setState(() {
@@ -121,7 +129,11 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
           }
         }
       });
-    } catch (e) {
+      
+      await _logger.logInfo('Loaded ${settings.length} notification settings for task: ID=${widget.task!.id}');
+    } catch (e, stackTrace) {
+      await _logger.logError('Error loading notification settings', e, stackTrace);
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -151,10 +163,12 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
           priority: _priority,
         );
         
+        await _logger.logInfo('Updating task: ID=${widget.task!.id}, Title=$title');
         await _taskRepository.updateTask(updatedTask);
         taskId = widget.task!.id!;
         
         // Delete existing notifications
+        await _logger.logInfo('Deleting existing notification settings for task: ID=$taskId');
         await _notificationRepository.deleteNotificationSettingsForTask(taskId);
       } else {
         final newTask = task_model.Task(
@@ -165,11 +179,15 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
           priority: _priority,
         );
         
+        await _logger.logInfo('Creating new task: Title=$title');
         taskId = await _taskRepository.insertTask(newTask);
+        await _logger.logInfo('New task created with ID: $taskId');
       }
       
       // Save notification settings
       if (dueDateTime != null && _selectedNotificationOptions.isNotEmpty) {
+        await _logger.logInfo('Setting up ${_selectedNotificationOptions.length} notifications for task: ID=$taskId');
+        
         for (final option in _selectedNotificationOptions) {
           final setting = notification_model.NotificationSetting(
             taskId: taskId,
@@ -180,6 +198,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
           );
           
           final settingId = await _notificationRepository.insertNotificationSetting(setting);
+          await _logger.logInfo('Created notification setting: ID=$settingId, TaskID=$taskId, TimeOption=${option.name}');
           
           // Schedule notification
           await _notificationService.scheduleTaskNotification(
@@ -193,12 +212,18 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
             setting.copyWith(id: settingId),
           );
         }
+      } else {
+        await _logger.logInfo('No notifications set for task: ID=$taskId');
       }
+      
+      await _logger.logInfo('Task saved successfully: ID=$taskId');
       
       if (mounted) {
         Navigator.of(context).pop();
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      await _logger.logError('Error saving task', e, stackTrace);
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

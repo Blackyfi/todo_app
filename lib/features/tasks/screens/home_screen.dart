@@ -6,6 +6,7 @@ import 'package:todo_app/features/categories/models/category.dart' as category_m
 import 'package:todo_app/features/tasks/widgets/task_card.dart' as task_card;
 import 'package:todo_app/core/database/repository/task_repository.dart' as task_repository;
 import 'package:todo_app/core/database/repository/category_repository.dart' as category_repository;
+import 'package:todo_app/core/logger/logger_service.dart';
 
 class HomeScreen extends mat.StatefulWidget {
   const HomeScreen({mat.Key? key}) : super(key: key);
@@ -17,6 +18,7 @@ class HomeScreen extends mat.StatefulWidget {
 class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProviderStateMixin {
   final _taskRepository = task_repository.TaskRepository();
   final _categoryRepository = category_repository.CategoryRepository();
+  final _logger = LoggerService();
   
   List<task_model.Task> _tasks = [];
   List<category_model.Category> _categories = [];
@@ -44,6 +46,7 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
     });
     
     try {
+      await _logger.logInfo('Loading tasks and categories in HomeScreen');
       final tasks = await _taskRepository.getAllTasks();
       final categories = await _categoryRepository.getAllCategories();
       
@@ -52,7 +55,11 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
         _categories = categories;
         _isLoading = false;
       });
-    } catch (e) {
+      
+      await _logger.logInfo('Loaded ${tasks.length} tasks and ${categories.length} categories');
+    } catch (e, stackTrace) {
+      await _logger.logError('Error loading data in HomeScreen', e, stackTrace);
+      
       setState(() {
         _isLoading = false;
       });
@@ -72,7 +79,11 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
       final updatedTask = task.copyWith(isCompleted: !task.isCompleted);
       await _taskRepository.updateTask(updatedTask);
       await _loadData();
-    } catch (e) {
+      
+      await _logger.logInfo('Task completion toggled: ID=${task.id}, Title=${task.title}, Completed=${!task.isCompleted}');
+    } catch (e, stackTrace) {
+      await _logger.logError('Error toggling task completion', e, stackTrace);
+      
       if (mounted) {
         mat.ScaffoldMessenger.of(context).showSnackBar(
           mat.SnackBar(
@@ -88,6 +99,8 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
       await _taskRepository.deleteTask(taskId);
       await _loadData();
       
+      await _logger.logInfo('Task deleted: ID=$taskId');
+      
       if (mounted) {
         mat.ScaffoldMessenger.of(context).showSnackBar(
           const mat.SnackBar(
@@ -95,7 +108,9 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
           ),
         );
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      await _logger.logError('Error deleting task', e, stackTrace);
+      
       if (mounted) {
         mat.ScaffoldMessenger.of(context).showSnackBar(
           mat.SnackBar(
@@ -117,6 +132,12 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
     mat.Navigator.of(context).pushNamed(
       app_constants.AppConstants.addTaskRoute,
     ).then((_) => _loadData());
+  }
+  
+  void _navigateToSettings() {
+    mat.Navigator.of(context).pushNamed(
+      app_constants.AppConstants.settingsRoute,
+    );
   }
   
   List<task_model.Task> _getFilteredTasks() {
@@ -194,6 +215,11 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
                 child: mat.Text('Upcoming'),
               ),
             ],
+          ),
+          mat.IconButton(
+            icon: const mat.Icon(mat.Icons.settings),
+            onPressed: _navigateToSettings,
+            tooltip: 'Settings',
           ),
         ],
         bottom: mat.TabBar(

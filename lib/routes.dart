@@ -6,6 +6,8 @@ import 'package:todo_app/features/tasks/screens/task_details_screen.dart' as tas
 import 'package:todo_app/features/tasks/screens/add_edit_task_screen.dart' as add_edit_task_screen;
 import 'package:todo_app/features/categories/screens/categories_screen.dart' as categories_screen;
 import 'package:todo_app/features/statistics/screens/statistics_screen.dart' as statistics_screen;
+import 'package:todo_app/features/settings/screens/settings_screen.dart';
+import 'package:todo_app/features/settings/screens/log_viewer_screen.dart';
 
 class AppRouter {
   static mat.Route<dynamic> generateRoute(mat.RouteSettings settings) {
@@ -38,6 +40,16 @@ class AppRouter {
       case app_constants.AppConstants.statisticsRoute:
         return mat.MaterialPageRoute(
           builder: (_) => const statistics_screen.StatisticsScreen(),
+        );
+        
+      case app_constants.AppConstants.settingsRoute:
+        return mat.MaterialPageRoute(
+          builder: (_) => const SettingsScreen(),
+        );
+        
+      case app_constants.AppConstants.logViewerRoute:
+        return mat.MaterialPageRoute(
+          builder: (_) => const LogViewerScreen(),
         );
         
       default:
