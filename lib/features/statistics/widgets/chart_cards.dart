@@ -108,7 +108,7 @@ class PriorityChart extends mat.StatelessWidget {
                         barTouchData: fl_chart.BarTouchData(
                           enabled: true,
                           touchTooltipData: fl_chart.BarTouchTooltipData(
-                            tooltipBgColor: mat.Colors.blueGrey.withOpacity(0.8),
+                            tooltipBgColor: mat.Colors.blueGrey.withAlpha((0.8 * 255).toInt()),
                           ),
                         ),
                         titlesData: fl_chart.FlTitlesData(
@@ -166,10 +166,10 @@ class PriorityChart extends mat.StatelessWidget {
                               reservedSize: 30,
                             ),
                           ),
-                          rightTitles: fl_chart.AxisTitles(
+                          rightTitles: const fl_chart.AxisTitles(
                             sideTitles: fl_chart.SideTitles(showTitles: false),
                           ),
-                          topTitles: fl_chart.AxisTitles(
+                          topTitles: const fl_chart.AxisTitles(
                             sideTitles: fl_chart.SideTitles(showTitles: false),
                           ),
                         ),
@@ -177,7 +177,7 @@ class PriorityChart extends mat.StatelessWidget {
                           show: true,
                           drawVerticalLine: false,
                           getDrawingHorizontalLine: (value) => fl_chart.FlLine(
-                            color: mat.Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
+                            color: mat.Theme.of(context).colorScheme.onSurface.withAlpha(25),
                             strokeWidth: 1,
                           ),
                         ),
@@ -375,7 +375,7 @@ class WeeklyTasksCard extends mat.StatelessWidget {
                       width: 40,
                       height: 40,
                       decoration: mat.BoxDecoration(
-                        color: category.color.withOpacity(0.2),
+                        color: category.color.withAlpha((0.2 * 255).toInt()),
                         borderRadius: mat.BorderRadius.circular(8),
                       ),
                       child: mat.Center(
@@ -396,7 +396,7 @@ class WeeklyTasksCard extends mat.StatelessWidget {
                         ? mat.Text(
                             intl.DateFormat('E, MMM d').format(task.dueDate!),
                             style: mat.TextStyle(
-                              color: theme.colorScheme.onSurface.withOpacity(0.7),
+                                color: theme.colorScheme.onSurface.withAlpha((0.7 * 255).toInt()),
                               fontSize: 12,
                             ),
                           )
@@ -407,7 +407,7 @@ class WeeklyTasksCard extends mat.StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: mat.BoxDecoration(
-                        color: task.priority.color.withOpacity(0.2),
+                        color: task.priority.color.withAlpha((0.2 * 255).toInt()),
                         borderRadius: mat.BorderRadius.circular(4),
                       ),
                       child: mat.Text(
@@ -462,7 +462,7 @@ class WeeklyCompletionChart extends mat.StatelessWidget {
                   barTouchData: fl_chart.BarTouchData(
                     enabled: true,
                     touchTooltipData: fl_chart.BarTouchTooltipData(
-                      tooltipBgColor: mat.Colors.blueGrey.withOpacity(0.8),
+                      tooltipBgColor: mat.Colors.blueGrey.withAlpha((0.8 * 255).toInt()),
                     ),
                   ),
                   titlesData: fl_chart.FlTitlesData(
@@ -511,10 +511,10 @@ class WeeklyCompletionChart extends mat.StatelessWidget {
                         reservedSize: 30,
                       ),
                     ),
-                    rightTitles: fl_chart.AxisTitles(
+                    rightTitles: const fl_chart.AxisTitles(
                       sideTitles: fl_chart.SideTitles(showTitles: false),
                     ),
-                    topTitles: fl_chart.AxisTitles(
+                    topTitles: const fl_chart.AxisTitles(
                       sideTitles: fl_chart.SideTitles(showTitles: false),
                     ),
                   ),
@@ -522,7 +522,7 @@ class WeeklyCompletionChart extends mat.StatelessWidget {
                     show: true,
                     drawVerticalLine: false,
                     getDrawingHorizontalLine: (value) => fl_chart.FlLine(
-                      color: theme.colorScheme.onSurface.withOpacity(0.1),
+                        color: theme.colorScheme.onSurface.withAlpha(25),
                       strokeWidth: 1,
                     ),
                   ),
