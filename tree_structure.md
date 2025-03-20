@@ -11,6 +11,7 @@ todo_app/
 ├── features.md                    # Feature specifications
 ├── pubspec.yaml                   # Package dependencies
 ├── technical-details.md           # Technical implementation details
+├── todo_app.iml                   # IntelliJ module file
 ├── tree_structure.md              # Project structure documentation
 ├── lib/                           # Source code
 │   ├── main.dart                  # Application entry point
@@ -44,16 +45,29 @@ todo_app/
 │       │   │   ├── add_edit_task_screen.dart # Task creation/editing
 │       │   │   ├── home_screen.dart          # Main task list
 │       │   │   └── task_details_screen.dart  # Task details
+│       │   ├── utils/
+│       │   │   └── task_form_helpers.dart    # Helper functions for task forms
 │       │   └── widgets/
-│       │       └── task_card.dart  # Task list item
+│       │       ├── notification_option_picker.dart # Notification selection UI
+│       │       ├── task_card.dart             # Task list item
+│       │       ├── task_detail_sections.dart  # Task detail UI components
+│       │       └── task_form_fields.dart      # Form fields for task creation/editing
 │       ├── categories/            # Category management
 │       │   ├── models/
 │       │   │   └── category.dart  # Category data model
-│       │   └── screens/
-│       │       └── categories_screen.dart # Category management
+│       │   ├── screens/
+│       │   │   └── categories_screen.dart # Category management screen
+│       │   └── widgets/
+│       │       ├── category_dialog.dart   # Dialog for adding/editing categories
+│       │       └── category_list_item.dart # Category list item
 │       └── statistics/            # Statistics and reporting
-│           └── screens/
-│               └── statistics_screen.dart # Statistics dashboard
+│           ├── screens/
+│           │   └── statistics_screen.dart # Statistics dashboard
+│           ├── utils/
+│           │   └── statistics_helpers.dart # Helper functions for statistics
+│           └── widgets/
+│               ├── chart_cards.dart       # Chart components
+│               └── summary_card.dart      # Summary statistics card
 └── android/                      # Android platform code
     └── ...
 └── ios/                          # iOS platform code
@@ -86,13 +100,17 @@ todo_app/
   - Models: Data structures for tasks
   - Screens: UI for task listing, creation, editing, and viewing
   - Widgets: Reusable task-specific components
+  - Utils: Helper functions for task operations
 
 - **Categories**: Category management
   - Models: Data structures for categories
-  - Screens: UI for category listing, creation, and editing
+  - Screens: UI for category management
+  - Widgets: Reusable category-specific components
 
 - **Statistics**: Analytics and reporting
   - Screens: Dashboard with charts and metrics
+  - Utils: Helper functions for statistics calculations
+  - Widgets: Chart and summary components
 
 ### Common Elements
 
