@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart' as mat;
 import 'package:flutter/services.dart' as services;
+import 'package:flutter/foundation.dart' show FlutterError, FlutterErrorDetails;
 import 'package:todo_app/app.dart' as app;
 import 'package:todo_app/core/logger/logger_service.dart';
 

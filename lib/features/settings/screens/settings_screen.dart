@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:todo_app/common/constants/app_constants.dart' as app_constants;
 import 'package:todo_app/features/settings/screens/log_viewer_screen.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
