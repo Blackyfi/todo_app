@@ -17,7 +17,7 @@ class PriorityBadge extends mat.StatelessWidget {
       width: size * 6,
       height: size * 2,
       decoration: mat.BoxDecoration(
-        color: priority.color.withOpacity(0.2),
+        color: priority.color.withAlpha((0.2 * 255).toInt()),
         borderRadius: mat.BorderRadius.circular(size),
         border: mat.Border.all(
           color: priority.color,

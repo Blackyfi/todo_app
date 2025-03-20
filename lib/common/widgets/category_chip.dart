@@ -21,8 +21,8 @@ class CategoryChip extends mat.StatelessWidget {
         padding: const mat.EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: mat.BoxDecoration(
           color: isSelected
-              ? category.color.withOpacity(0.2)
-              : mat.Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+              ? category.color.withAlpha((0.2 * 255).round())
+              : mat.Theme.of(context).colorScheme.surfaceContainerHighest.withAlpha((0.3 * 255).round()),
           borderRadius: mat.BorderRadius.circular(20),
           border: mat.Border.all(
             color: isSelected ? category.color : mat.Colors.transparent,

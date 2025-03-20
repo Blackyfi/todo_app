@@ -38,7 +38,7 @@ class AppTheme {
         borderRadius: mat.BorderRadius.circular(12),
       ),
       filled: true,
-      fillColor: _lightColorScheme.surfaceContainerHighest.withOpacity(0.3),
+      fillColor: _lightColorScheme.surfaceContainerHighest.withAlpha((0.3 * 255).toInt()),
     ),
   );
 

@@ -25,14 +25,14 @@ class EmptyState extends mat.StatelessWidget {
             mat.Icon(
               icon,
               size: 80,
-              color: mat.Theme.of(context).colorScheme.primary.withOpacity(0.5),
+              color: mat.Theme.of(context).colorScheme.primary.withAlpha(128),
             ),
             const mat.SizedBox(height: 16),
             mat.Text(
               message,
               textAlign: mat.TextAlign.center,
               style: mat.Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: mat.Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                    color: mat.Theme.of(context).colorScheme.onSurface.withAlpha(179),
                   ),
             ),
             if (onActionPressed != null && actionLabel != null) ...[
