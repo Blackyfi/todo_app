@@ -57,7 +57,7 @@ class _CategoriesScreenState extends mat.State<CategoriesScreen> {
       if (mounted) {
         mat.ScaffoldMessenger.of(context).showSnackBar(
           mat.SnackBar(
-            content: mat.Text(app_constants.AppConstants.databaseErrorMessage),
+            content: const mat.Text(app_constants.AppConstants.databaseErrorMessage),
           ),
         );
       }
@@ -93,7 +93,7 @@ class _CategoriesScreenState extends mat.State<CategoriesScreen> {
         if (mounted) {
           mat.ScaffoldMessenger.of(context).showSnackBar(
             mat.SnackBar(
-              content: mat.Text(app_constants.AppConstants.databaseErrorMessage),
+              content: const mat.Text(app_constants.AppConstants.databaseErrorMessage),
             ),
           );
         }
@@ -145,7 +145,7 @@ class _CategoriesScreenState extends mat.State<CategoriesScreen> {
         if (mounted) {
           mat.ScaffoldMessenger.of(context).showSnackBar(
             mat.SnackBar(
-              content: mat.Text(app_constants.AppConstants.databaseErrorMessage),
+              content: const mat.Text(app_constants.AppConstants.databaseErrorMessage),
             ),
           );
         }
