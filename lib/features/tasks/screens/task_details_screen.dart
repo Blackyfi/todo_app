@@ -58,7 +58,7 @@ class _TaskDetailsScreenState extends mat.State<TaskDetailsScreen> {
       
       if (mounted) {
         mat.ScaffoldMessenger.of(context).showSnackBar(
-          mat.SnackBar(
+          const mat.SnackBar(
             content: mat.Text(app_constants.AppConstants.databaseErrorMessage),
           ),
         );
@@ -70,11 +70,13 @@ class _TaskDetailsScreenState extends mat.State<TaskDetailsScreen> {
     try {
       final updatedTask = widget.task.copyWith(isCompleted: !widget.task.isCompleted);
       await _taskRepository.updateTask(updatedTask);
-      mat.Navigator.of(context).pop();
+      if (mounted) {
+        mat.Navigator.of(context).pop();
+      }
     } catch (e) {
       if (mounted) {
         mat.ScaffoldMessenger.of(context).showSnackBar(
-          mat.SnackBar(
+          const mat.SnackBar(
             content: mat.Text(app_constants.AppConstants.databaseErrorMessage),
           ),
         );
@@ -114,7 +116,7 @@ class _TaskDetailsScreenState extends mat.State<TaskDetailsScreen> {
     } catch (e) {
       if (mounted) {
         mat.ScaffoldMessenger.of(context).showSnackBar(
-          mat.SnackBar(
+          const mat.SnackBar(
             content: mat.Text(app_constants.AppConstants.databaseErrorMessage),
           ),
         );
@@ -126,7 +128,11 @@ class _TaskDetailsScreenState extends mat.State<TaskDetailsScreen> {
     mat.Navigator.of(context).pushNamed(
       app_constants.AppConstants.editTaskRoute,
       arguments: widget.task,
-    ).then((_) => mat.Navigator.of(context).pop());
+    ).then((_) {
+      if (mounted) {
+        mat.Navigator.of(context).pop();
+      }
+    });
   }
   
   @override

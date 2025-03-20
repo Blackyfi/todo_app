@@ -106,7 +106,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text(app_constants.AppConstants.databaseErrorMessage),
           ),
         );
@@ -136,7 +136,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text(app_constants.AppConstants.databaseErrorMessage),
           ),
         );
@@ -226,7 +226,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text(app_constants.AppConstants.databaseErrorMessage),
           ),
         );

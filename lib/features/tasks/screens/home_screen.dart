@@ -66,7 +66,7 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
       
       if (mounted) {
         mat.ScaffoldMessenger.of(context).showSnackBar(
-          mat.SnackBar(
+          const mat.SnackBar(
             content: mat.Text(app_constants.AppConstants.databaseErrorMessage),
           ),
         );
@@ -86,7 +86,7 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
       
       if (mounted) {
         mat.ScaffoldMessenger.of(context).showSnackBar(
-          mat.SnackBar(
+          const mat.SnackBar(
             content: mat.Text(app_constants.AppConstants.databaseErrorMessage),
           ),
         );
@@ -113,7 +113,7 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
       
       if (mounted) {
         mat.ScaffoldMessenger.of(context).showSnackBar(
-          mat.SnackBar(
+          const mat.SnackBar(
             content: mat.Text(app_constants.AppConstants.databaseErrorMessage),
           ),
         );

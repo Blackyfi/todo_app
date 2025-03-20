@@ -77,10 +77,10 @@ class NotificationOptionPicker extends StatelessWidget {
           vertical: 12,
         ),
         decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+            color: theme.colorScheme.surfaceContainerHighest.withAlpha(76),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: theme.colorScheme.outline.withOpacity(0.5),
+            border: Border.all(
+            color: theme.colorScheme.outline.withAlpha(128),
           ),
         ),
         child: Row(

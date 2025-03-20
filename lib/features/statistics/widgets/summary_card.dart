@@ -71,7 +71,7 @@ class SummaryCard extends mat.StatelessWidget {
             const mat.SizedBox(height: 8),
             mat.LinearProgressIndicator(
               value: completionPercentage / 100,
-              backgroundColor: mat.Theme.of(context).colorScheme.surfaceVariant,
+              backgroundColor: mat.Theme.of(context).colorScheme.surfaceContainerHighest,
               color: mat.Theme.of(context).colorScheme.primary,
               borderRadius: mat.BorderRadius.circular(8),
               minHeight: 10,
@@ -106,7 +106,7 @@ class SummaryCard extends mat.StatelessWidget {
             label,
             style: mat.TextStyle(
               fontSize: 12,
-              color: mat.Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              color: mat.Theme.of(context).colorScheme.onSurface.withAlpha(180),
             ),
           ),
         ],

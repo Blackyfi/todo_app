@@ -84,7 +84,7 @@ class TaskCard extends mat.StatelessWidget {
                   shape: const mat.CircleBorder(),
                   activeColor: categoryColor, // Use category color or default
                 ),
-                mat.SizedBox(width: 8),
+                const mat.SizedBox(width: 8),
                 mat.Expanded(
                   child: mat.Column(
                     crossAxisAlignment: mat.CrossAxisAlignment.start,
@@ -99,7 +99,7 @@ class TaskCard extends mat.StatelessWidget {
                                     ? mat.TextDecoration.lineThrough
                                     : null,
                                 color: task.isCompleted
-                                    ? theme.colorScheme.onSurface.withOpacity(0.5)
+                                    ? theme.colorScheme.onSurface.withAlpha(128)
                                     : null,
                                 fontWeight: mat.FontWeight.bold,
                               ),
@@ -116,7 +116,7 @@ class TaskCard extends mat.StatelessWidget {
                           task.description,
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: task.isCompleted
-                                ? theme.colorScheme.onSurface.withOpacity(0.5)
+                                ? theme.colorScheme.onSurface.withAlpha(128)
                                 : null,
                             decoration: task.isCompleted
                                 ? mat.TextDecoration.lineThrough
@@ -134,7 +134,7 @@ class TaskCard extends mat.StatelessWidget {
                             mat.Container(
                               padding: const mat.EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                               decoration: mat.BoxDecoration(
-                                color: category!.color.withOpacity(0.2),
+                                color: category!.color.withAlpha(51),
                                 borderRadius: mat.BorderRadius.circular(8),
                               ),
                               child: mat.Text(
@@ -181,7 +181,7 @@ class TaskCard extends mat.StatelessWidget {
     
     // If the task is completed, use a muted color
     if (task.isCompleted) {
-      return theme.colorScheme.onSurface.withOpacity(0.5);
+      return theme.colorScheme.onSurface.withAlpha(128);
     }
     
     // If the due date is today
@@ -209,6 +209,6 @@ class TaskCard extends mat.StatelessWidget {
     }
     
     // Otherwise, use the default text color
-    return theme.colorScheme.onSurface.withOpacity(0.7);
+    return theme.colorScheme.onSurface.withAlpha(179); // Equivalent to 70% opacity
   }
 }
