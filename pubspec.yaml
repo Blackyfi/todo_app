@@ -9,6 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+
   cupertino_icons: ^1.0.8
   sqflite: ^2.3.2
   sqflite_common_ffi: ^2.3.2+1  # Added this line
@@ -24,3 +25,6 @@ dependencies:
 
 dev_dependencies:
   flutter_lints: ^2.0.0  # or the latest version
+
+flutter:
+  uses-material-design: true
