@@ -1,8 +1,11 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:todo_app/core/logger/logger_service.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
 
 class LogViewerScreen extends StatefulWidget {
   const LogViewerScreen({Key? key}) : super(key: key);
@@ -153,6 +156,85 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
     }
   }
 
+  // New method to copy log content to clipboard
+  Future<void> _copyLogToClipboard() async {
+    if (_selectedLogContent == null || _selectedLogContent!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No log content to copy')),
+      );
+      return;
+    }
+    
+    try {
+      await Clipboard.setData(ClipboardData(text: _selectedLogContent!));
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Log content copied to clipboard')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error copying to clipboard: $e')),
+        );
+      }
+    }
+  }
+
+  // New method to extract logs as JSON
+  Future<void> _extractLogsAsJson() async {
+    if (_logFiles.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No log files to extract')),
+      );
+      return;
+    }
+
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+      
+      // Create a map of log file names to their content
+      final Map<String, String> logsMap = {};
+      
+      for (final file in _logFiles) {
+        final fileName = path.basename(file.path);
+        final content = await file.readAsString();
+        logsMap[fileName] = content;
+      }
+      
+      // Convert to JSON
+      final jsonData = jsonEncode(logsMap);
+      
+      // Create a temporary file to share
+      final tempDir = await getTemporaryDirectory();
+      final jsonFile = File('${tempDir.path}/todo_app_logs.json');
+      await jsonFile.writeAsString(jsonData);
+      
+      setState(() {
+        _isLoading = false;
+      });
+      
+      // Share the JSON file
+      await Share.shareXFiles(
+        [XFile(jsonFile.path)],
+        subject: 'Todo App Logs - JSON Export',
+      );
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error extracting logs as JSON: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -161,10 +243,21 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
         actions: [
           if (_selectedLogFileName != null)
             IconButton(
+              icon: const Icon(Icons.content_copy),
+              onPressed: _copyLogToClipboard,
+              tooltip: 'Copy log content',
+            ),
+          if (_selectedLogFileName != null)
+            IconButton(
               icon: const Icon(Icons.share),
               onPressed: _shareSelectedLog,
               tooltip: 'Share log file',
             ),
+          IconButton(
+            icon: const Icon(Icons.code),
+            onPressed: _extractLogsAsJson,
+            tooltip: 'Extract logs as JSON',
+          ),
           IconButton(
             icon: const Icon(Icons.delete_forever),
             onPressed: _logFiles.isNotEmpty ? _clearLogs : null,
@@ -231,6 +324,36 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
                     ),
                   ],
                 ),
+      bottomNavigationBar: _logFiles.isEmpty 
+          ? null
+          : SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: _copyLogToClipboard,
+                      icon: const Icon(Icons.content_copy),
+                      label: const Text('Copy Logs'),
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: _extractLogsAsJson,
+                      icon: const Icon(Icons.code),
+                      label: const Text('Export as JSON'),
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: _clearLogs,
+                      icon: const Icon(Icons.delete_outline),
+                      label: const Text('Clear Logs'),
+                      style: ElevatedButton.styleFrom(
+                        foregroundColor: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
     );
   }
 }
