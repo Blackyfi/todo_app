@@ -38,7 +38,7 @@ class AppTheme {
         borderRadius: mat.BorderRadius.circular(12),
       ),
       filled: true,
-      fillColor: _lightColorScheme.surfaceVariant.withOpacity(0.3),
+      fillColor: _lightColorScheme.surfaceContainerHighest.withOpacity(0.3),
     ),
   );
 
@@ -69,7 +69,7 @@ class AppTheme {
         borderRadius: mat.BorderRadius.circular(12),
       ),
       filled: true,
-      fillColor: _darkColorScheme.surfaceVariant.withOpacity(0.3),
+      fillColor: _darkColorScheme.surfaceContainerHighest.withAlpha((0.3 * 255).toInt()),
     ),
   );
 }
