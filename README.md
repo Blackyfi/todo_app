@@ -61,6 +61,15 @@ The app follows a feature-based architecture with clear separation of concerns:
 This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Commands
+flutter clean
+
+flutter pub get
+
+flutter doctor
+
+flutter analyse
+
+flutter upgrade
 
 flutter build apk --release
 
