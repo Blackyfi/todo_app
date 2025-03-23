@@ -39,6 +39,10 @@ void main() async {
       ),
     );
     
+    // Process auto-delete for completed tasks
+    final autoDeleteService = AutoDeleteService();
+    await autoDeleteService.processCompletedTasks();
+    
     mat.runApp(const app.TodoApp());
   }, (error, stackTrace) {
     _reportError(error, stackTrace);

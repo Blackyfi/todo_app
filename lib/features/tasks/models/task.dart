@@ -8,6 +8,7 @@ class Task {
   final bool isCompleted;
   final int? categoryId; // Changed to nullable
   final Priority priority;
+  final DateTime? completedAt; // New field
 
   Task({
     this.id,
@@ -17,6 +18,7 @@ class Task {
     this.isCompleted = false,
     this.categoryId, // Made optional
     this.priority = Priority.medium,
+    this.completedAt, // New field
   });
 
   Task copyWith({
@@ -27,6 +29,7 @@ class Task {
     bool? isCompleted,
     int? categoryId,
     Priority? priority,
+    DateTime? completedAt, // Add this parameter
   }) {
     return Task(
       id: id ?? this.id,
@@ -36,6 +39,7 @@ class Task {
       isCompleted: isCompleted ?? this.isCompleted,
       categoryId: categoryId, // Will be set to null if explicitly passed as null
       priority: priority ?? this.priority,
+      completedAt: completedAt ?? this.completedAt, // Set the completedAt
     );
   }
 
@@ -48,6 +52,7 @@ class Task {
       'isCompleted': isCompleted ? 1 : 0,
       'categoryId': categoryId,
       'priority': priority.index,
+      'completedAt': completedAt?.millisecondsSinceEpoch, // Add this field
     };
   }
 
@@ -62,6 +67,9 @@ class Task {
       isCompleted: map['isCompleted'] == 1,
       categoryId: map['categoryId'],
       priority: Priority.values[map['priority'] ?? 1],
+      completedAt: map['completedAt'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(map['completedAt'])
+          : null, // Set completedAt from the database
     );
   }
 }

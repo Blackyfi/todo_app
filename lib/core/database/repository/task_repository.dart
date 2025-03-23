@@ -247,4 +247,50 @@ class TaskRepository {
       rethrow;
     }
   }
+
+  Future<int> deleteCompletedTasksOlderThan(Duration duration) async {
+    try {
+      final db = await _databaseHelper.database;
+      final cutoffTime = DateTime.now().subtract(duration).millisecondsSinceEpoch;
+      
+      final result = await db.delete(
+        'tasks',
+        where: 'isCompleted = 1 AND completedAt <= ?',
+        whereArgs: [cutoffTime],
+      );
+      
+      await _logger.logInfo('Deleted $result completed tasks older than $duration');
+      return result;
+    } catch (e, stackTrace) {
+      await _logger.logError('Error deleting completed tasks', e, stackTrace);
+      rethrow;
+    }
+  }
+
+  Future<int> toggleTaskCompletion(int taskId, bool completed) async {
+    try {
+      final task = await getTask(taskId);
+      
+      if (task == null) {
+        await _logger.logWarning('Cannot toggle completion: Task not found: ID=$taskId');
+        return 0;
+      }
+      
+      final completedAt = completed ? DateTime.now() : null;
+      
+      final updatedTask = task.copyWith(
+        isCompleted: completed,
+        completedAt: completedAt,
+      );
+      
+      final result = await updateTask(updatedTask);
+      
+      await _logger.logInfo('Task completion toggled: ID=$taskId, Completed=$completed, CompletedAt=${completedAt?.toIso8601String()}');
+      
+      return result;
+    } catch (e, stackTrace) {
+      await _logger.logError('Error toggling task completion', e, stackTrace);
+      rethrow;
+    }
+  }
 }

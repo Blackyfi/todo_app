@@ -66,6 +66,7 @@ class DatabaseHelper {
           description TEXT,
           dueDate INTEGER,
           isCompleted INTEGER NOT NULL DEFAULT 0,
+          completedAt INTEGER,  // Add this field
           categoryId INTEGER,
           priority INTEGER NOT NULL DEFAULT 1,
           FOREIGN KEY (categoryId) REFERENCES categories (id) ON DELETE CASCADE
@@ -83,12 +84,27 @@ class DatabaseHelper {
         )
       ''');
 
+      // Create autoDeleteSettings table
+      await db.execute('''
+        CREATE TABLE autoDeleteSettings(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          deleteImmediately INTEGER NOT NULL DEFAULT 0,
+          deleteAfterDays INTEGER NOT NULL DEFAULT 1
+        )
+      ''');
+
       // Insert default categories
       await db.insert('categories', {'name': 'Work', 'color': 0xFF2196F3});
       await db.insert('categories', {'name': 'Personal', 'color': 0xFF4CAF50});
       await db.insert('categories', {'name': 'Shopping', 'color': 0xFFFF9800});
       await db.insert('categories', {'name': 'Health', 'color': 0xFFF44336});
       await db.insert('categories', {'name': 'Education', 'color': 0xFF9C27B0});
+
+      // Insert default settings
+      await db.insert('autoDeleteSettings', {
+        'deleteImmediately': 0,
+        'deleteAfterDays': 1
+      });
       
       await _logger.logInfo('Database tables created successfully');
     } catch (e, stackTrace) {

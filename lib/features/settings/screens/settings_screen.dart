@@ -4,6 +4,9 @@ import 'package:todo_app/common/widgets/app_bar_with_time.dart';
 import 'package:todo_app/core/providers/time_format_provider.dart';
 import 'package:todo_app/features/settings/screens/log_viewer_screen.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:todo_app/core/settings/models/auto_delete_settings.dart';
+import 'package:todo_app/core/settings/repository/auto_delete_settings_repository.dart';
+import 'package:flutter/services.dart'; // This includes FilteringTextInputFormatter
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -16,6 +19,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   ThemeMode _themeMode = ThemeMode.system;
   String _appVersion = '';
   bool _isLoading = true;
+  AutoDeleteSettings _autoDeleteSettings = AutoDeleteSettings();
+  bool _isLoadingAutoDeleteSettings = true;
+  final _autoDeleteSettingsRepository = AutoDeleteSettingsRepository();
+  final _autoDeleteDaysController = TextEditingController();
 
   @override
   void initState() {
@@ -26,21 +33,77 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _loadSettings() async {
     setState(() {
       _isLoading = true;
+      _isLoadingAutoDeleteSettings = true;
     });
 
     try {
       // Load app version
       final packageInfo = await PackageInfo.fromPlatform();
-      
+      final autoDeleteSettings = await _autoDeleteSettingsRepository.getSettings();
+      _autoDeleteDaysController.text = autoDeleteSettings.deleteAfterDays.toString();
+
       setState(() {
         _appVersion = '${packageInfo.version} (${packageInfo.buildNumber})';
+        _autoDeleteSettings = autoDeleteSettings;
         _isLoading = false;
+        _isLoadingAutoDeleteSettings = false;
       });
     } catch (e) {
       setState(() {
         _isLoading = false;
+        _isLoadingAutoDeleteSettings = false;
       });
     }
+  }
+
+  Future<void> _saveAutoDeleteSettings() async {
+    setState(() {
+      _isLoadingAutoDeleteSettings = true;
+    });
+
+    try {
+      int days = 1;
+      try {
+        days = int.parse(_autoDeleteDaysController.text);
+        if (days < 1) days = 1;
+      } catch (e) {
+        days = 1;
+        _autoDeleteDaysController.text = '1';
+      }
+
+      final updatedSettings = _autoDeleteSettings.copyWith(
+        deleteAfterDays: days,
+      );
+
+      await _autoDeleteSettingsRepository.updateSettings(updatedSettings);
+
+      setState(() {
+        _autoDeleteSettings = updatedSettings;
+        _isLoadingAutoDeleteSettings = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Auto-delete settings saved')),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isLoadingAutoDeleteSettings = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error saving auto-delete settings')),
+        );
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _autoDeleteDaysController.dispose();
+    super.dispose();
   }
 
   void _setThemeMode(ThemeMode themeMode) {
@@ -112,6 +175,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ],
                 ),
+                _buildSection(
+                  title: 'Auto-Delete Tasks',
+                  children: [
+                    _buildAutoDeleteSection(),
+                  ],
+                ),
               ],
             ),
     );
@@ -181,5 +250,66 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ],
     );
+  }
+
+  Widget _buildAutoDeleteSection() {
+    return _isLoadingAutoDeleteSettings
+        ? const Center(child: CircularProgressIndicator())
+        : Column(
+            children: [
+              SwitchListTile(
+                title: const Text('Delete completed tasks immediately'),
+                subtitle: const Text('When enabled, tasks will be deleted as soon as they are marked as completed'),
+                value: _autoDeleteSettings.deleteImmediately,
+                onChanged: (value) async {
+                  setState(() {
+                    _autoDeleteSettings = _autoDeleteSettings.copyWith(
+                      deleteImmediately: value,
+                    );
+                  });
+                  await _autoDeleteSettingsRepository.updateSettings(_autoDeleteSettings);
+                },
+              ),
+              if (!_autoDeleteSettings.deleteImmediately)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Delete completed tasks after:',
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      SizedBox(
+                        width: 70,
+                        child: TextFormField(
+                          controller: _autoDeleteDaysController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            isDense: true,
+                            contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                          ),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'days',
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                      const SizedBox(width: 8),
+                      TextButton(
+                        onPressed: _saveAutoDeleteSettings,
+                        child: const Text('Save'),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          );
   }
 }

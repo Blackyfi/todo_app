@@ -7,6 +7,7 @@ import 'package:todo_app/features/tasks/widgets/task_card.dart' as task_card;
 import 'package:todo_app/core/database/repository/task_repository.dart' as task_repository;
 import 'package:todo_app/core/database/repository/category_repository.dart' as category_repository;
 import 'package:todo_app/core/logger/logger_service.dart';
+import 'package:todo_app/core/settings/repository/auto_delete_settings_repository.dart';
 
 class HomeScreen extends mat.StatefulWidget {
   const HomeScreen({mat.Key? key}) : super(key: key);
@@ -19,6 +20,7 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
   final _taskRepository = task_repository.TaskRepository();
   final _categoryRepository = category_repository.CategoryRepository();
   final _logger = LoggerService();
+  final _autoDeleteSettingsRepository = AutoDeleteSettingsRepository();
   
   List<task_model.Task> _tasks = [];
   List<category_model.Category> _categories = [];
@@ -76,11 +78,35 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
   
   Future<void> _toggleTaskCompletion(task_model.Task task) async {
     try {
-      final updatedTask = task.copyWith(isCompleted: !task.isCompleted);
-      await _taskRepository.updateTask(updatedTask);
-      await _loadData();
-      
-      await _logger.logInfo('Task completion toggled: ID=${task.id}, Title=${task.title}, Completed=${!task.isCompleted}');
+      // Instead of creating an updated task here, we'll use the repository method
+      if (task.id != null) {
+        await _taskRepository.toggleTaskCompletion(task.id!, !task.isCompleted);
+        await _loadData();
+        
+        // If task was marked as completed, show a snackbar indicating it will be auto-deleted
+        if (!task.isCompleted) {
+          final autoDeleteSettings = await _autoDeleteSettingsRepository.getSettings();
+          if (autoDeleteSettings.deleteImmediately) {
+            if (mounted) {
+              mat.ScaffoldMessenger.of(context).showSnackBar(
+                const mat.SnackBar(
+                  content: mat.Text('Task marked complete and will be deleted immediately'),
+                ),
+              );
+            }
+          } else {
+            if (mounted) {
+              mat.ScaffoldMessenger.of(context).showSnackBar(
+                mat.SnackBar(
+                  content: mat.Text(
+                    'Task marked complete and will be deleted after ${autoDeleteSettings.deleteAfterDays} day(s)'
+                  ),
+                ),
+              );
+            }
+          }
+        }
+      }
     } catch (e, stackTrace) {
       await _logger.logError('Error toggling task completion', e, stackTrace);
       
