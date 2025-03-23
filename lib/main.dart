@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart' show FlutterError, FlutterErrorDetails,
 import 'package:todo_app/app.dart' as app;
 import 'package:todo_app/core/logger/logger_service.dart';
 import 'package:todo_app/core/database/database_config.dart';
+import 'package:todo_app/core/settings/services/auto_delete_service.dart';
 
 void main() async {
   // Capture Flutter errors
