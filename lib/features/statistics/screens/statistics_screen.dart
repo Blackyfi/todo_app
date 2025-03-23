@@ -9,7 +9,7 @@ import 'package:todo_app/features/statistics/widgets/chart_cards.dart' as chart_
 import 'package:todo_app/features/statistics/utils/statistics_helpers.dart' as statistics_helpers;
 
 class StatisticsScreen extends mat.StatefulWidget {
-  const StatisticsScreen({mat.Key? key}) : super(key: key);
+  const StatisticsScreen({super.key});
 
   @override
   mat.State<StatisticsScreen> createState() => _StatisticsScreenState();

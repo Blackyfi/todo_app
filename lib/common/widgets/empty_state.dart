@@ -7,12 +7,12 @@ class EmptyState extends mat.StatelessWidget {
   final String? actionLabel;
 
   const EmptyState({
-    mat.Key? key,
+    super.key,
     required this.message,
     this.icon = mat.Icons.info_outline,
     this.onActionPressed,
     this.actionLabel,
-  }) : super(key: key);
+  });
 
   @override
   mat.Widget build(mat.BuildContext context) {

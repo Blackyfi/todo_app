@@ -9,12 +9,12 @@ class CategoryListItem extends mat.StatelessWidget {
   final VoidCallback onDelete;
 
   const CategoryListItem({
-    mat.Key? key,
+    super.key,
     required this.category,
     required this.taskCount,
     required this.onEdit,
     required this.onDelete,
-  }) : super(key: key);
+  });
 
   Future<bool> _confirmDeletion(mat.BuildContext context) async {
     return await mat.showDialog<bool>(

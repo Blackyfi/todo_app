@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:todo_app/core/providers/time_format_provider.dart';
 
 class CurrentTimeDisplay extends StatefulWidget {
-  const CurrentTimeDisplay({Key? key}) : super(key: key);
+  const CurrentTimeDisplay({super.key});
 
   @override
   State<CurrentTimeDisplay> createState() => _CurrentTimeDisplayState();

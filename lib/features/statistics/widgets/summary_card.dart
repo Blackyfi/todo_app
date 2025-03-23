@@ -6,9 +6,9 @@ class SummaryCard extends mat.StatelessWidget {
   final List<task_model.Task> tasks;
   
   const SummaryCard({
-    mat.Key? key,
+    super.key,
     required this.tasks,
-  }) : super(key: key);
+  });
   
   @override
   mat.Widget build(mat.BuildContext context) {

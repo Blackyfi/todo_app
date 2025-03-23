@@ -6,10 +6,10 @@ class PriorityBadge extends mat.StatelessWidget {
   final double size;
 
   const PriorityBadge({
-    mat.Key? key,
+    super.key,
     required this.priority,
     this.size = 12.0,
-  }) : super(key: key);
+  });
 
   @override
   mat.Widget build(mat.BuildContext context) {

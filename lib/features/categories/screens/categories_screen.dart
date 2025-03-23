@@ -8,7 +8,7 @@ import 'package:todo_app/features/categories/widgets/category_dialog.dart';
 import 'package:todo_app/features/categories/widgets/category_list_item.dart';
 
 class CategoriesScreen extends mat.StatefulWidget {
-  const CategoriesScreen({mat.Key? key}) : super(key: key);
+  const CategoriesScreen({super.key});
 
   @override
   mat.State<CategoriesScreen> createState() => _CategoriesScreenState();

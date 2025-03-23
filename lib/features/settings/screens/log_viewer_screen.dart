@@ -8,7 +8,7 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
 class LogViewerScreen extends StatefulWidget {
-  const LogViewerScreen({Key? key}) : super(key: key);
+  const LogViewerScreen({super.key});
 
   @override
   State<LogViewerScreen> createState() => _LogViewerScreenState();

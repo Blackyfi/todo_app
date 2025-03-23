@@ -8,9 +8,9 @@ class CompletionChart extends mat.StatelessWidget {
   final Map<String, int> stats;
 
   const CompletionChart({
-    mat.Key? key,
+    super.key,
     required this.stats,
-  }) : super(key: key);
+  });
 
   @override
   mat.Widget build(mat.BuildContext context) {
@@ -74,9 +74,9 @@ class PriorityChart extends mat.StatelessWidget {
   final Map<String, int> stats;
 
   const PriorityChart({
-    mat.Key? key,
+    super.key,
     required this.stats,
-  }) : super(key: key);
+  });
 
   @override
   mat.Widget build(mat.BuildContext context) {
@@ -241,10 +241,10 @@ class CategoryChart extends mat.StatelessWidget {
   final List<category_model.Category> categories;
 
   const CategoryChart({
-    mat.Key? key,
+    super.key,
     required this.stats,
     required this.categories,
-  }) : super(key: key);
+  });
 
   @override
   mat.Widget build(mat.BuildContext context) {
@@ -326,10 +326,10 @@ class WeeklyTasksCard extends mat.StatelessWidget {
   final List<category_model.Category> categories;
 
   const WeeklyTasksCard({
-    mat.Key? key,
+    super.key,
     required this.tasks,
     required this.categories,
-  }) : super(key: key);
+  });
 
   @override
   mat.Widget build(mat.BuildContext context) {
@@ -421,7 +421,7 @@ class WeeklyTasksCard extends mat.StatelessWidget {
                     ),
                   ),
                 );
-              }).toList(),
+              }),
             ],
           ],
         ),
@@ -434,9 +434,9 @@ class WeeklyCompletionChart extends mat.StatelessWidget {
   final Map<String, int> stats;
 
   const WeeklyCompletionChart({
-    mat.Key? key,
+    super.key,
     required this.stats,
-  }) : super(key: key);
+  });
 
   @override
   mat.Widget build(mat.BuildContext context) {
