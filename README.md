@@ -67,9 +67,13 @@ flutter pub get
 
 flutter doctor
 
-flutter analyse
+flutter analyze
 
 flutter upgrade
+
+flutter devices
+
+flutter clean
 
 flutter build apk --release
 
