@@ -15,11 +15,14 @@ class AppBarWithTime extends StatelessWidget implements PreferredSizeWidget {
   
   @override
   Widget build(BuildContext context) {
-    final finalActions = [
+    final List<Widget> finalActions = <Widget>[
       const CurrentTimeDisplay(),
       const SizedBox(width: 8),
-      ...(actions ?? []),
     ];
+    
+    if (actions != null) {
+      finalActions.addAll(actions!);
+    }
     
     return AppBar(
       title: Text(title),
@@ -29,5 +32,7 @@ class AppBarWithTime extends StatelessWidget implements PreferredSizeWidget {
   }
   
   @override
-  Size get preferredSize => Size.fromHeight(bottom != null ? 100.0 : kToolbarHeight);
+  Size get preferredSize => Size.fromHeight(
+    bottom != null ? kToolbarHeight + bottom!.preferredSize.height : kToolbarHeight
+  );
 }
