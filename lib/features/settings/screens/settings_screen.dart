@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:todo_app/common/widgets/app_bar_with_time.dart';
+import 'package:todo_app/core/providers/time_format_provider.dart';
 import 'package:todo_app/features/settings/screens/log_viewer_screen.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -50,9 +53,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final timeFormatProvider = Provider.of<TimeFormatProvider>(context);
+    
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Settings'),
+      appBar: const AppBarWithTime(
+        title: 'Settings',
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -62,6 +67,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   title: 'Appearance',
                   children: [
                     _buildThemeSelector(),
+                  ],
+                ),
+                _buildSection(
+                  title: 'Preferences',
+                  children: [
+                    _buildTimeFormatSelector(timeFormatProvider),
                   ],
                 ),
                 _buildSection(
@@ -146,6 +157,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
           value: ThemeMode.dark,
           groupValue: _themeMode,
           onChanged: (value) => _setThemeMode(value!),
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildTimeFormatSelector(TimeFormatProvider provider) {
+    return Column(
+      children: [
+        RadioListTile<TimeFormat>(
+          title: const Text('European Time (24-hour)'),
+          subtitle: const Text('Example: 14:30'),
+          value: TimeFormat.european,
+          groupValue: provider.timeFormat,
+          onChanged: (value) => provider.setTimeFormat(value!),
+        ),
+        RadioListTile<TimeFormat>(
+          title: const Text('American Time (12-hour)'),
+          subtitle: const Text('Example: 2:30 PM'),
+          value: TimeFormat.american,
+          groupValue: provider.timeFormat,
+          onChanged: (value) => provider.setTimeFormat(value!),
         ),
       ],
     );
