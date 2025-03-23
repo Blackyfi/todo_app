@@ -107,9 +107,7 @@ class PriorityChart extends mat.StatelessWidget {
                         ).toDouble() + 2,
                         barTouchData: fl_chart.BarTouchData(
                           enabled: true,
-                          touchTooltipData: fl_chart.BarTouchTooltipData(
-                            tooltipBgColor: mat.Colors.blueGrey.withAlpha((0.8 * 255).toInt()),
-                          ),
+                          // Remove tooltipBgColor parameter, it's not available in this version
                         ),
                         titlesData: fl_chart.FlTitlesData(
                           show: true,
@@ -461,9 +459,7 @@ class WeeklyCompletionChart extends mat.StatelessWidget {
                   maxY: stats.values.fold(0, (max, value) => value > max ? value : max).toDouble() + 1,
                   barTouchData: fl_chart.BarTouchData(
                     enabled: true,
-                    touchTooltipData: fl_chart.BarTouchTooltipData(
-                      tooltipBgColor: mat.Colors.blueGrey.withAlpha((0.8 * 255).toInt()),
-                    ),
+                    // Remove tooltipBgColor parameter, it's not available in this version
                   ),
                   titlesData: fl_chart.FlTitlesData(
                     show: true,
