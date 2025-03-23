@@ -221,4 +221,30 @@ class TaskRepository {
       rethrow;
     }
   }
+
+  Future<List<task_model.Task>> getTodayTasks() async {
+    try {
+      final db = await _databaseHelper.database;
+      
+      final now = DateTime.now();
+      final startOfDay = DateTime(now.year, now.month, now.day).millisecondsSinceEpoch;
+      final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59, 999).millisecondsSinceEpoch;
+      
+      final maps = await db.query(
+        'tasks',
+        where: 'dueDate >= ? AND dueDate <= ?',
+        whereArgs: [startOfDay, endOfDay],
+      );
+
+      final tasks = List.generate(maps.length, (i) {
+        return task_model.Task.fromMap(maps[i]);
+      });
+      
+      await _logger.logInfo('Retrieved tasks due today: Count=${tasks.length}');
+      return tasks;
+    } catch (e, stackTrace) {
+      await _logger.logError('Error getting tasks due today', e, stackTrace);
+      rethrow;
+    }
+  }
 }

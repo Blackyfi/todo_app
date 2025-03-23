@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart' as mat;
 import 'package:flutter/services.dart' as services;
-import 'package:flutter/foundation.dart' show FlutterError, FlutterErrorDetails;
+import 'package:flutter/foundation.dart' show FlutterError, FlutterErrorDetails, debugPrint;
 import 'package:todo_app/app.dart' as app;
 import 'package:todo_app/core/logger/logger_service.dart';
 import 'package:todo_app/core/database/database_config.dart';
@@ -46,6 +46,23 @@ void main() async {
 }
 
 void _reportError(dynamic error, StackTrace? stackTrace) async {
+  // Create a new logger each time to ensure it's initialized
   final logger = LoggerService();
-  await logger.logError('Uncaught exception', error, stackTrace);
+  try {
+    await logger.init();
+    await logger.logError('Uncaught exception', error, stackTrace);
+    
+    // Print to console as well for immediate debugging
+    debugPrint('ERROR: $error');
+    if (stackTrace != null) {
+      debugPrint('STACK TRACE: $stackTrace');
+    }
+  } catch (logError) {
+    // If logging fails, at least print to console
+    debugPrint('Failed to log error: $logError');
+    debugPrint('Original error: $error');
+    if (stackTrace != null) {
+      debugPrint('Original stack trace: $stackTrace');
+    }
+  }
 }
