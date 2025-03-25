@@ -4,6 +4,7 @@
 todo_app/
 ├── .gitignore                     # Git ignore file
 ├── .metadata                      # Flutter metadata
+├── ERROR_LOGGING.md               # Error logging system documentation
 ├── LICENSE                        # MIT License
 ├── README.md                      # Project overview
 ├── analysis_options.yaml          # Dart analysis options
@@ -23,20 +24,34 @@ todo_app/
 │   │   ├── theme/
 │   │   │   └── app_theme.dart     # Theme configuration
 │   │   └── widgets/               # Reusable widgets
+│   │       ├── app_bar_with_time.dart # Custom app bar with time display
 │   │       ├── category_chip.dart # Category display widget
+│   │       ├── current_time_display.dart # Current time widget
 │   │       ├── empty_state.dart   # Empty state widget
 │   │       └── priority_badge.dart# Priority indicator widget
 │   ├── core/                      # Core functionality
 │   │   ├── database/              # Database implementation
-│   │   │   ├── database_helper.dart# Database initialization
+│   │   │   ├── database_config.dart # Database platform configuration
+│   │   │   ├── database_helper.dart # Database initialization
 │   │   │   └── repository/        # Data access repositories
 │   │   │       ├── category_repository.dart
 │   │   │       ├── notification_repository.dart
 │   │   │       └── task_repository.dart
-│   │   └── notifications/         # Notification system
+│   │   ├── logger/
+│   │   │   └── logger_service.dart # Error logging service
+│   │   ├── notifications/         # Notification system
+│   │   │   ├── models/
+│   │   │   │   └── notification_settings.dart
+│   │   │   └── notification_service.dart
+│   │   ├── providers/
+│   │   │   └── time_format_provider.dart # Time format state management
+│   │   └── settings/              # Application settings
 │   │       ├── models/
-│   │       │   └── notification_settings.dart
-│   │       └── notification_service.dart
+│   │       │   └── auto_delete_settings.dart
+│   │       ├── repository/
+│   │       │   └── auto_delete_settings_repository.dart
+│   │       └── services/
+│   │           └── auto_delete_service.dart
 │   └── features/                  # App features
 │       ├── tasks/                 # Task management
 │       │   ├── models/
@@ -60,6 +75,10 @@ todo_app/
 │       │   └── widgets/
 │       │       ├── category_dialog.dart   # Dialog for adding/editing categories
 │       │       └── category_list_item.dart # Category list item
+│       ├── settings/              # Settings management
+│       │   └── screens/
+│       │       ├── log_viewer_screen.dart # Log viewing interface
+│       │       └── settings_screen.dart   # App settings screen
 │       └── statistics/            # Statistics and reporting
 │           ├── screens/
 │           │   └── statistics_screen.dart # Statistics dashboard
@@ -68,18 +87,8 @@ todo_app/
 │           └── widgets/
 │               ├── chart_cards.dart       # Chart components
 │               └── summary_card.dart      # Summary statistics card
-└── android/                      # Android platform code
-    └── ...
-└── ios/                          # iOS platform code
-    └── ...
-└── web/                          # Web platform code
-    └── ...
-└── linux/                        # Linux platform code
-    └── ...
-└── macos/                        # macOS platform code
-    └── ...
-└── windows/                      # Windows platform code
-    └── ...
+└── packages/                     # Local package dependencies
+    └── flutter_local_notifications-16.3.3/ # Local notifications package
 ```
 
 ## Key Components
@@ -88,11 +97,20 @@ todo_app/
 
 - **Database Layer**: SQLite implementation with repository pattern
   - `DatabaseHelper`: Central database configuration
+  - `DatabaseConfig`: Platform-specific database setup
   - Repositories: Entity-specific data access (Task, Category, Notification)
 
 - **Notification System**: Local notification implementation
   - `NotificationService`: Handles scheduling and management
   - `NotificationSetting`: Model for notification preferences
+
+- **Logger System**: Comprehensive error logging functionality
+  - `LoggerService`: Centralized logging with multiple severity levels
+  - Log file management and viewer interface
+
+- **Settings Management**: Application settings and preferences
+  - `TimeFormatProvider`: Time format preference management
+  - `AutoDeleteService`: Management of completed task cleanup
 
 ### Feature Modules
 
@@ -112,12 +130,32 @@ todo_app/
   - Utils: Helper functions for statistics calculations
   - Widgets: Chart and summary components
 
+- **Settings**: Application settings management
+  - Settings configuration interface
+  - Log viewer and management
+  - Time format and theme preferences
+
 ### Common Elements
 
-- **Constants**: Application-wide constants
-- **Theme**: Styling and appearance configuration
-- **Widgets**: Shared UI components
+- **Constants**: Application-wide constants and configuration values
+- **Theme**: Styling and appearance configuration with Material 3 support
+- **Widgets**: Shared UI components used across multiple features
 
 ### Navigation
 
-- **Routes**: Centralized navigation configuration
+- **Routes**: Centralized navigation configuration with named routes
+
+## Architecture Overview
+
+The Todo App follows a feature-based architecture with a clear separation of concerns:
+
+1. **Presentation Layer**: Screens and widgets (`features/*/screens`, `features/*/widgets`)
+2. **Business Logic Layer**: Models and utilities (`features/*/models`, `features/*/utils`)
+3. **Data Access Layer**: Repositories and services (`core/database/repository`, `core/services`)
+4. **Core Infrastructure**: Shared functionality and configuration (`core/*`, `common/*`)
+
+This organization allows for:
+- Easy navigation of the codebase
+- Clear component responsibilities
+- Scalable feature development
+- Maintainable and testable code structure
