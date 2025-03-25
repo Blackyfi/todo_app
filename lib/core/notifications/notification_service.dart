@@ -112,8 +112,8 @@ class NotificationService {
                 flutter_notifications.AndroidFlutterLocalNotificationsPlugin>();
                 
         if (androidPlugin != null) {
-          final granted = await androidPlugin.requestPermission();
-          await _logger.logInfo('Android notification permission request result: $granted');
+          final granted = await androidPlugin.areNotificationsEnabled();
+          await _logger.logInfo('Android notification enabled status: $granted');
         }
       }
       
