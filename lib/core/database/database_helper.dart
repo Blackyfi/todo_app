@@ -66,7 +66,7 @@ class DatabaseHelper {
           description TEXT,
           dueDate INTEGER,
           isCompleted INTEGER NOT NULL DEFAULT 0,
-          completedAt INTEGER,  // Add this field
+          completedAt INTEGER,
           categoryId INTEGER,
           priority INTEGER NOT NULL DEFAULT 1,
           FOREIGN KEY (categoryId) REFERENCES categories (id) ON DELETE CASCADE
