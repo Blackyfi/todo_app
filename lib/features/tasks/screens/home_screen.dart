@@ -10,7 +10,7 @@ import 'package:todo_app/core/logger/logger_service.dart';
 import 'package:todo_app/core/settings/repository/auto_delete_settings_repository.dart';
 
 class HomeScreen extends mat.StatefulWidget {
-  const HomeScreen({mat.Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   mat.State<HomeScreen> createState() => _HomeScreenState();

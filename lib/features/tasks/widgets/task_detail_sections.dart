@@ -11,11 +11,11 @@ class TaskDetailContent extends mat.StatelessWidget {
   final List<notification_model.NotificationSetting> notificationSettings;
 
   const TaskDetailContent({
-    mat.Key? key,
+    super.key,
     required this.task,
     this.category,
     required this.notificationSettings,
-  }) : super(key: key);
+  });
 
   @override
   mat.Widget build(mat.BuildContext context) {

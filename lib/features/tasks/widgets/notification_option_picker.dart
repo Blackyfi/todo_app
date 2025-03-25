@@ -10,12 +10,12 @@ class NotificationOptionPicker extends StatelessWidget {
   final Function(DateTime?) onCustomTimeChanged;
 
   const NotificationOptionPicker({
-    Key? key,
+    super.key,
     required this.selectedOptions,
     this.customTime,
     required this.onOptionToggled,
     required this.onCustomTimeChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

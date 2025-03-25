@@ -18,7 +18,7 @@ class TaskFormFields extends StatelessWidget {
   final Function(task_model.Priority) onPriorityChanged;
 
   const TaskFormFields({
-    Key? key,
+    super.key,
     required this.titleController,
     required this.descriptionController,
     this.dueDate,
@@ -30,7 +30,7 @@ class TaskFormFields extends StatelessWidget {
     required this.onCategorySelected,
     required this.priority,
     required this.onPriorityChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

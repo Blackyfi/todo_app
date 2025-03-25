@@ -12,9 +12,9 @@ class TaskDetailsScreen extends mat.StatefulWidget {
   final task_model.Task task;
 
   const TaskDetailsScreen({
-    mat.Key? key,
+    super.key,
     required this.task,
-  }) : super(key: key);
+  });
 
   @override
   mat.State<TaskDetailsScreen> createState() => _TaskDetailsScreenState();

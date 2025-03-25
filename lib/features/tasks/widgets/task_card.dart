@@ -13,13 +13,13 @@ class TaskCard extends mat.StatelessWidget {
   final VoidCallback? onDelete;
 
   const TaskCard({
-    mat.Key? key,
+    super.key,
     required this.task,
     this.category, // Now optional
     required this.onTap,
     required this.onCompletedChanged,
     this.onDelete,
-  }) : super(key: key);
+  });
 
   @override
   mat.Widget build(mat.BuildContext context) {

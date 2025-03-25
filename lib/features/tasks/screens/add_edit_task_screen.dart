@@ -16,9 +16,9 @@ class AddEditTaskScreen extends StatefulWidget {
   final task_model.Task? task;
 
   const AddEditTaskScreen({
-    Key? key,
+    super.key,
     this.task,
-  }) : super(key: key);
+  });
 
   @override
   State<AddEditTaskScreen> createState() => _AddEditTaskScreenState();
