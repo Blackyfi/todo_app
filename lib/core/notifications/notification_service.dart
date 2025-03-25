@@ -1,11 +1,11 @@
-import 'dart:io' show Platform;
-import 'package:desktop_notifications/desktop_notifications.dart' as desktop;
+import 'dart:io';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart' as flutter_notifications;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:todo_app/features/tasks/models/task.dart' as task_model;
 import 'package:todo_app/core/notifications/models/notification_settings.dart' as notification_model;
 import 'package:todo_app/core/logger/logger_service.dart';
+import 'package:intl/intl.dart' as intl;
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -17,55 +17,73 @@ class NotificationService {
   final LoggerService _logger = LoggerService();
   final flutter_notifications.FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       flutter_notifications.FlutterLocalNotificationsPlugin();
-  
-  // Add for desktop
-  desktop.NotificationsClient? _desktopClient;
 
   Future<void> init() async {
     try {
       await _logger.logInfo('Initializing NotificationService');
       
-      // Initialize timezone data (still needed for all platforms)
+      // Initialize timezone data
       tz_data.initializeTimeZones();
 
-      if (Platform.isAndroid || Platform.isIOS) {
-        // Mobile platforms - use flutter_local_notifications
-        const android = flutter_notifications.AndroidInitializationSettings('@mipmap/ic_launcher');
-        const iOS = flutter_notifications.DarwinInitializationSettings();
-        const initSettings = flutter_notifications.InitializationSettings(android: android, iOS: iOS);
-        
-        final initResult = await flutterLocalNotificationsPlugin.initialize(initSettings);
-        if (initResult != null && initResult) {
-          await _logger.logInfo('Mobile NotificationService initialized successfully');
-        }
-      } 
-      else if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
-        // Desktop platforms - use desktop_notifications
-        _desktopClient = desktop.NotificationsClient();
-        await _logger.logInfo('Desktop NotificationService initialized successfully');
-      }
-      else {
-        await _logger.logInfo('Notifications not supported on this platform');
+      // Create notification channels
+      await _createNotificationChannels();
+
+      // Configure platform-specific settings more explicitly
+      const androidSettings = flutter_notifications.AndroidInitializationSettings('@mipmap/ic_launcher');
+      
+      // Add request permissions for iOS
+      const iOSSettings = flutter_notifications.DarwinInitializationSettings(
+        requestAlertPermission: true,
+        requestBadgePermission: true,
+        requestSoundPermission: true,
+      );
+      
+      const initSettings = flutter_notifications.InitializationSettings(
+        android: androidSettings, 
+        iOS: iOSSettings
+      );
+
+      // Initialize the plugin and await the result
+      final success = await flutterLocalNotificationsPlugin.initialize(
+        initSettings,
+        // Add this onDidReceiveNotificationResponse callback
+        onDidReceiveNotificationResponse: (flutter_notifications.NotificationResponse response) async {
+          final currentTime = DateTime.now();
+          final formattedTime = intl.DateFormat('yyyy-MM-dd HH:mm:ss.SSS').format(currentTime);
+          await _logger.logInfo('Notification displayed and interacted with: Time=$formattedTime, ID=${response.id}, Title=${response.payload ?? "No title"}');
+        },
+      );
+      
+      if (success ?? false) {
+        await _logger.logInfo('NotificationService initialized successfully');
+        await requestPermissions(); // Call the new method here
+      } else {
+        await _logger.logWarning('NotificationService initialization failed');
       }
     } catch (e, stackTrace) {
       await _logger.logError('Error initializing NotificationService', e, stackTrace);
+      rethrow;
     }
   }
 
+  // Add this method
   Future<void> requestPermissions() async {
     if (Platform.isIOS) {
-      await flutterLocalNotificationsPlugin
-          .resolvePlatformSpecificImplementation<
-              flutter_notifications.IOSFlutterLocalNotificationsPlugin>()
-          ?.requestPermissions(
-            alert: true,
-            badge: true,
-            sound: true,
-          );
+      final iOSPlugin = flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<flutter_notifications.IOSFlutterLocalNotificationsPlugin>();
+      if (iOSPlugin != null) {
+        await iOSPlugin.requestPermissions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+      }
     } else if (Platform.isAndroid) {
-      flutterLocalNotificationsPlugin
-          .resolvePlatformSpecificImplementation<
-              flutter_notifications.AndroidFlutterLocalNotificationsPlugin>();
+      final androidPlugin = flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<flutter_notifications.AndroidFlutterLocalNotificationsPlugin>();
+      if (androidPlugin != null) {
+        // Android-specific permissions can be handled here if needed
+      }
     }
   }
 
@@ -94,105 +112,99 @@ class NotificationService {
 
       final notificationId = setting.id ?? task.id!.hashCode + setting.timeOption.index;
       
-      if (Platform.isAndroid || Platform.isIOS) {
-        // Mobile platforms
-        // Check if plugin is properly initialized before trying to use it
-        if (!await _isNotificationPluginInitialized()) {
-          await _logger.logWarning('Notification plugin not properly initialized. Trying to initialize...');
-          await init();
-          
-          // Check again after initialization attempt
-          if (!await _isNotificationPluginInitialized()) {
-            await _logger.logError('Failed to initialize notification plugin after retry');
-            return;
-          }
-        }
+      // Check if plugin is properly initialized before trying to use it
+      if (!await _isNotificationPluginInitialized()) {
+        await _logger.logWarning('Notification plugin not properly initialized. Trying to initialize...');
+        await init();
         
-        try {
-          await flutterLocalNotificationsPlugin.zonedSchedule(
-            notificationId,
-            'Task Reminder: ${task.title}',
-            task.description.isNotEmpty ? task.description : 'This task is due soon.',
-            tz.TZDateTime.from(notificationTime, tz.local),
-            const flutter_notifications.NotificationDetails(
-              android: flutter_notifications.AndroidNotificationDetails(
-                'todo_app_channel',
-                'Task Reminders',
-                channelDescription: 'Notifications for task reminders',
-                importance: flutter_notifications.Importance.high,
-                priority: flutter_notifications.Priority.high,
-              ),
-              iOS: flutter_notifications.DarwinNotificationDetails(),
-            ),
-            androidScheduleMode: flutter_notifications.AndroidScheduleMode.exactAllowWhileIdle,
-            uiLocalNotificationDateInterpretation:
-                flutter_notifications.UILocalNotificationDateInterpretation.absoluteTime,
-          );
-          
-          await _logger.logInfo(
-            'Notification scheduled: TaskID=${task.id}, SettingID=${setting.id}, '
-            'NotificationID=$notificationId, NotificationTime=${notificationTime.toIso8601String()}, '
-            'TimeOption=${setting.timeOption.name}'
-          );
-        } catch (e) {
-          // Handle case when zonedSchedule is not implemented
-          await _logger.logWarning(
-            'Advanced notification scheduling not available on this platform. '
-            'Using basic notification instead for TaskID=${task.id}'
-          );
-          
-          // Try to use a simpler notification method as fallback
-          if (await _isNotificationPluginInitialized()) {
-            try {
-              await flutterLocalNotificationsPlugin.show(
-                notificationId,
-                'Task Reminder: ${task.title}',
-                task.description.isNotEmpty ? task.description : 'This task is due soon.',
-                const flutter_notifications.NotificationDetails(
-                  android: flutter_notifications.AndroidNotificationDetails(
-                    'todo_app_channel',
-                    'Task Reminders',
-                    channelDescription: 'Notifications for task reminders',
-                    importance: flutter_notifications.Importance.high,
-                    priority: flutter_notifications.Priority.high,
-                  ),
-                  iOS: flutter_notifications.DarwinNotificationDetails(),
-                ),
-              );
-              
-              await _logger.logInfo(
-                'Basic notification used as fallback: TaskID=${task.id}, SettingID=${setting.id}, '
-                'NotificationID=$notificationId'
-              );
-            } catch (innerError, innerStackTrace) {
-              await _logger.logError('Error showing basic notification', innerError, innerStackTrace);
-              // Don't rethrow here - let the task be saved even if notification fails
-            }
-          } else {
-            await _logger.logWarning('Cannot show fallback notification: plugin not initialized');
-          }
+        // Check again after initialization attempt
+        if (!await _isNotificationPluginInitialized()) {
+          await _logger.logError('Failed to initialize notification plugin after retry');
+          return;
         }
       }
-      else if (_desktopClient != null) {
-        // Desktop platforms - schedule a desktop notification
-        // Note: Desktop notifications don't support scheduling for the future
-        // We'll need a background timer to handle this
-
-        // Calculate duration until notification time
-        final now = DateTime.now();
-        final duration = notificationTime.difference(now);
+      
+      try {
+        final currentTime = DateTime.now();
+        final formattedTime = intl.DateFormat('yyyy-MM-dd HH:mm:ss.SSS').format(currentTime);
         
-        // Log the scheduled time
-        await _logger.logInfo('Desktop notification scheduled for ${duration.inSeconds} seconds from now');
+        await _logger.logInfo(
+          'Scheduling notification: Time=$formattedTime, TaskID=${task.id}, Title="${task.title}", '
+          'NotificationID=$notificationId, ScheduledFor=${notificationTime.toIso8601String()}'
+        );
         
-        // Create a delayed notification using a simple Future.delayed
-        Future.delayed(duration, () {
-          _showDesktopNotification(
-            id: notificationId,
-            title: 'Task Reminder: ${task.title}',
-            body: task.description.isNotEmpty ? task.description : 'This task is due soon.',
-          );
-        });
+        await flutterLocalNotificationsPlugin.zonedSchedule(
+          notificationId,
+          'Task Reminder: ${task.title}',
+          task.description.isNotEmpty ? task.description : 'This task is due soon.',
+          tz.TZDateTime.from(notificationTime, tz.local),
+          const flutter_notifications.NotificationDetails(
+            android: flutter_notifications.AndroidNotificationDetails(
+              'todo_app_channel',
+              'Task Reminders',
+              channelDescription: 'Notifications for task reminders',
+              importance: flutter_notifications.Importance.high,
+              priority: flutter_notifications.Priority.high,
+            ),
+            iOS: flutter_notifications.DarwinNotificationDetails(),
+          ),
+          androidScheduleMode: flutter_notifications.AndroidScheduleMode.exactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              flutter_notifications.UILocalNotificationDateInterpretation.absoluteTime,
+          payload: task.title, // Add the task title as the payload
+        );
+        
+        await _logger.logInfo(
+          'Notification scheduled: TaskID=${task.id}, SettingID=${setting.id}, '
+          'NotificationID=$notificationId, NotificationTime=${notificationTime.toIso8601String()}, '
+          'TimeOption=${setting.timeOption.name}'
+        );
+      } catch (e) {
+        // Handle case when zonedSchedule is not implemented
+        await _logger.logWarning(
+          'Advanced notification scheduling not available on this platform. '
+          'Using basic notification instead for TaskID=${task.id}'
+        );
+        
+        // Try to use a simpler notification method as fallback
+        if (await _isNotificationPluginInitialized()) {
+          try {
+            final currentTime = DateTime.now();
+            final formattedTime = intl.DateFormat('yyyy-MM-dd HH:mm:ss.SSS').format(currentTime);
+            
+            await _logger.logInfo(
+              'Showing basic notification: Time=$formattedTime, TaskID=${task.id}, '
+              'Title="${task.title}", NotificationID=$notificationId'
+            );
+            
+            await flutterLocalNotificationsPlugin.show(
+              notificationId,
+              'Task Reminder: ${task.title}',
+              task.description.isNotEmpty ? task.description : 'This task is due soon.',
+              const flutter_notifications.NotificationDetails(
+                android: flutter_notifications.AndroidNotificationDetails(
+                  'todo_app_channel',
+                  'Task Reminders',
+                  channelDescription: 'Notifications for task reminders',
+                  importance: flutter_notifications.Importance.high,
+                  priority: flutter_notifications.Priority.high,
+                ),
+                iOS: flutter_notifications.DarwinNotificationDetails(),
+              ),
+              payload: task.title, // Add task title as payload
+            );
+            
+            await _logger.logInfo(
+              'Basic notification used as fallback: TaskID=${task.id}, SettingID=${setting.id}, '
+              'NotificationID=$notificationId'
+            );
+          } catch (innerError, innerStackTrace) {
+            await _logger.logError('Error showing basic notification', innerError, innerStackTrace);
+            // Don't rethrow here - let the task be saved even if notification fails
+          }
+        } else {
+          await _logger.logWarning('Cannot show fallback notification: plugin not initialized');
+        }
       }
     } catch (e, stackTrace) {
       await _logger.logError('Error scheduling task notification', e, stackTrace);
@@ -200,24 +212,7 @@ class NotificationService {
     }
   }
 
-  Future<void> _showDesktopNotification({
-    required int id,
-    required String title,
-    required String body,
-  }) async {
-    try {
-      if (_desktopClient != null) {
-        await _desktopClient!.notify(
-          title,
-          body: body,
-        );
-        await _logger.logInfo('Desktop notification shown: ID=$id, Title=$title');
-      }
-    } catch (e, stackTrace) {
-      await _logger.logError('Error showing desktop notification', e, stackTrace);
-    }
-  }
-
+  // Add this helper method to check if the notification plugin is initialized
   Future<bool> _isNotificationPluginInitialized() async {
     try {
       // Try to access the platform instance - this will throw if not initialized
@@ -251,4 +246,22 @@ class NotificationService {
     }
   }
 
+  Future<void> _createNotificationChannels() async {
+    if (Platform.isAndroid) {
+      const androidChannel = flutter_notifications.AndroidNotificationChannel(
+        'todo_app_channel',
+        'Task Reminders',
+        description: 'Notifications for task reminders',
+        importance: flutter_notifications.Importance.high,
+      );
+      
+      final androidPlugin = flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<flutter_notifications.AndroidFlutterLocalNotificationsPlugin>();
+      if (androidPlugin != null) {
+        await androidPlugin.createNotificationChannel(androidChannel);
+      }
+          
+      await _logger.logInfo('Notification channel created for Android');
+    }
+  }
 }
