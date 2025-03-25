@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart' as flutter_notifications;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
@@ -23,22 +24,54 @@ class NotificationService {
       // Initialize timezone data
       tz_data.initializeTimeZones();
 
-      // Platform-specific initialization settings
-      const android = flutter_notifications.AndroidInitializationSettings('@mipmap/ic_launcher');
-      const iOS = flutter_notifications.DarwinInitializationSettings();
-      const initSettings = flutter_notifications.InitializationSettings(android: android, iOS: iOS);
+      // Create notification channels
+      await _createNotificationChannels();
 
-      // IMPORTANT: Await the initialization and store the result
-      final initResult = await flutterLocalNotificationsPlugin.initialize(initSettings);
+      // Configure platform-specific settings more explicitly
+      const androidSettings = flutter_notifications.AndroidInitializationSettings('@mipmap/ic_launcher');
       
-      if (initResult != null && initResult) {
+      // Add request permissions for iOS
+      const iOSSettings = flutter_notifications.DarwinInitializationSettings(
+        requestAlertPermission: true,
+        requestBadgePermission: true,
+        requestSoundPermission: true,
+      );
+      
+      const initSettings = flutter_notifications.InitializationSettings(
+        android: androidSettings, 
+        iOS: iOSSettings
+      );
+
+      // Initialize the plugin and await the result
+      final success = await flutterLocalNotificationsPlugin.initialize(initSettings);
+      
+      if (success ?? false) {
         await _logger.logInfo('NotificationService initialized successfully');
+        await requestPermissions(); // Call the new method here
       } else {
-        await _logger.logWarning('NotificationService initialization may have failed');
+        await _logger.logWarning('NotificationService initialization failed');
       }
     } catch (e, stackTrace) {
       await _logger.logError('Error initializing NotificationService', e, stackTrace);
       rethrow;
+    }
+  }
+
+  // Add this method
+  Future<void> requestPermissions() async {
+    if (Platform.isIOS) {
+      await flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+              flutter_notifications.IOSFlutterLocalNotificationsPlugin>()
+          ?.requestPermissions(
+            alert: true,
+            badge: true,
+            sound: true,
+          );
+    } else if (Platform.isAndroid) {
+      flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+              flutter_notifications.AndroidFlutterLocalNotificationsPlugin>();
     }
   }
 
@@ -180,6 +213,24 @@ class NotificationService {
     } catch (e, stackTrace) {
       await _logger.logError('Error canceling all notifications', e, stackTrace);
       rethrow;
+    }
+  }
+
+  Future<void> _createNotificationChannels() async {
+    if (Platform.isAndroid) {
+      const androidChannel = flutter_notifications.AndroidNotificationChannel(
+        'todo_app_channel',
+        'Task Reminders',
+        description: 'Notifications for task reminders',
+        importance: flutter_notifications.Importance.high,
+      );
+      
+      await flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+              flutter_notifications.AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(androidChannel);
+          
+      await _logger.logInfo('Notification channel created for Android');
     }
   }
 }
