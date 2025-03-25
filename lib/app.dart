@@ -41,6 +41,8 @@ class _TodoAppState extends mat.State<TodoApp> {
       // You can add that functionality later
       
       await _loggerService.logInfo('Application initialized successfully');
+      
+      // We'll check for permissions in the first screen instead of here
     } catch (e, stackTrace) {
       await _loggerService.logError('Error during app initialization', e, stackTrace);
     }

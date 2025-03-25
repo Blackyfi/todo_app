@@ -1,3 +1,4 @@
+// lib/main.dart
 import 'dart:async';
 import 'package:flutter/material.dart' as mat;
 import 'package:flutter/services.dart' as services;
@@ -6,6 +7,7 @@ import 'package:todo_app/app.dart' as app;
 import 'package:todo_app/core/logger/logger_service.dart';
 import 'package:todo_app/core/database/database_config.dart';
 import 'package:todo_app/core/settings/services/auto_delete_service.dart';
+import 'package:todo_app/core/notifications/notification_service.dart';
 
 void main() async {
   // Capture Flutter errors
@@ -43,6 +45,11 @@ void main() async {
     // Process auto-delete for completed tasks
     final autoDeleteService = AutoDeleteService();
     await autoDeleteService.processCompletedTasks();
+    
+    // Request notification permissions as early as possible
+    final notificationService = NotificationService();
+    await notificationService.init();
+    await notificationService.requestNotificationPermission();
     
     mat.runApp(const app.TodoApp());
   }, (error, stackTrace) {

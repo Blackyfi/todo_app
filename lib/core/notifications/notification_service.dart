@@ -6,6 +6,8 @@ import 'package:todo_app/features/tasks/models/task.dart' as task_model;
 import 'package:todo_app/core/notifications/models/notification_settings.dart' as notification_model;
 import 'package:todo_app/core/logger/logger_service.dart';
 import 'package:intl/intl.dart' as intl;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/material.dart' as mat;
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -17,6 +19,8 @@ class NotificationService {
   final LoggerService _logger = LoggerService();
   final flutter_notifications.FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       flutter_notifications.FlutterLocalNotificationsPlugin();
+  
+  static const String _notificationPermissionRequestedKey = 'notification_permission_requested';
 
   Future<void> init() async {
     try {
@@ -31,11 +35,13 @@ class NotificationService {
       // Configure platform-specific settings more explicitly
       const androidSettings = flutter_notifications.AndroidInitializationSettings('@mipmap/ic_launcher');
       
-      // Add request permissions for iOS
       const iOSSettings = flutter_notifications.DarwinInitializationSettings(
-        requestAlertPermission: true,
-        requestBadgePermission: true,
-        requestSoundPermission: true,
+        requestAlertPermission: false,  // We'll request permissions manually
+        requestBadgePermission: false,
+        requestSoundPermission: false,
+        defaultPresentAlert: false,
+        defaultPresentBadge: false,
+        defaultPresentSound: false,
       );
       
       const initSettings = flutter_notifications.InitializationSettings(
@@ -43,7 +49,6 @@ class NotificationService {
         iOS: iOSSettings
       );
 
-      // Initialize the plugin and await the result
       final success = await flutterLocalNotificationsPlugin.initialize(
         initSettings,
         // Add this onDidReceiveNotificationResponse callback
@@ -66,7 +71,114 @@ class NotificationService {
     }
   }
 
-  // Add this method
+  Future<bool> _isFirstRun() async {
+    final prefs = await SharedPreferences.getInstance();
+    return !prefs.containsKey(_notificationPermissionRequestedKey);
+  }
+
+  Future<void> _markPermissionRequested() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_notificationPermissionRequestedKey, true);
+  }
+
+  Future<void> requestNotificationPermission() async {
+    try {
+      final isFirstRun = await _isFirstRun();
+      
+      if (!isFirstRun) {
+        await _logger.logInfo('Notification permissions already requested in the past');
+        return;
+      }
+      
+      await _logger.logInfo('Requesting notification permissions');
+      
+      if (Platform.isIOS) {
+        final iosPlugin = flutterLocalNotificationsPlugin
+            .resolvePlatformSpecificImplementation<
+                flutter_notifications.IOSFlutterLocalNotificationsPlugin>();
+                
+        if (iosPlugin != null) {
+          final result = await iosPlugin.requestPermissions(
+            alert: true,
+            badge: true,
+            sound: true,
+          );
+          
+          await _logger.logInfo('iOS notification permission request result: $result');
+        }
+      } else if (Platform.isAndroid) {
+        final androidPlugin = flutterLocalNotificationsPlugin
+            .resolvePlatformSpecificImplementation<
+                flutter_notifications.AndroidFlutterLocalNotificationsPlugin>();
+                
+        if (androidPlugin != null) {
+          final granted = await androidPlugin.requestPermission();
+          await _logger.logInfo('Android notification permission request result: $granted');
+        }
+      }
+      
+      await _markPermissionRequested();
+      
+    } catch (e, stackTrace) {
+      await _logger.logError('Error requesting notification permissions', e, stackTrace);
+    }
+  }
+
+  Future<bool> areNotificationPermissionsGranted() async {
+    try {
+      if (Platform.isIOS) {
+        final settings = await flutterLocalNotificationsPlugin
+            .resolvePlatformSpecificImplementation<
+                flutter_notifications.IOSFlutterLocalNotificationsPlugin>()
+            ?.getNotificationAppLaunchDetails();
+        return settings?.notificationResponse != null;
+      } else if (Platform.isAndroid) {
+        final androidPlugin = flutterLocalNotificationsPlugin
+            .resolvePlatformSpecificImplementation<
+                flutter_notifications.AndroidFlutterLocalNotificationsPlugin>();
+        if (androidPlugin != null) {
+          return await androidPlugin.areNotificationsEnabled() ?? false;
+        }
+      }
+      return false;
+    } catch (e, stackTrace) {
+      await _logger.logError('Error checking notification permissions', e, stackTrace);
+      return false;
+    }
+  }
+  
+  Future<void> showNotificationPermissionDialog(mat.BuildContext context) async {
+    try {
+      final result = await mat.showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => mat.AlertDialog(
+          title: const mat.Text('Enable Notifications'),
+          content: const mat.Text(
+            'To get reminders for your tasks, please allow notifications. '
+            'Without this permission, you won\'t receive any task reminders.',
+          ),
+          actions: [
+            mat.TextButton(
+              onPressed: () => mat.Navigator.of(context).pop(false),
+              child: const mat.Text('Not Now'),
+            ),
+            mat.FilledButton(
+              onPressed: () => mat.Navigator.of(context).pop(true),
+              child: const mat.Text('Enable'),
+            ),
+          ],
+        ),
+      );
+      
+      if (result == true) {
+        await requestNotificationPermission();
+      }
+    } catch (e, stackTrace) {
+      await _logger.logError('Error showing notification permission dialog', e, stackTrace);
+    }
+  }
+
   Future<void> requestPermissions() async {
     if (Platform.isIOS) {
       final iOSPlugin = flutterLocalNotificationsPlugin

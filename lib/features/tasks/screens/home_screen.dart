@@ -8,6 +8,7 @@ import 'package:todo_app/core/database/repository/task_repository.dart' as task_
 import 'package:todo_app/core/database/repository/category_repository.dart' as category_repository;
 import 'package:todo_app/core/logger/logger_service.dart';
 import 'package:todo_app/core/settings/repository/auto_delete_settings_repository.dart';
+import 'package:todo_app/core/notifications/notification_service.dart' as notification_service;
 
 class HomeScreen extends mat.StatefulWidget {
   const HomeScreen({super.key});
@@ -34,6 +35,11 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
     super.initState();
     _tabController = mat.TabController(length: 3, vsync: this);
     _loadData();
+    
+    // Check for notification permissions after a short delay to ensure the UI is built
+    Future.delayed(const Duration(milliseconds: 500), () {
+      _checkNotificationPermissions();
+    });
   }
   
   @override
@@ -205,6 +211,18 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
     );
   }
 
+  Future<void> _checkNotificationPermissions() async {
+    try {
+      final notificationService = notification_service.NotificationService();
+      final hasPermissions = await notificationService.areNotificationPermissionsGranted();
+      
+      if (!hasPermissions && mounted) {
+        await notificationService.showNotificationPermissionDialog(context);
+      }
+    } catch (e, stackTrace) {
+      await _logger.logError('Error checking notification permissions', e, stackTrace);
+    }
+  }
   
   @override
   mat.Widget build(mat.BuildContext context) {
