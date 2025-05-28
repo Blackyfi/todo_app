@@ -4,6 +4,8 @@ import 'package:todo_app/features/tasks/models/task.dart' as task_model;
 import 'package:todo_app/features/categories/models/category.dart' as category_model;
 import 'package:todo_app/common/widgets/priority_badge.dart' as priority_badge;
 import 'package:intl/intl.dart' as intl;
+import 'package:provider/provider.dart';
+import 'package:todo_app/core/providers/time_format_provider.dart';
 
 class TaskCard extends mat.StatelessWidget {
   final task_model.Task task;
@@ -25,6 +27,7 @@ class TaskCard extends mat.StatelessWidget {
   mat.Widget build(mat.BuildContext context) {
     final theme = mat.Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final timeFormatProvider = Provider.of<TimeFormatProvider>(context);
     
     // Use theme primary color if no category is selected
     final categoryColor = category?.color ?? theme.colorScheme.primary;
@@ -156,7 +159,7 @@ class TaskCard extends mat.StatelessWidget {
                             ),
                             const mat.SizedBox(width: 4),
                             mat.Text(
-                              intl.DateFormat('MMM d, yyyy · h:mm a').format(task.dueDate!),
+                              _formatDueDate(task.dueDate!, timeFormatProvider.isEuropean),
                               style: mat.TextStyle(
                                 color: _getDueDateColor(task.dueDate!, theme),
                                 fontSize: 12,
@@ -174,6 +177,15 @@ class TaskCard extends mat.StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _formatDueDate(DateTime dueDate, bool isEuropean) {
+    final dateFormat = intl.DateFormat('MMM d, yyyy');
+    final timeFormat = isEuropean 
+        ? intl.DateFormat('HH:mm')
+        : intl.DateFormat('h:mm a');
+    
+    return '${dateFormat.format(dueDate)} · ${timeFormat.format(dueDate)}';
   }
 
   mat.Color _getDueDateColor(DateTime dueDate, mat.ThemeData theme) {
