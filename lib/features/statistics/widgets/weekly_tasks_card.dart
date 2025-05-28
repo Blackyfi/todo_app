@@ -31,7 +31,7 @@ class WeeklyTasksCard extends mat.StatelessWidget {
             if (tasks.isEmpty) ...[
               _buildEmptyState(),
             ] else ...[
-              ...tasks.map((task) => _buildTaskItem(task, theme)).toList(),
+              ...tasks.map((task) => _buildTaskItem(task, theme)),
             ],
           ],
         ),
