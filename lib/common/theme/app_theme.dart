@@ -19,7 +19,7 @@ class AppTheme {
       foregroundColor: _lightColorScheme.onPrimaryContainer,
       elevation: 0,
     ),
-    cardTheme: mat.CardTheme(
+    cardTheme: mat.CardThemeData(
       clipBehavior: mat.Clip.antiAlias,
       elevation: 2,
       shape: mat.RoundedRectangleBorder(
@@ -50,7 +50,7 @@ class AppTheme {
       foregroundColor: _darkColorScheme.onPrimaryContainer,
       elevation: 0,
     ),
-    cardTheme: mat.CardTheme(
+    cardTheme: mat.CardThemeData(
       clipBehavior: mat.Clip.antiAlias,
       elevation: 2,
       shape: mat.RoundedRectangleBorder(

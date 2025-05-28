@@ -6,6 +6,12 @@
 *.swp
 .buildlog/
 .history
+.idea
+.vscode
+android/
+ios/
+linux/
+macos/
 
 
 
