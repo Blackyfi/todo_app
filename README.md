@@ -97,6 +97,17 @@ flutter build apk --release
 flutter build windows --release
 ```
 
+## Usueal Development Commands
+```bash
+flutter clean
+flutter upgrade
+flutter doctor
+flutter pub get
+flutter analyze
+flutter build windows --release
+```
+
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
