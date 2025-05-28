@@ -1,6 +1,6 @@
 # Todo App Project Structure
 
-```
+```bash
 todo_app/
 ├── .gitignore                     # Git ignore file
 ├── .metadata                      # Flutter metadata
@@ -155,6 +155,7 @@ The Todo App follows a feature-based architecture with a clear separation of con
 4. **Core Infrastructure**: Shared functionality and configuration (`core/*`, `common/*`)
 
 This organization allows for:
+
 - Easy navigation of the codebase
 - Clear component responsibilities
 - Scalable feature development
