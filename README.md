@@ -25,25 +25,29 @@ A full-featured task management application built with Flutter that helps you or
 
 ### Installation
 
-1. Clone the repository
-   ```bash
-   git clone https://github.com/yourusername/todo_app.git
-   ```
+1.Clone the repository
 
-2. Navigate to the project directory
-   ```bash
-   cd todo_app
-   ```
+```bash
+git clone https://github.com/yourusername/todo_app.git
+```
 
-3. Get dependencies
-   ```bash
-   flutter pub get
-   ```
+2.Navigate to the project directory
 
-4. Run the app
-   ```bash
-   flutter run
-   ```
+```bash
+cd todo_app
+```
+
+3.Get dependencies
+
+```bash
+flutter pub get
+```
+
+4.Run the app
+
+```bash
+flutter run
+```
 
 ## Project Structure
 
@@ -98,6 +102,7 @@ flutter build windows --release
 ```
 
 ## Usueal Development Commands
+
 ```bash
 flutter clean
 flutter upgrade
@@ -106,7 +111,6 @@ flutter pub get
 flutter analyze
 flutter build windows --release
 ```
-
 
 ## License
 
