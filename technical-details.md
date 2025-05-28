@@ -8,7 +8,7 @@ The Todo App follows a feature-based architecture with a clean separation of con
 
 The application is organized by feature rather than by type:
 
-```
+```bash
 lib/
 ├── common/       # Shared components, constants, themes, widgets
 ├── core/         # Core functionality (database, notifications, logging)
@@ -16,6 +16,7 @@ lib/
 ```
 
 Each feature contains its own:
+
 - Models (data structures)
 - Screens (UI components)
 - Widgets (reusable UI elements)
@@ -61,7 +62,7 @@ import 'package:todo_app/features/tasks/models/task.dart' as task_model;
 - **Files**: snake_case.dart
 - **Classes**: PascalCase
 - **Variables and methods**: camelCase
-- **Constants**: 
+- **Constants**:
   - SCREAMING_SNAKE_CASE for top-level constants
   - camelCase within constant classes
 
@@ -94,6 +95,7 @@ Each entity has a dedicated repository that handles:
 - Error handling and logging
 
 Example repositories:
+
 - `TaskRepository`
 - `CategoryRepository`
 - `NotificationRepository`
@@ -112,8 +114,10 @@ The app implements Material Design 3 principles:
 ### Responsive Design
 
 The UI adapts to different screen sizes:
+
 - Responsive layouts with flexible widgets
 - Size-aware components
+- Appropriate spacing and padding for different form factors
 - Appropriate spacing and padding for different form factors
 
 ### Custom Components
@@ -229,6 +233,6 @@ The application is designed to run on multiple platforms:
 
 - **Mobile**: Android and iOS
 - **Desktop**: Windows, macOS, and Linux
-- **Web**: Browser-based version
+Each platform has specific optimizations and configurations to ensure the best user experience.
 
 Each platform has specific optimizations and configurations to ensure the best user experience.
