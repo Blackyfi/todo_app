@@ -197,13 +197,20 @@ class TaskCard extends mat.StatelessWidget {
     mat.Color color;
     
     if (taskDate.isBefore(today)) {
-      // Task is overdue
+      // Task is overdue (date is in the past)
       text = 'OVERDUE';
       color = mat.Colors.red.withAlpha(51); // 20% opacity
     } else if (taskDate.isAtSameMomentAs(today)) {
-      // Task is due today
-      text = 'TODAY';
-      color = mat.Colors.red.withAlpha(51); // 20% opacity
+      // Task is due today - check if the time has passed
+      if (dueDate.isBefore(now)) {
+        // Time has passed, task is overdue
+        text = 'OVERDUE';
+        color = mat.Colors.red.withAlpha(51); // 20% opacity
+      } else {
+        // Time hasn't passed yet, task is due today
+        text = 'TODAY';
+        color = mat.Colors.red.withAlpha(51); // 20% opacity
+      }
     } else {
       // Task is in the future - calculate days left
       final daysLeft = taskDate.difference(today).inDays;
