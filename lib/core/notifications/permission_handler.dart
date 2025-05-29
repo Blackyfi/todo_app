@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart' as flutter_notifications;
+import 'package:app_settings/app_settings.dart';
 import 'package:todo_app/core/logger/logger_service.dart';
 
 class PermissionHandler {
@@ -58,11 +59,13 @@ class PermissionHandler {
   Future<bool> arePermissionsGranted() async {
     try {
       if (Platform.isIOS) {
-        final settings = await _flutterLocalNotificationsPlugin
+        final iosPlugin = _flutterLocalNotificationsPlugin
             .resolvePlatformSpecificImplementation<
-                flutter_notifications.IOSFlutterLocalNotificationsPlugin>()
-            ?.getNotificationAppLaunchDetails();
-        return settings?.notificationResponse != null;
+                flutter_notifications.IOSFlutterLocalNotificationsPlugin>();
+        if (iosPlugin != null) {
+          final result = await iosPlugin.pendingNotificationRequests();
+          return result.isNotEmpty;
+        }
       } else if (Platform.isAndroid) {
         final androidPlugin = _flutterLocalNotificationsPlugin
             .resolvePlatformSpecificImplementation<
@@ -86,8 +89,8 @@ class PermissionHandler {
         builder: (context) => AlertDialog(
           title: const Text('Enable Notifications'),
           content: const Text(
-            'To get reminders for your tasks, please allow notifications. '
-            'Without this permission, you won\'t receive any task reminders.',
+            'To get reminders for your tasks, please enable notifications in your device settings. '
+            'Tap "Enable" to open the app settings where you can allow notifications.',
           ),
           actions: [
             TextButton(
@@ -103,10 +106,31 @@ class PermissionHandler {
       );
       
       if (result == true) {
-        await requestPermissions();
+        await openAppSettings();
       }
     } catch (e, stackTrace) {
       await _logger.logError('Error showing notification permission dialog', e, stackTrace);
+    }
+  }
+
+  Future<void> openAppSettings() async {
+    try {
+      await _logger.logInfo('Opening app settings for notification permissions');
+      
+      // Use app_settings package to open the notification settings
+      await AppSettings.openAppSettings(type: AppSettingsType.notification);
+      
+      await _logger.logInfo('Successfully opened app notification settings');
+    } catch (e, stackTrace) {
+      await _logger.logError('Error opening app settings, trying alternative method', e, stackTrace);
+      
+      // Fallback: try to open general app settings if notification settings fail
+      try {
+        await AppSettings.openAppSettings();
+        await _logger.logInfo('Opened general app settings as fallback');
+      } catch (fallbackError, fallbackStackTrace) {
+        await _logger.logError('Error opening fallback app settings', fallbackError, fallbackStackTrace);
+      }
     }
   }
 
@@ -125,7 +149,7 @@ class PermissionHandler {
       final androidPlugin = _flutterLocalNotificationsPlugin
           .resolvePlatformSpecificImplementation<flutter_notifications.AndroidFlutterLocalNotificationsPlugin>();
       if (androidPlugin != null) {
-        // Android-specific permissions can be handled here if needed
+        await androidPlugin.requestNotificationsPermission();
       }
     }
   }
