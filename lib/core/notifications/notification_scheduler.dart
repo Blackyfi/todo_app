@@ -87,64 +87,21 @@ class NotificationScheduler {
       );
       
       await _logger.logInfo(
-        'Notification scheduled: TaskID=${task.id}, SettingID=${setting.id}, '
+        'Notification scheduled successfully: TaskID=${task.id}, SettingID=${setting.id}, '
         'NotificationID=$notificationId, NotificationTime=${notificationTime.toIso8601String()}, '
         'TimeOption=${setting.timeOption.name}'
       );
     } catch (e) {
-      // Handle case when zonedSchedule is not implemented
+      // Handle case when zonedSchedule is not implemented or fails
       await _logger.logWarning(
-        'Advanced notification scheduling not available on this platform. '
-        'Using basic notification instead for TaskID=${task.id}'
+        'Advanced notification scheduling failed for TaskID=${task.id}. Error: $e'
       );
       
-      // Try to use a simpler notification method as fallback
-      await _showBasicNotification(task, setting, notificationId);
-    }
-  }
-  
-  Future<void> _showBasicNotification(
-    task_model.Task task,
-    notification_model.NotificationSetting setting,
-    int notificationId,
-  ) async {
-    if (await _isNotificationPluginInitialized()) {
-      try {
-        final currentTime = DateTime.now();
-        final formattedTime = intl.DateFormat('yyyy-MM-dd HH:mm:ss.SSS').format(currentTime);
-        
-        await _logger.logInfo(
-          'Showing basic notification: Time=$formattedTime, TaskID=${task.id}, '
-          'Title="${task.title}", NotificationID=$notificationId'
-        );
-        
-        await _flutterLocalNotificationsPlugin.show(
-          notificationId,
-          'Task Reminder: ${task.title}',
-          task.description.isNotEmpty ? task.description : 'This task is due soon.',
-          const flutter_notifications.NotificationDetails(
-            android: flutter_notifications.AndroidNotificationDetails(
-              'todo_app_channel',
-              'Task Reminders',
-              channelDescription: 'Notifications for task reminders',
-              importance: flutter_notifications.Importance.high,
-              priority: flutter_notifications.Priority.high,
-            ),
-            iOS: flutter_notifications.DarwinNotificationDetails(),
-          ),
-          payload: task.title, // Add task title as payload
-        );
-        
-        await _logger.logInfo(
-          'Basic notification used as fallback: TaskID=${task.id}, SettingID=${setting.id}, '
-          'NotificationID=$notificationId'
-        );
-      } catch (innerError, innerStackTrace) {
-        await _logger.logError('Error showing basic notification', innerError, innerStackTrace);
-        // Don't rethrow here - let the task be saved even if notification fails
-      }
-    } else {
-      await _logger.logWarning('Cannot show fallback notification: plugin not initialized');
+      // IMPORTANT: Don't show immediate notification as fallback
+      // Instead, just log that scheduling failed and continue
+      await _logger.logInfo(
+        'Notification scheduling skipped for TaskID=${task.id} due to platform limitations'
+      );
     }
   }
 

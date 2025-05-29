@@ -25,9 +25,18 @@ class NotificationService {
   late final NotificationScheduler _scheduler;
   
   static const String _notificationPermissionRequestedKey = 'notification_permission_requested';
+  
+  // Add a flag to track if service is already initialized
+  bool _isInitialized = false;
 
   Future<void> init() async {
     try {
+      // Prevent double initialization
+      if (_isInitialized) {
+        await _logger.logInfo('NotificationService already initialized, skipping');
+        return;
+      }
+      
       await _logger.logInfo('Initializing NotificationService');
       
       // Initialize timezone data
@@ -42,6 +51,7 @@ class NotificationService {
       // Configure platform-specific settings
       await _initializePluginSettings();
       
+      _isInitialized = true;
       await _logger.logInfo('NotificationService initialized successfully');
       await requestPermissions();
     } catch (e, stackTrace) {
@@ -73,7 +83,7 @@ class NotificationService {
     );
     
     if (!(success ?? false)) {
-      await _logger.logWarning('NotificationService initialization failed');
+      await _logger.logWarning('NotificationService plugin initialization failed');
     }
   }
 
@@ -120,6 +130,11 @@ class NotificationService {
     task_model.Task task,
     notification_model.NotificationSetting setting,
   ) async {
+    if (!_isInitialized) {
+      await _logger.logWarning('NotificationService not initialized, skipping notification scheduling');
+      return;
+    }
+    
     await _scheduler.scheduleNotification(task, setting);
   }
 
