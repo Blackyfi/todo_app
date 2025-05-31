@@ -34,7 +34,7 @@ class NotificationScheduler {
         return;
       }
 
-      final notificationId = _generateNotificationId(task, setting);
+      final notificationId = setting.id ?? task.id!.hashCode + setting.timeOption.index;
       
       // Check if plugin is properly initialized before trying to use it
       if (!await _isNotificationPluginInitialized()) {
@@ -48,13 +48,6 @@ class NotificationScheduler {
       await _logger.logError('Error scheduling task notification', e, stackTrace);
       // Don't rethrow here - we want task saving to proceed even if notification fails
     }
-  }
-
-  int _generateNotificationId(task_model.Task task, notification_model.NotificationSetting setting) {
-    // Generate a unique notification ID based on task ID and setting type
-    final taskId = task.id ?? 0;
-    final settingIndex = setting.timeOption.index;
-    return (taskId * 1000) + settingIndex;
   }
   
   Future<void> _scheduleZonedNotification(
@@ -71,19 +64,12 @@ class NotificationScheduler {
         'Scheduling notification: Time=$formattedTime, TaskID=${task.id}, Title="${task.title}", '
         'NotificationID=$notificationId, ScheduledFor=${notificationTime.toIso8601String()}'
       );
-
-      // Create TZDateTime for the notification time
-      final scheduledDate = tz.TZDateTime.from(notificationTime, tz.local);
-      
-      await _logger.logInfo(
-        'Converted to TZDateTime: ${scheduledDate.toIso8601String()}, Local timezone: ${tz.local.name}'
-      );
       
       await _flutterLocalNotificationsPlugin.zonedSchedule(
         notificationId,
         'Task Reminder: ${task.title}',
         task.description.isNotEmpty ? task.description : 'This task is due soon.',
-        scheduledDate,
+        tz.TZDateTime.from(notificationTime, tz.local),
         const flutter_notifications.NotificationDetails(
           android: flutter_notifications.AndroidNotificationDetails(
             'todo_app_channel',
@@ -91,53 +77,28 @@ class NotificationScheduler {
             channelDescription: 'Notifications for task reminders',
             importance: flutter_notifications.Importance.high,
             priority: flutter_notifications.Priority.high,
-            playSound: true,
-            enableVibration: true,
-            autoCancel: true,
-            ongoing: false,
-            ticker: 'Task Reminder',
           ),
-          iOS: flutter_notifications.DarwinNotificationDetails(
-            presentAlert: true,
-            presentBadge: true,
-            presentSound: true,
-          ),
+          iOS: flutter_notifications.DarwinNotificationDetails(),
         ),
         androidScheduleMode: flutter_notifications.AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            flutter_notifications.UILocalNotificationDateInterpretation.absoluteTime,
+        uiLocalNotificationDateInterpretation: flutter_notifications.UILocalNotificationDateInterpretation.absoluteTime,
         payload: task.title, // Add the task title as the payload
       );
       
       await _logger.logInfo(
-        'Notification scheduled successfully: TaskID=${task.id}, SettingID=${setting.id}, '
+        'Notification scheduled: TaskID=${task.id}, SettingID=${setting.id}, '
         'NotificationID=$notificationId, NotificationTime=${notificationTime.toIso8601String()}, '
         'TimeOption=${setting.timeOption.name}'
       );
-
-      // Verify the notification was scheduled by checking pending notifications
-      await _verifyNotificationScheduled(notificationId);
-      
-    } catch (e, stackTrace) {
-      await _logger.logError('Error in zonedSchedule, attempting fallback', e, stackTrace);
+    } catch (e) {
+      // Handle case when zonedSchedule is not implemented
+      await _logger.logWarning(
+        'Advanced notification scheduling not available on this platform. '
+        'Using basic notification instead for TaskID=${task.id}'
+      );
       
       // Try to use a simpler notification method as fallback
       await _showBasicNotification(task, setting, notificationId);
-    }
-  }
-
-  Future<void> _verifyNotificationScheduled(int notificationId) async {
-    try {
-      final pendingNotifications = await _flutterLocalNotificationsPlugin.pendingNotificationRequests();
-      final isScheduled = pendingNotifications.any((notification) => notification.id == notificationId);
-      
-      if (isScheduled) {
-        await _logger.logInfo('Verified notification is scheduled: ID=$notificationId');
-      } else {
-        await _logger.logWarning('Notification not found in pending list: ID=$notificationId');
-      }
-    } catch (e, stackTrace) {
-      await _logger.logError('Error verifying notification schedule', e, stackTrace);
     }
   }
   
@@ -152,7 +113,7 @@ class NotificationScheduler {
         final formattedTime = intl.DateFormat('yyyy-MM-dd HH:mm:ss.SSS').format(currentTime);
         
         await _logger.logInfo(
-          'Showing basic notification as fallback: Time=$formattedTime, TaskID=${task.id}, '
+          'Showing basic notification: Time=$formattedTime, TaskID=${task.id}, '
           'Title="${task.title}", NotificationID=$notificationId'
         );
         
@@ -167,8 +128,6 @@ class NotificationScheduler {
               channelDescription: 'Notifications for task reminders',
               importance: flutter_notifications.Importance.high,
               priority: flutter_notifications.Priority.high,
-              playSound: true,
-              enableVibration: true,
             ),
             iOS: flutter_notifications.DarwinNotificationDetails(),
           ),
@@ -190,34 +149,14 @@ class NotificationScheduler {
 
   Future<bool> _isNotificationPluginInitialized() async {
     try {
-      // Try to get pending notifications to test if plugin is working
-      await _flutterLocalNotificationsPlugin.pendingNotificationRequests();
-      return true;
+      // Try to access the platform instance - this will throw if not initialized
+      final isInitialized = _flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<flutter_notifications.AndroidFlutterLocalNotificationsPlugin>() !=
+          null;
+      return isInitialized;
     } catch (e) {
-      await _logger.logWarning('Notification plugin not properly initialized: $e');
+      await _logger.logWarning('Notification plugin not initialized: $e');
       return false;
-    }
-  }
-
-  Future<void> cancelNotification(int notificationId) async {
-    try {
-      await _flutterLocalNotificationsPlugin.cancel(notificationId);
-      await _logger.logInfo('Notification cancelled: ID=$notificationId');
-    } catch (e, stackTrace) {
-      await _logger.logError('Error cancelling notification', e, stackTrace);
-    }
-  }
-
-  Future<void> cancelTaskNotifications(task_model.Task task) async {
-    try {
-      // Cancel all possible notifications for this task
-      for (int i = 0; i < notification_model.NotificationTimeOption.values.length; i++) {
-        final notificationId = (task.id ?? 0) * 1000 + i;
-        await _flutterLocalNotificationsPlugin.cancel(notificationId);
-      }
-      await _logger.logInfo('All notifications cancelled for task: ID=${task.id}');
-    } catch (e, stackTrace) {
-      await _logger.logError('Error cancelling task notifications', e, stackTrace);
     }
   }
 }

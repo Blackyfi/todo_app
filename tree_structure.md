@@ -14,13 +14,10 @@ todo_app/
 ├── technical-details.md           # Technical implementation details
 ├── todo_app.iml                   # IntelliJ module file
 ├── tree_structure.md              # Project structure documentation
-├── android/                       # Android platform configuration
-│   └── app/src/main/
-│       └── AndroidManifest.xml    # Android permissions and configuration
 ├── lib/                           # Source code
 │   ├── main.dart                  # Application entry point
 │   ├── app.dart                   # Main app configuration
-│   ├── app_initializer.dart       # App initialization logic
+│   ├── app_initializer.dart       # Application initialization service
 │   ├── routes.dart                # Navigation routes
 │   ├── common/                    # Common utilities and widgets
 │   │   ├── constants/
@@ -46,9 +43,9 @@ todo_app/
 │   │   ├── notifications/         # Notification system
 │   │   │   ├── models/
 │   │   │   │   └── notification_settings.dart
-│   │   │   ├── notification_service.dart # Main notification service
 │   │   │   ├── notification_scheduler.dart # Notification scheduling logic
-│   │   │   └── permission_handler.dart # Permission management
+│   │   │   ├── notification_service.dart   # Main notification service
+│   │   │   └── permission_handler.dart     # Notification permission management
 │   │   ├── providers/
 │   │   │   └── time_format_provider.dart # Time format state management
 │   │   └── settings/              # Application settings
@@ -71,7 +68,8 @@ todo_app/
 │       │   └── widgets/
 │       │       ├── notification_option_picker.dart # Notification selection UI
 │       │       ├── task_card.dart             # Task list item
-│       │       ├── task_detail_sections.dart  # Task detail UI components
+│       │       ├── task_detail_*.dart         # Task detail UI components
+│       │       ├── task_detail_sections.dart  # Combined task detail UI
 │       │       └── task_form_fields.dart      # Form fields for task creation/editing
 │       ├── categories/            # Category management
 │       │   ├── models/
@@ -84,20 +82,20 @@ todo_app/
 │       ├── settings/              # Settings management
 │       │   └── screens/
 │       │       ├── log_viewer_screen.dart # Log viewing interface
-│       │       └── settings_screen.dart   # App settings screen with notification testing
+│       │       └── settings_screen.dart   # App settings screen
 │       └── statistics/            # Statistics and reporting
 │           ├── screens/
 │           │   └── statistics_screen.dart # Statistics dashboard
 │           ├── utils/
 │           │   └── statistics_helpers.dart # Helper functions for statistics
 │           └── widgets/
-│               ├── chart_cards.dart       # Chart components
-│               ├── completion_chart.dart  # Completion statistics chart
-│               ├── priority_chart.dart    # Priority distribution chart
-│               ├── category_chart.dart    # Category distribution chart
-│               ├── weekly_tasks_card.dart # Weekly tasks overview
-│               ├── weekly_completion_chart.dart # Weekly completion trends
-│               └── summary_card.dart      # Summary statistics card
+│               ├── chart_cards.dart          # Chart components export file
+│               ├── completion_chart.dart     # Task completion chart
+│               ├── priority_chart.dart       # Priority distribution chart
+│               ├── category_chart.dart       # Category distribution chart
+│               ├── weekly_tasks_card.dart    # Weekly tasks display
+│               ├── weekly_completion_chart.dart # Weekly completion chart
+│               └── summary_card.dart         # Summary statistics card
 └── packages/                     # Local package dependencies
     └── flutter_local_notifications-16.3.3/ # Local notifications package
 ```

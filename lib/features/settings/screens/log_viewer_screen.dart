@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:todo_app/core/logger/logger_service.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:share_plus/share_plus.dart' as share_plus;
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
@@ -143,7 +143,7 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
         (file) => path.basename(file.path) == _selectedLogFileName,
       );
       
-      await Share.shareXFiles(
+      await share_plus.shareXFiles(
         [XFile(logFile.path)],
         subject: 'Todo App Log - $_selectedLogFileName',
       );
@@ -218,7 +218,7 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
       });
       
       // Share the JSON file
-      await Share.shareXFiles(
+      await share_plus.shareXFiles(
         [XFile(jsonFile.path)],
         subject: 'Todo App Logs - JSON Export',
       );
