@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:todo_app/core/logger/logger_service.dart';
-import 'package:share_plus/share_plus.dart' show Share;
+import 'package:share_plus/share_plus.dart' show SharePlus, ShareParams;
 import 'package:cross_file/cross_file.dart';  // Added this import
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
@@ -145,9 +145,11 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
       );
       
       // Share the log file
-      await Share.shareXFiles(
-        [XFile(logFile.path)],
-        subject: 'Todo App Log - $_selectedLogFileName',
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(logFile.path)],
+          subject: 'Todo App Log - $_selectedLogFileName',
+        ),
       );
     } catch (e) {
       if (mounted) {
@@ -220,9 +222,11 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
       });
       
       // Share the JSON file
-      await Share.shareXFiles(
-        [XFile(jsonFile.path)],
-        subject: 'Todo App Logs - JSON Export',
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(jsonFile.path)],
+          subject: 'Todo App Logs - JSON Export',
+        ),
       );
     } catch (e) {
       setState(() {
