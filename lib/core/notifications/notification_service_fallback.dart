@@ -135,8 +135,7 @@ class NotificationServiceFallback {
             ),
             iOS: flutter_notifications.DarwinNotificationDetails(),
           ),
-          uiLocalNotificationDateInterpretation:
-              flutter_notifications.UILocalNotificationDateInterpretation.absoluteTime,
+          androidScheduleMode: flutter_notifications.AndroidScheduleMode.exactAllowWhileIdle,
         );
         
         await _logger.logInfo('Notification scheduled: TaskID=${task.id}, NotificationID=$notificationId');

@@ -81,7 +81,7 @@ class NotificationScheduler {
           iOS: flutter_notifications.DarwinNotificationDetails(),
         ),
         androidScheduleMode: flutter_notifications.AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation: flutter_notifications.UILocalNotificationDateInterpretation.absoluteTime,
+        matchDateTimeComponents: flutter_notifications.DateTimeComponents.time,
         payload: task.title, // Add the task title as the payload
       );
       
