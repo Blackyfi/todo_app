@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart' as flutter_notifications;
-import 'package:app_settings/app_settings.dart';
 import 'package:todo_app/core/logger/logger_service.dart';
 
 class PermissionHandler {
@@ -22,7 +21,7 @@ class PermissionHandler {
         return;
       }
       
-      await _logger.logInfo('Requesting notification permissions');
+      await _logger.logInfo('Requesting notification permissions for first time');
       
       if (Platform.isIOS) {
         final iosPlugin = _flutterLocalNotificationsPlugin
@@ -44,8 +43,25 @@ class PermissionHandler {
                 flutter_notifications.AndroidFlutterLocalNotificationsPlugin>();
                 
         if (androidPlugin != null) {
-          final granted = await androidPlugin.areNotificationsEnabled();
-          await _logger.logInfo('Android notification enabled status: $granted');
+          // For Android 13+ (API 33+), request notification permission
+          bool granted = false;
+          try {
+            granted = await androidPlugin.requestNotificationsPermission() ?? false;
+          } catch (e) {
+            await _logger.logWarning('requestNotificationsPermission not available: $e');
+            granted = await androidPlugin.areNotificationsEnabled() ?? false;
+          }
+          await _logger.logInfo('Android notification permission request result: $granted');
+          
+          // Also request exact alarm permission for precise scheduling
+          bool exactAlarmGranted = false;
+          try {
+            exactAlarmGranted = await androidPlugin.requestExactAlarmsPermission() ?? false;
+          } catch (e) {
+            await _logger.logWarning('requestExactAlarmsPermission not available: $e');
+            exactAlarmGranted = true; // Assume granted on older versions
+          }
+          await _logger.logInfo('Android exact alarms permission request result: $exactAlarmGranted');
         }
       }
       
@@ -63,15 +79,33 @@ class PermissionHandler {
             .resolvePlatformSpecificImplementation<
                 flutter_notifications.IOSFlutterLocalNotificationsPlugin>();
         if (iosPlugin != null) {
-          final result = await iosPlugin.pendingNotificationRequests();
-          return result.isNotEmpty;
+          // For iOS, check if permissions are granted
+          final settings = await iosPlugin.checkPermissions();
+          final granted = (settings?.isAlertEnabled ?? false) && 
+                          (settings?.isSoundEnabled ?? false) && 
+                          (settings?.isBadgeEnabled ?? false);
+          await _logger.logInfo('iOS notification permissions granted: $granted');
+          return granted;
         }
       } else if (Platform.isAndroid) {
         final androidPlugin = _flutterLocalNotificationsPlugin
             .resolvePlatformSpecificImplementation<
                 flutter_notifications.AndroidFlutterLocalNotificationsPlugin>();
         if (androidPlugin != null) {
-          return await androidPlugin.areNotificationsEnabled() ?? false;
+          final notificationsEnabled = await androidPlugin.areNotificationsEnabled() ?? false;
+          bool exactAlarmsAllowed = true; // Default to true for older Android versions
+          
+          try {
+            exactAlarmsAllowed = await androidPlugin.canScheduleExactNotifications() ?? false;
+          } catch (e) {
+            await _logger.logWarning('canScheduleExactNotifications not available: $e');
+            exactAlarmsAllowed = true;
+          }
+          
+          await _logger.logInfo('Android notifications enabled: $notificationsEnabled');
+          await _logger.logInfo('Android exact alarms allowed: $exactAlarmsAllowed');
+          
+          return notificationsEnabled && exactAlarmsAllowed;
         }
       }
       return false;
@@ -89,8 +123,8 @@ class PermissionHandler {
         builder: (context) => AlertDialog(
           title: const Text('Enable Notifications'),
           content: const Text(
-            'To get reminders for your tasks, please enable notifications in your device settings. '
-            'Tap "Enable" to open the app settings where you can allow notifications.',
+            'To get reminders for your tasks, please allow notifications and exact alarms. '
+            'Without these permissions, you won\'t receive any task reminders.',
           ),
           actions: [
             TextButton(
@@ -106,51 +140,73 @@ class PermissionHandler {
       );
       
       if (result == true) {
-        await openAppSettings();
+        await requestPermissions();
       }
     } catch (e, stackTrace) {
       await _logger.logError('Error showing notification permission dialog', e, stackTrace);
     }
   }
 
-  Future<void> openAppSettings() async {
+  Future<void> requestPermissions() async {
     try {
-      await _logger.logInfo('Opening app settings for notification permissions');
-      
-      // Use app_settings package to open the notification settings
-      await AppSettings.openAppSettings(type: AppSettingsType.notification);
-      
-      await _logger.logInfo('Successfully opened app notification settings');
-    } catch (e, stackTrace) {
-      await _logger.logError('Error opening app settings, trying alternative method', e, stackTrace);
-      
-      // Fallback: try to open general app settings if notification settings fail
-      try {
-        await AppSettings.openAppSettings();
-        await _logger.logInfo('Opened general app settings as fallback');
-      } catch (fallbackError, fallbackStackTrace) {
-        await _logger.logError('Error opening fallback app settings', fallbackError, fallbackStackTrace);
+      if (Platform.isIOS) {
+        final iOSPlugin = _flutterLocalNotificationsPlugin
+            .resolvePlatformSpecificImplementation<flutter_notifications.IOSFlutterLocalNotificationsPlugin>();
+        if (iOSPlugin != null) {
+          final result = await iOSPlugin.requestPermissions(
+            alert: true,
+            badge: true,
+            sound: true,
+          );
+          await _logger.logInfo('iOS permission request result: $result');
+        }
+      } else if (Platform.isAndroid) {
+        final androidPlugin = _flutterLocalNotificationsPlugin
+            .resolvePlatformSpecificImplementation<flutter_notifications.AndroidFlutterLocalNotificationsPlugin>();
+        if (androidPlugin != null) {
+          // Request notification permission
+          bool notificationResult = false;
+          try {
+            notificationResult = await androidPlugin.requestNotificationsPermission() ?? false;
+          } catch (e) {
+            await _logger.logWarning('requestNotificationsPermission not available: $e');
+          }
+          await _logger.logInfo('Android notification permission result: $notificationResult');
+          
+          // Request exact alarms permission for precise scheduling
+          bool exactAlarmResult = true; // Default to true for older versions
+          try {
+            exactAlarmResult = await androidPlugin.requestExactAlarmsPermission() ?? false;
+          } catch (e) {
+            await _logger.logWarning('requestExactAlarmsPermission not available: $e');
+          }
+          await _logger.logInfo('Android exact alarms permission result: $exactAlarmResult');
+        }
       }
+    } catch (e, stackTrace) {
+      await _logger.logError('Error requesting permissions', e, stackTrace);
     }
   }
 
-  Future<void> requestPermissions() async {
-    if (Platform.isIOS) {
-      final iOSPlugin = _flutterLocalNotificationsPlugin
-          .resolvePlatformSpecificImplementation<flutter_notifications.IOSFlutterLocalNotificationsPlugin>();
-      if (iOSPlugin != null) {
-        await iOSPlugin.requestPermissions(
-          alert: true,
-          badge: true,
-          sound: true,
-        );
-      }
-    } else if (Platform.isAndroid) {
-      final androidPlugin = _flutterLocalNotificationsPlugin
-          .resolvePlatformSpecificImplementation<flutter_notifications.AndroidFlutterLocalNotificationsPlugin>();
-      if (androidPlugin != null) {
-        await androidPlugin.requestNotificationsPermission();
-      }
+  Future<void> showPermissionSettings(BuildContext context) async {
+    try {
+      await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Notification Settings'),
+          content: const Text(
+            'Please enable notifications and exact alarms in your device settings for this app to receive task reminders.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    } catch (e, stackTrace) {
+      await _logger.logError('Error showing permission settings dialog', e, stackTrace);
     }
   }
 }

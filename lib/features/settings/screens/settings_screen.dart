@@ -7,6 +7,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:todo_app/core/settings/models/auto_delete_settings.dart';
 import 'package:todo_app/core/settings/repository/auto_delete_settings_repository.dart';
 import 'package:flutter/services.dart'; // This includes FilteringTextInputFormatter
+import 'package:todo_app/core/notifications/notification_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -23,6 +24,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _isLoadingAutoDeleteSettings = true;
   final _autoDeleteSettingsRepository = AutoDeleteSettingsRepository();
   final _autoDeleteDaysController = TextEditingController();
+  final _notificationService = NotificationService();
 
   @override
   void initState() {
@@ -100,6 +102,67 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  Future<void> _testNotification() async {
+    try {
+      await _notificationService.showTestNotification();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Test notification sent')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error sending test notification: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _checkPendingNotifications() async {
+    try {
+      final pending = await _notificationService.getPendingNotifications();
+      
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('Pending Notifications (${pending.length})'),
+            content: SizedBox(
+              width: double.maxFinite,
+              height: 300,
+              child: pending.isEmpty
+                  ? const Center(child: Text('No pending notifications'))
+                  : ListView.builder(
+                      itemCount: pending.length,
+                      itemBuilder: (context, index) {
+                        final notification = pending[index];
+                        return ListTile(
+                          title: Text(notification.title ?? 'No title'),
+                          subtitle: Text('ID: ${notification.id}'),
+                          trailing: Text(notification.body ?? 'No body'),
+                        );
+                      },
+                    ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Close'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error checking pending notifications: $e')),
+        );
+      }
+    }
+  }
+
   @override
   void dispose() {
     _autoDeleteDaysController.dispose();
@@ -153,6 +216,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                         );
                       },
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.notifications_active),
+                      title: const Text('Test Notification'),
+                      subtitle: const Text('Send a test notification immediately'),
+                      trailing: const Icon(Icons.send),
+                      onTap: _testNotification,
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.schedule),
+                      title: const Text('Check Pending Notifications'),
+                      subtitle: const Text('View scheduled notifications'),
+                      trailing: const Icon(Icons.list),
+                      onTap: _checkPendingNotifications,
                     ),
                   ],
                 ),
