@@ -6,8 +6,8 @@
 *.swp
 .buildlog/
 .history
-.idea/
-.vscode/
+.idea
+.vscode
 ios/
 linux/
 macos/
