@@ -36,8 +36,8 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
     _tabController = mat.TabController(length: 3, vsync: this);
     _loadData();
     
-    // Check for notification permissions after a longer delay to ensure the UI is fully built
-    Future.delayed(const Duration(milliseconds: 1500), () {
+    // Check for notification permissions after a short delay to ensure the UI is built
+    Future.delayed(const Duration(milliseconds: 500), () {
       _checkNotificationPermissions();
     });
   }
@@ -214,7 +214,11 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
   Future<void> _checkNotificationPermissions() async {
     try {
       final notificationService = notification_service.NotificationService();
-      await notificationService.checkAndRequestPermissionsIfNeeded(context);
+      final hasPermissions = await notificationService.areNotificationPermissionsGranted();
+      
+      if (!hasPermissions && mounted) {
+        await notificationService.showNotificationPermissionDialog(context);
+      }
     } catch (e, stackTrace) {
       await _logger.logError('Error checking notification permissions', e, stackTrace);
     }

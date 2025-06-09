@@ -3,8 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:todo_app/core/logger/logger_service.dart';
-import 'package:share_plus/share_plus.dart' show SharePlus, ShareParams;
-import 'package:cross_file/cross_file.dart';  // Added this import
+import 'package:share_plus/share_plus.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
@@ -144,12 +143,9 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
         (file) => path.basename(file.path) == _selectedLogFileName,
       );
       
-      // Share the log file
-      await SharePlus.instance.share(
-        ShareParams(
-          files: [XFile(logFile.path)],
-          subject: 'Todo App Log - $_selectedLogFileName',
-        ),
+      await Share.shareXFiles(
+        [XFile(logFile.path)],
+        subject: 'Todo App Log - $_selectedLogFileName',
       );
     } catch (e) {
       if (mounted) {
@@ -160,7 +156,7 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
     }
   }
 
-  // Copy log content to clipboard
+  // New method to copy log content to clipboard
   Future<void> _copyLogToClipboard() async {
     if (_selectedLogContent == null || _selectedLogContent!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -186,7 +182,7 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
     }
   }
 
-  // Extract logs as JSON
+  // New method to extract logs as JSON
   Future<void> _extractLogsAsJson() async {
     if (_logFiles.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -222,11 +218,9 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
       });
       
       // Share the JSON file
-      await SharePlus.instance.share(
-        ShareParams(
-          files: [XFile(jsonFile.path)],
-          subject: 'Todo App Logs - JSON Export',
-        ),
+      await Share.shareXFiles(
+        [XFile(jsonFile.path)],
+        subject: 'Todo App Logs - JSON Export',
       );
     } catch (e) {
       setState(() {

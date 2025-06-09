@@ -25,7 +25,6 @@ class NotificationService {
   late final NotificationScheduler _scheduler;
   
   static const String _notificationPermissionRequestedKey = 'notification_permission_requested';
-  static const String _exactAlarmPermissionRequestedKey = 'exact_alarm_permission_requested';
 
   Future<void> init() async {
     try {
@@ -44,114 +43,9 @@ class NotificationService {
       await _initializePluginSettings();
       
       await _logger.logInfo('NotificationService initialized successfully');
-      
-      // Automatically request permissions on first run
-      await _autoRequestPermissionsOnFirstRun();
-      
     } catch (e, stackTrace) {
       await _logger.logError('Error initializing NotificationService', e, stackTrace);
       rethrow;
-    }
-  }
-
-  Future<void> _autoRequestPermissionsOnFirstRun() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final hasRequestedBasic = prefs.getBool(_notificationPermissionRequestedKey) ?? false;
-      final hasRequestedExact = prefs.getBool(_exactAlarmPermissionRequestedKey) ?? false;
-      
-      // Check current permission status
-      final hasBasicPermissions = await _hasBasicNotificationPermissions();
-      final hasExactPermissions = await _hasExactAlarmPermissions();
-      
-      await _logger.logInfo('Permission status - Basic: $hasBasicPermissions, Exact: $hasExactPermissions');
-      await _logger.logInfo('Previously requested - Basic: $hasRequestedBasic, Exact: $hasRequestedExact');
-      
-      // Request basic notifications first if not granted and not previously requested
-      if (!hasBasicPermissions && !hasRequestedBasic) {
-        await _logger.logInfo('Auto-requesting basic notification permissions on first run');
-        await _requestBasicNotificationPermissions();
-        await prefs.setBool(_notificationPermissionRequestedKey, true);
-      }
-      
-      // Then request exact alarm permissions if basic are granted but exact are not
-      if (hasBasicPermissions && !hasExactPermissions && !hasRequestedExact) {
-        await _logger.logInfo('Auto-requesting exact alarm permissions');
-        await _requestExactAlarmPermissions();
-        await prefs.setBool(_exactAlarmPermissionRequestedKey, true);
-      }
-      
-    } catch (e, stackTrace) {
-      await _logger.logError('Error in auto permission request', e, stackTrace);
-    }
-  }
-
-  Future<bool> _hasBasicNotificationPermissions() async {
-    if (Platform.isAndroid) {
-      final androidPlugin = flutterLocalNotificationsPlugin
-          .resolvePlatformSpecificImplementation<flutter_notifications.AndroidFlutterLocalNotificationsPlugin>();
-      if (androidPlugin != null) {
-        return await androidPlugin.areNotificationsEnabled() ?? false;
-      }
-    } else if (Platform.isIOS) {
-      // For iOS, we can check if permissions were granted before
-      // This is a simplified check - you might want to implement a more robust solution
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getBool('ios_notifications_granted') ?? false;
-    }
-    return false;
-  }
-
-  Future<bool> _hasExactAlarmPermissions() async {
-    if (Platform.isAndroid) {
-      final androidPlugin = flutterLocalNotificationsPlugin
-          .resolvePlatformSpecificImplementation<flutter_notifications.AndroidFlutterLocalNotificationsPlugin>();
-      if (androidPlugin != null) {
-        return await androidPlugin.canScheduleExactNotifications() ?? false;
-      }
-    }
-    return true; // iOS doesn't need exact alarm permissions
-  }
-
-  Future<void> _requestBasicNotificationPermissions() async {
-    try {
-      if (Platform.isAndroid) {
-        // Android handles this automatically when the app tries to show notifications
-        await _logger.logInfo('Basic notification permissions will be requested when showing first notification');
-      } else if (Platform.isIOS) {
-        final iosPlugin = flutterLocalNotificationsPlugin
-            .resolvePlatformSpecificImplementation<flutter_notifications.IOSFlutterLocalNotificationsPlugin>();
-        if (iosPlugin != null) {
-          final granted = await iosPlugin.requestPermissions(
-            alert: true,
-            badge: true,
-            sound: true,
-          );
-          
-          // Store the result for future reference
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setBool('ios_notifications_granted', granted ?? false);
-          
-          await _logger.logInfo('iOS basic notification permission granted: $granted');
-        }
-      }
-    } catch (e, stackTrace) {
-      await _logger.logError('Error requesting basic notification permissions', e, stackTrace);
-    }
-  }
-
-  Future<void> _requestExactAlarmPermissions() async {
-    try {
-      if (Platform.isAndroid) {
-        final androidPlugin = flutterLocalNotificationsPlugin
-            .resolvePlatformSpecificImplementation<flutter_notifications.AndroidFlutterLocalNotificationsPlugin>();
-        if (androidPlugin != null) {
-          final granted = await androidPlugin.requestExactAlarmsPermission();
-          await _logger.logInfo('Android exact alarm permission granted: $granted');
-        }
-      }
-    } catch (e, stackTrace) {
-      await _logger.logError('Error requesting exact alarm permissions', e, stackTrace);
     }
   }
 
@@ -192,14 +86,6 @@ class NotificationService {
     );
   }
 
-  // Keep the existing manual permission request methods for settings screen
-  Future<void> requestNotificationPermission() async {
-    await _permissionHandler.requestPermission(
-      _isFirstRun,
-      _markPermissionRequested,
-    );
-  }
-
   Future<bool> _isFirstRun() async {
     final prefs = await SharedPreferences.getInstance();
     return !prefs.containsKey(_notificationPermissionRequestedKey);
@@ -208,6 +94,13 @@ class NotificationService {
   Future<void> _markPermissionRequested() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_notificationPermissionRequestedKey, true);
+  }
+
+  Future<void> requestNotificationPermission() async {
+    await _permissionHandler.requestPermission(
+      _isFirstRun,
+      _markPermissionRequested,
+    );
   }
 
   Future<bool> areNotificationPermissionsGranted() async {
@@ -222,25 +115,9 @@ class NotificationService {
     await _permissionHandler.requestPermissions();
   }
 
-  // Method to manually trigger permission requests (for settings or when user denies initially)
-  Future<void> requestAllPermissions() async {
-    try {
-      await _logger.logInfo('Manually requesting all notification permissions');
-      
-      // Request basic permissions first
-      await _requestBasicNotificationPermissions();
-      
-      // Then request exact alarm permissions
-      await _requestExactAlarmPermissions();
-      
-      // Mark as requested
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(_notificationPermissionRequestedKey, true);
-      await prefs.setBool(_exactAlarmPermissionRequestedKey, true);
-      
-    } catch (e, stackTrace) {
-      await _logger.logError('Error requesting all permissions manually', e, stackTrace);
-    }
+  /// New method to open app settings directly
+  Future<void> openAppSettings() async {
+    await _permissionHandler.openAppSettings();
   }
 
   Future<void> scheduleTaskNotification(
@@ -286,23 +163,6 @@ class NotificationService {
       }
           
       await _logger.logInfo('Notification channel created for Android');
-    }
-  }
-
-  // Method to check and show permission dialog if needed (call this from HomeScreen)
-  Future<void> checkAndRequestPermissionsIfNeeded(mat.BuildContext context) async {
-    try {
-      final hasBasicPermissions = await _hasBasicNotificationPermissions();
-      final hasExactPermissions = await _hasExactAlarmPermissions();
-      
-      if (!hasBasicPermissions || !hasExactPermissions) {
-        await _logger.logInfo('Missing permissions detected, showing dialog');
-        if (context.mounted) {
-          await showNotificationPermissionDialog(context);
-        }
-      }
-    } catch (e, stackTrace) {
-      await _logger.logError('Error checking permissions', e, stackTrace);
     }
   }
 }

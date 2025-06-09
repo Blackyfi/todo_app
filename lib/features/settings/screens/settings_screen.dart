@@ -6,9 +6,8 @@ import 'package:todo_app/features/settings/screens/log_viewer_screen.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:todo_app/core/settings/models/auto_delete_settings.dart';
 import 'package:todo_app/core/settings/repository/auto_delete_settings_repository.dart';
-import 'package:flutter/services.dart'; // This includes FilteringTextInputFormatter
-import 'package:todo_app/core/notifications/notification_service.dart' as notification_service;
-import 'package:flutter_local_notifications/flutter_local_notifications.dart' as flutter_notifications;
+import 'package:flutter/services.dart';
+import 'package:todo_app/core/notifications/notification_service.dart'; // Add this import
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -25,6 +24,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _isLoadingAutoDeleteSettings = true;
   final _autoDeleteSettingsRepository = AutoDeleteSettingsRepository();
   final _autoDeleteDaysController = TextEditingController();
+  final _notificationService = NotificationService(); // Add this
 
   @override
   void initState() {
@@ -102,88 +102,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  Future<void> _testNotification() async {
-    try {
-      final notificationService = notification_service.NotificationService();
-      
-      // Show a simple test notification immediately
-      await notificationService.flutterLocalNotificationsPlugin.show(
-        9999,
-        'Test Notification',
-        'This is a test notification from the settings screen!',
-        const flutter_notifications.NotificationDetails(
-          android: flutter_notifications.AndroidNotificationDetails(
-            'todo_app_channel',
-            'Task Reminders',
-            channelDescription: 'Notifications for task reminders',
-            importance: flutter_notifications.Importance.high,
-            priority: flutter_notifications.Priority.high,
-          ),
-          iOS: flutter_notifications.DarwinNotificationDetails(),
-        ),
-      );
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Test notification sent')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error sending test notification: $e')),
-        );
-      }
-    }
-  }
-
-  Future<void> _checkPendingNotifications() async {
-    try {
-      final notificationService = notification_service.NotificationService();
-      
-      // Get pending notifications
-      final pending = await notificationService.flutterLocalNotificationsPlugin.pendingNotificationRequests();
-      
-      if (mounted) {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: Text('Pending Notifications (${pending.length})'),
-            content: SizedBox(
-              width: double.maxFinite,
-              height: 300,
-              child: pending.isEmpty
-                  ? const Center(child: Text('No pending notifications'))
-                  : ListView.builder(
-                      itemCount: pending.length,
-                      itemBuilder: (context, index) {
-                        final notification = pending[index];
-                        return ListTile(
-                          title: Text(notification.title ?? 'No title'),
-                          subtitle: Text('ID: ${notification.id}'),
-                          trailing: Text(notification.body ?? 'No body'),
-                        );
-                      },
-                    ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Close'),
-              ),
-            ],
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error checking pending notifications: $e')),
-        );
-      }
-    }
-  }
-
   @override
   void dispose() {
     _autoDeleteDaysController.dispose();
@@ -223,6 +141,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ],
                 ),
                 _buildSection(
+                  title: 'Notifications', // Add this section
+                  children: [
+                    _buildNotificationSettings(),
+                  ],
+                ),
+                _buildSection(
                   title: 'Debugging',
                   children: [
                     ListTile(
@@ -236,49 +160,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             builder: (_) => const LogViewerScreen(),
                           ),
                         );
-                      },
-                    ),
-                    ListTile(
-                      leading: const Icon(Icons.notifications_active),
-                      title: const Text('Test Notification'),
-                      subtitle: const Text('Send a test notification immediately'),
-                      trailing: const Icon(Icons.send),
-                      onTap: _testNotification,
-                    ),
-                    ListTile(
-                      leading: const Icon(Icons.schedule),
-                      title: const Text('Check Pending Notifications'),
-                      subtitle: const Text('View scheduled notifications'),
-                      trailing: const Icon(Icons.list),
-                      onTap: _checkPendingNotifications,
-                    ),
-                    ListTile(
-                      leading: const Icon(Icons.notifications),
-                      title: const Text('Request Notification Permissions'),
-                      subtitle: const Text('Manually request notification and exact alarm permissions'),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () async {
-                        final scaffoldMessenger = ScaffoldMessenger.of(context);
-                        try {
-                          final notificationService = notification_service.NotificationService();
-                          await notificationService.requestAllPermissions();
-                          
-                          if (mounted) {
-                            scaffoldMessenger.showSnackBar(
-                              const SnackBar(
-                                content: Text('Permission request completed. Check your notification settings.'),
-                              ),
-                            );
-                          }
-                        } catch (e) {
-                          if (mounted) {
-                            scaffoldMessenger.showSnackBar(
-                              const SnackBar(
-                                content: Text('Error requesting permissions'),
-                              ),
-                            );
-                          }
-                        }
                       },
                     ),
                   ],
@@ -374,6 +255,50 @@ class _SettingsScreenState extends State<SettingsScreen> {
           value: TimeFormat.american,
           groupValue: provider.timeFormat,
           onChanged: (value) => provider.setTimeFormat(value!),
+        ),
+      ],
+    );
+  }
+
+  // Add this new method
+  Widget _buildNotificationSettings() {
+    return Column(
+      children: [
+        ListTile(
+          leading: const Icon(Icons.notifications),
+          title: const Text('Notification Settings'),
+          subtitle: const Text('Manage app notification permissions'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () async {
+            await _notificationService.openAppSettings();
+          },
+        ),
+        FutureBuilder<bool>(
+          future: _notificationService.areNotificationPermissionsGranted(),
+          builder: (context, snapshot) {
+            final isEnabled = snapshot.data ?? false;
+            return ListTile(
+              leading: Icon(
+                isEnabled ? Icons.notifications_active : Icons.notifications_off,
+                color: isEnabled ? Colors.green : Colors.red,
+              ),
+              title: Text('Notifications ${isEnabled ? 'Enabled' : 'Disabled'}'),
+              subtitle: Text(
+                isEnabled 
+                  ? 'You will receive task reminders'
+                  : 'Enable notifications to receive task reminders',
+              ),
+              trailing: !isEnabled 
+                ? TextButton(
+                    onPressed: () async {
+                      await _notificationService.showNotificationPermissionDialog(context);
+                      setState(() {}); // Refresh the UI
+                    },
+                    child: const Text('Enable'),
+                  )
+                : null,
+            );
+          },
         ),
       ],
     );
