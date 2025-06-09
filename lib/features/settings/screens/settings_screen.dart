@@ -8,6 +8,7 @@ import 'package:todo_app/core/settings/models/auto_delete_settings.dart';
 import 'package:todo_app/core/settings/repository/auto_delete_settings_repository.dart';
 import 'package:flutter/services.dart';
 import 'package:todo_app/core/notifications/notification_service.dart'; // Add this import
+import 'package:todo_app/features/widgets/screens/widget_management_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -116,6 +117,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     // and notify the app to change theme
   }
 
+  Future<void> _openWidgetManagement() async {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const WidgetManagementScreen(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final timeFormatProvider = Provider.of<TimeFormatProvider>(context);
@@ -144,6 +153,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   title: 'Notifications', // Add this section
                   children: [
                     _buildNotificationSettings(),
+                  ],
+                ),
+                _buildSection(
+                  title: 'Home Screen Integration',
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.widgets),
+                      title: const Text('Create Home Integrated Task Screen'),
+                      subtitle: const Text('Create widgets to display tasks on your home screen'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: _openWidgetManagement,
+                    ),
                   ],
                 ),
                 _buildSection(
