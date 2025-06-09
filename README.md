@@ -109,7 +109,8 @@ flutter upgrade
 flutter doctor
 flutter pub get
 flutter analyze
-flutter build windows --release
+flutter build apk --release
+
 ```
 
 ## License
