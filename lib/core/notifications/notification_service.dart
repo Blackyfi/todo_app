@@ -297,7 +297,9 @@ class NotificationService {
       
       if (!hasBasicPermissions || !hasExactPermissions) {
         await _logger.logInfo('Missing permissions detected, showing dialog');
-        await showNotificationPermissionDialog(context);
+        if (context.mounted) {
+          await showNotificationPermissionDialog(context);
+        }
       }
     } catch (e, stackTrace) {
       await _logger.logError('Error checking permissions', e, stackTrace);

@@ -258,12 +258,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       subtitle: const Text('Manually request notification and exact alarm permissions'),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () async {
+                        final scaffoldMessenger = ScaffoldMessenger.of(context);
                         try {
                           final notificationService = notification_service.NotificationService();
                           await notificationService.requestAllPermissions();
                           
                           if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            scaffoldMessenger.showSnackBar(
                               const SnackBar(
                                 content: Text('Permission request completed. Check your notification settings.'),
                               ),
@@ -271,7 +272,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           }
                         } catch (e) {
                           if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            scaffoldMessenger.showSnackBar(
                               const SnackBar(
                                 content: Text('Error requesting permissions'),
                               ),
