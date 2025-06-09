@@ -1,4 +1,3 @@
-// lib/main.dart
 import 'dart:async';
 import 'package:flutter/material.dart' as mat;
 import 'package:flutter/services.dart' as services;
@@ -7,32 +6,32 @@ import 'package:todo_app/app.dart' as app;
 import 'package:todo_app/core/logger/logger_service.dart';
 import 'package:todo_app/core/database/database_config.dart';
 import 'package:todo_app/core/settings/services/auto_delete_service.dart';
+import 'package:todo_app/core/widgets/services/widget_service.dart';
+import 'package:todo_app/core/widgets/repository/widget_config_repository.dart';
+import 'package:todo_app/common/constants/app_constants.dart' as app_constants;
+
+// Global navigator key to handle navigation from widget actions
+final mat.GlobalKey<mat.NavigatorState> navigatorKey = mat.GlobalKey<mat.NavigatorState>();
 
 void main() async {
-  // Capture Flutter errors
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.presentError(details);
     _reportError(details.exception, details.stack);
   };
   
-  // Capture zone errors
   runZonedGuarded<Future<void>>(() async {
     mat.WidgetsFlutterBinding.ensureInitialized();
     
-    // Initialize logger
     final logger = LoggerService();
     await logger.init();
     
-    // Initialize database factory for the appropriate platform
     await DatabaseConfig.initDatabaseFactory();
     
-    // Set preferred orientations
     await services.SystemChrome.setPreferredOrientations([
       services.DeviceOrientation.portraitUp,
       services.DeviceOrientation.portraitDown,
     ]);
     
-    // Set system UI overlay style
     services.SystemChrome.setSystemUIOverlayStyle(
       const services.SystemUiOverlayStyle(
         statusBarColor: mat.Colors.transparent,
@@ -41,30 +40,70 @@ void main() async {
       ),
     );
     
-    // Process auto-delete for completed tasks
     final autoDeleteService = AutoDeleteService();
     await autoDeleteService.processCompletedTasks();
     
-    mat.runApp(const app.TodoApp());
+    // Initialize widget service and set up widget action handling
+    final widgetService = WidgetService();
+    await widgetService.init();
+    _setupWidgetActionHandling(widgetService, logger);
+    
+    mat.runApp(app.TodoApp(navigatorKey: navigatorKey));
   }, (error, stackTrace) {
     _reportError(error, stackTrace);
   });
 }
 
+void _setupWidgetActionHandling(WidgetService widgetService, LoggerService logger) {
+  const platform = services.MethodChannel('com.example.todo_app/widget');
+  
+  platform.setMethodCallHandler((services.MethodCall call) async {
+    if (call.method == 'handleWidgetAction') {
+      final String action = call.arguments['action'];
+      final Map<dynamic, dynamic> data = call.arguments['data'] ?? {};
+      
+      await logger.logInfo('Received widget action: $action with data: $data');
+      
+      switch (action) {
+        case 'add_task':
+          // Navigate to add task screen
+          navigatorKey.currentState?.pushNamed(app_constants.AppConstants.addTaskRoute);
+          break;
+          
+        case 'widget_settings':
+          final int? widgetId = data['widgetId'];
+          if (widgetId != null) {
+            try {
+              final widgetConfigRepository = WidgetConfigRepository();
+              final widgetConfig = await widgetConfigRepository.getWidgetConfig(widgetId);
+              navigatorKey.currentState?.pushNamed('/widget-settings', arguments: widgetConfig);
+            } catch (e) {
+              await logger.logError('Error loading widget config for settings', e);
+            }
+          }
+          break;
+          
+        case 'sync_widget':
+        case 'toggle_task':
+          // Handle these actions through the widget service
+          await widgetService.handleWidgetAction(action, data);
+          break;
+      }
+    }
+  });
+}
+
 void _reportError(dynamic error, StackTrace? stackTrace) async {
-  // Create a new logger each time to ensure it's initialized
   final logger = LoggerService();
   try {
     await logger.init();
     await logger.logError('Uncaught exception', error, stackTrace);
     
-    // Print to console as well for immediate debugging
     debugPrint('ERROR: $error');
     if (stackTrace != null) {
       debugPrint('STACK TRACE: $stackTrace');
     }
   } catch (logError) {
-    // If logging fails, at least print to console
     debugPrint('Failed to log error: $logError');
     debugPrint('Original error: $error');
     if (stackTrace != null) {

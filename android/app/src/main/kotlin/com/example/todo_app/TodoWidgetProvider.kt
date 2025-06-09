@@ -38,7 +38,7 @@ class TodoWidgetProvider : AppWidgetProvider() {
                 views.setTextViewText(R.id.task_count, "$taskCount ${if (taskCount == 1) "task" else "tasks"}")
                 
                 // Update task list
-                updateTaskList(views, tasks, config)
+                updateTaskList(views, tasks, config, context, appWidgetId)
             } else {
                 // Default state
                 views.setTextViewText(R.id.widget_title, "Todo App")
@@ -49,7 +49,7 @@ class TodoWidgetProvider : AppWidgetProvider() {
             views.setTextViewText(R.id.task_count, "Error loading tasks")
         }
         
-        // Set up button click handlers (but don't set default click handlers)
+        // Set up button click handlers
         setupButtonClickHandlers(context, views, appWidgetId)
         
         appWidgetManager.updateAppWidget(appWidgetId, views)
@@ -64,26 +64,26 @@ class TodoWidgetProvider : AppWidgetProvider() {
         }
         val addTaskPendingIntent = PendingIntent.getActivity(
             context, 
-            appWidgetId * 100 + 1, // Unique request code
+            appWidgetId * 100 + 1,
             addTaskIntent, 
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         views.setOnClickPendingIntent(R.id.add_task_button, addTaskPendingIntent)
         
-        // Refresh button - triggers widget update
+        // Refresh button - syncs data and updates widget
         val refreshIntent = Intent(context, TodoWidgetProvider::class.java).apply {
-            action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
-            putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, intArrayOf(appWidgetId))
+            action = "REFRESH_WIDGET"
+            putExtra("widget_id", appWidgetId)
         }
         val refreshPendingIntent = PendingIntent.getBroadcast(
             context, 
-            appWidgetId * 100 + 2, // Unique request code
+            appWidgetId * 100 + 2,
             refreshIntent, 
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         views.setOnClickPendingIntent(R.id.refresh_button, refreshPendingIntent)
         
-        // Settings button - opens the app to widget settings
+        // Settings button - opens the app to widget settings for this specific widget
         val settingsIntent = Intent(context, MainActivity::class.java).apply {
             action = "WIDGET_SETTINGS"
             putExtra("widget_id", appWidgetId)
@@ -91,17 +91,14 @@ class TodoWidgetProvider : AppWidgetProvider() {
         }
         val settingsPendingIntent = PendingIntent.getActivity(
             context, 
-            appWidgetId * 100 + 3, // Unique request code
+            appWidgetId * 100 + 3,
             settingsIntent, 
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         views.setOnClickPendingIntent(R.id.settings_button, settingsPendingIntent)
-        
-        // IMPORTANT: Don't set a default click handler for the entire widget
-        // This prevents automatic app launching when the widget is added
     }
     
-    private fun updateTaskList(views: RemoteViews, tasks: JSONArray, config: JSONObject) {
+    private fun updateTaskList(views: RemoteViews, tasks: JSONArray, config: JSONObject, context: Context, appWidgetId: Int) {
         // Clear existing task views first
         views.removeAllViews(R.id.task_list)
         
@@ -109,6 +106,7 @@ class TodoWidgetProvider : AppWidgetProvider() {
         
         for (i in 0 until maxTasks) {
             val task = tasks.getJSONObject(i)
+            val taskId = task.getInt("id")
             val taskTitle = task.getString("title")
             val isCompleted = task.getBoolean("isCompleted")
             
@@ -118,13 +116,60 @@ class TodoWidgetProvider : AppWidgetProvider() {
             // Set completion status
             if (isCompleted) {
                 taskView.setTextViewText(R.id.task_checkbox, "✓")
-                taskView.setTextColor(R.id.task_title, 0xFF999999.toInt()) // Gray out completed tasks
+                taskView.setTextColor(R.id.task_title, 0xFF999999.toInt())
             } else {
                 taskView.setTextViewText(R.id.task_checkbox, "○")
-                taskView.setTextColor(R.id.task_title, 0xFF000000.toInt()) // Black for active tasks
+                taskView.setTextColor(R.id.task_title, 0xFF000000.toInt())
             }
             
+            // Set up task toggle click handler
+            val toggleIntent = Intent(context, TodoWidgetProvider::class.java).apply {
+                action = "TOGGLE_TASK"
+                putExtra("task_id", taskId)
+                putExtra("widget_id", appWidgetId)
+            }
+            val togglePendingIntent = PendingIntent.getBroadcast(
+                context,
+                taskId * 1000 + appWidgetId,
+                toggleIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            taskView.setOnClickPendingIntent(R.id.task_item_container, togglePendingIntent)
+            
             views.addView(R.id.task_list, taskView)
+        }
+    }
+    
+    override fun onReceive(context: Context, intent: Intent) {
+        super.onReceive(context, intent)
+        
+        when (intent.action) {
+            "REFRESH_WIDGET" -> {
+                val widgetId = intent.getIntExtra("widget_id", -1)
+                if (widgetId != -1) {
+                    // Trigger sync in Flutter app
+                    val syncIntent = Intent(context, MainActivity::class.java).apply {
+                        action = "SYNC_WIDGET_DATA"
+                        putExtra("widget_id", widgetId)
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    }
+                    context.startActivity(syncIntent)
+                }
+            }
+            "TOGGLE_TASK" -> {
+                val taskId = intent.getIntExtra("task_id", -1)
+                val widgetId = intent.getIntExtra("widget_id", -1)
+                if (taskId != -1 && widgetId != -1) {
+                    // Trigger task toggle in Flutter app
+                    val toggleIntent = Intent(context, MainActivity::class.java).apply {
+                        action = "TOGGLE_TASK"
+                        putExtra("task_id", taskId)
+                        putExtra("widget_id", widgetId)
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    }
+                    context.startActivity(toggleIntent)
+                }
+            }
         }
     }
 }

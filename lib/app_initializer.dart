@@ -12,7 +12,6 @@ class AppInitializer {
     TimeFormatProvider timeFormatProvider,
   ) async {
     try {
-      // Prevent duplicate initialization
       if (_isInitialized) {
         await loggerService.logInfo('Application already initialized, skipping');
         return;
@@ -38,20 +37,16 @@ class AppInitializer {
   ) async {
     await loggerService.logInfo('Application initialization started');
     
-    // Initialize notification service (this will check if already initialized)
     await notificationService.init();
     await loggerService.logInfo('Notification service initialized');
     
-    // Initialize time format provider
     await timeFormatProvider.init();
     await loggerService.logInfo('Time format provider initialized');
     
-    // Initialize widget service
     final widgetService = WidgetService();
     await widgetService.init();
     await loggerService.logInfo('Widget service initialized');
     
-    // Request notification permissions after initialization
     await notificationService.requestNotificationPermission();
     await loggerService.logInfo('Notification permissions requested');
     
