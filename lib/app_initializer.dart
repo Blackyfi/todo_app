@@ -45,6 +45,10 @@ class AppInitializer {
     await timeFormatProvider.init();
     await loggerService.logInfo('Time format provider initialized');
     
+    // Request notification permissions after initialization
+    await notificationService.requestNotificationPermission();
+    await loggerService.logInfo('Notification permissions requested');
+    
     await loggerService.logInfo('Application initialized successfully');
   }
 }
