@@ -98,6 +98,38 @@ class _WidgetPreviewState extends State<WidgetPreview> {
     }
   }
 
+  void _onAddTaskPressed() {
+    // In a real widget, this would open the add task screen
+    // For now, we'll just show a message since this is a preview
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Add task button pressed - would open add task screen'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _onRefreshPressed() {
+    // Refresh the widget data
+    _loadPreviewData();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Widget refreshed'),
+        duration: Duration(seconds: 1),
+      ),
+    );
+  }
+
+  void _onSettingsPressed() {
+    // In a real widget, this would open widget settings
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Widget settings button pressed - would open widget settings'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = widget.config.size.size;
@@ -120,53 +152,126 @@ class _WidgetPreviewState extends State<WidgetPreview> {
           ),
         ],
       ),
-      child: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _buildWidgetContent(),
-    );
-  }
-
-  Widget _buildWidgetContent() {
-    return Padding(
-      padding: const EdgeInsets.all(12),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeader(),
-          const SizedBox(height: 8),
+          _buildHeaderBar(),
           Expanded(
-            child: _tasks.isEmpty
-                ? _buildEmptyState()
-                : _buildTaskList(),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _buildWidgetContent(),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeaderBar() {
+    return Container(
+      height: 36,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primaryContainer.withAlpha(128),
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(14),
+          topRight: Radius.circular(14),
+        ),
+      ),
+      child: Row(
+        children: [
+          // Widget name on the left
+          Expanded(
+            child: Text(
+              widget.config.name,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onPrimaryContainer,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          
+          // Buttons on the right (in order: Add Task, Refresh, Settings)
+          _buildHeaderButton(
+            icon: Icons.add,
+            onPressed: _onAddTaskPressed,
+            tooltip: 'Add Task',
+          ),
+          const SizedBox(width: 4),
+          _buildHeaderButton(
+            icon: Icons.refresh,
+            onPressed: _onRefreshPressed,
+            tooltip: 'Refresh Widget',
+          ),
+          const SizedBox(width: 4),
+          _buildHeaderButton(
+            icon: Icons.settings,
+            onPressed: _onSettingsPressed,
+            tooltip: 'Widget Settings',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeaderButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+    required String tooltip,
+  }) {
+    return SizedBox(
+      width: 24,
+      height: 24,
+      child: IconButton(
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(),
+        icon: Icon(
+          icon,
+          size: 14,
+          color: Theme.of(context).colorScheme.onPrimaryContainer.withAlpha(204),
+        ),
+        onPressed: onPressed,
+        tooltip: tooltip,
+        style: IconButton.styleFrom(
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          minimumSize: const Size(24, 24),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWidgetContent() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildTaskCounter(),
+        const SizedBox(height: 8),
+        Expanded(
+          child: _tasks.isEmpty
+              ? _buildEmptyState()
+              : _buildTaskList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTaskCounter() {
     return Row(
       children: [
         Icon(
           Icons.task_alt,
           color: Theme.of(context).colorScheme.primary,
-          size: 20,
+          size: 16,
         ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            widget.config.name,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
+        const SizedBox(width: 6),
         Text(
-          '${_tasks.length}',
+          '${_tasks.length} ${_tasks.length == 1 ? 'task' : 'tasks'}',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: Theme.of(context).colorScheme.onSurface.withAlpha(153),
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],

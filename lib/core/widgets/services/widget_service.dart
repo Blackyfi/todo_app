@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:todo_app/core/widgets/models/widget_config.dart';
 import 'package:todo_app/core/widgets/repository/widget_config_repository.dart';
@@ -20,6 +20,7 @@ class WidgetService {
   final LoggerService _logger = LoggerService();
 
   bool _isInitialized = false;
+  static const platform = MethodChannel('com.example.todo_app/widget');
 
   Future<void> init() async {
     if (_isInitialized) {
@@ -29,7 +30,18 @@ class WidgetService {
 
     try {
       await _logger.logInfo('Initializing WidgetService');
-      await HomeWidget.setAppGroupId('group.com.example.todo_app');
+      
+      // Set up method channel handler for widget actions
+      platform.setMethodCallHandler(_handleMethodCall);
+      
+      // Initialize home widget without app group for Android
+      try {
+        await HomeWidget.setAppGroupId('group.com.example.todo_app');
+      } catch (e) {
+        // Ignore app group errors on Android
+        await _logger.logWarning('App group not supported on this platform: $e');
+      }
+      
       _isInitialized = true;
       await _logger.logInfo('WidgetService initialized successfully');
     } catch (e, stackTrace) {
@@ -38,10 +50,25 @@ class WidgetService {
     }
   }
 
+  Future<dynamic> _handleMethodCall(MethodCall call) async {
+    switch (call.method) {
+      case 'handleWidgetAction':
+        final String action = call.arguments['action'];
+        final int widgetId = call.arguments['widgetId'];
+        await handleWidgetAction(action, widgetId);
+        break;
+      default:
+        throw PlatformException(
+          code: 'UNIMPLEMENTED',
+          details: 'Method ${call.method} not implemented',
+        );
+    }
+  }
+
   Future<bool> isWidgetSupported() async {
     try {
       // Check if the platform supports widgets
-      final isSupported = await HomeWidget.getWidgetData('test_key') != null || true;
+      const isSupported = true; // Assume supported for now
       await _logger.logInfo('Widget support check: $isSupported');
       return isSupported;
     } catch (e, stackTrace) {
@@ -64,21 +91,38 @@ class WidgetService {
       );
       final widgetId = await _widgetConfigRepository.insertWidgetConfig(configWithTimestamp);
       
-      // Update widget data
-      await updateWidget(widgetId);
+      // Prepare and send initial data to widget (but don't update/trigger yet)
+      await _prepareWidgetData(widgetId);
       
-      // Register the widget with the system
-      await HomeWidget.updateWidget(
-        name: 'TodoWidgetProvider',
-        androidName: 'TodoWidgetProvider',
-        iOSName: 'TodoWidget',
-        qualifiedAndroidName: 'com.example.todo_app.TodoWidgetProvider',
-      );
-      
-      await _logger.logInfo('Widget created successfully: ID=$widgetId');
+      await _logger.logInfo('Widget created successfully: ID=$widgetId (data prepared, update will happen when widget is added to home screen)');
     } catch (e, stackTrace) {
       await _logger.logError('Error creating widget', e, stackTrace);
       rethrow;
+    }
+  }
+
+  Future<void> _prepareWidgetData(int widgetId) async {
+    try {
+      final config = await _widgetConfigRepository.getWidgetConfig(widgetId);
+      if (config == null) {
+        await _logger.logWarning('Widget config not found for data preparation: ID=$widgetId');
+        return;
+      }
+
+      // Get tasks based on configuration
+      final tasks = await _getTasksForWidget(config);
+      final categories = await _categoryRepository.getAllCategories();
+      
+      // Prepare widget data
+      final widgetData = await _buildWidgetData(config, tasks, categories);
+      
+      // Send data to widget without triggering update
+      await HomeWidget.saveWidgetData<String>('widget_data', jsonEncode(widgetData));
+      await HomeWidget.saveWidgetData<String>('widget_config', jsonEncode(config.toMap()));
+      
+      await _logger.logInfo('Widget data prepared successfully: ID=$widgetId');
+    } catch (e, stackTrace) {
+      await _logger.logError('Error preparing widget data', e, stackTrace);
     }
   }
 
@@ -90,24 +134,10 @@ class WidgetService {
     try {
       await _logger.logInfo('Updating widget: ID=$widgetId');
       
-      final config = await _widgetConfigRepository.getWidgetConfig(widgetId);
-      if (config == null) {
-        await _logger.logWarning('Widget config not found for update: ID=$widgetId');
-        return;
-      }
-
-      // Get tasks based on configuration
-      final tasks = await _getTasksForWidget(config);
-      final categories = await _categoryRepository.getAllCategories();
+      // Prepare the data first
+      await _prepareWidgetData(widgetId);
       
-      // Prepare widget data
-      final widgetData = await _prepareWidgetData(config, tasks, categories);
-      
-      // Send data to widget
-      await HomeWidget.saveWidgetData<String>('widget_data', jsonEncode(widgetData));
-      await HomeWidget.saveWidgetData<String>('widget_config', jsonEncode(config.toMap()));
-      
-      // Update the widget
+      // Now trigger the actual widget update
       await HomeWidget.updateWidget(
         name: 'TodoWidgetProvider',
         androidName: 'TodoWidgetProvider',
@@ -127,11 +157,25 @@ class WidgetService {
       await _logger.logInfo('Updating all widgets');
       final configs = await _widgetConfigRepository.getAllWidgetConfigs();
       
+      if (configs.isEmpty) {
+        await _logger.logInfo('No widgets to update');
+        return;
+      }
+      
+      // Prepare data for all widgets
       for (final config in configs) {
         if (config.id != null) {
-          await updateWidget(config.id!);
+          await _prepareWidgetData(config.id!);
         }
       }
+      
+      // Trigger single update for all widgets
+      await HomeWidget.updateWidget(
+        name: 'TodoWidgetProvider',
+        androidName: 'TodoWidgetProvider',
+        iOSName: 'TodoWidget',
+        qualifiedAndroidName: 'com.example.todo_app.TodoWidgetProvider',
+      );
       
       await _logger.logInfo('All widgets updated: Count=${configs.length}');
     } catch (e, stackTrace) {
@@ -212,7 +256,7 @@ class WidgetService {
     return tasks;
   }
 
-  Future<Map<String, dynamic>> _prepareWidgetData(
+  Future<Map<String, dynamic>> _buildWidgetData(
     WidgetConfig config,
     List<task_model.Task> tasks,
     List<category_model.Category> categories,
@@ -250,5 +294,33 @@ class WidgetService {
 
   Future<List<WidgetConfig>> getAllWidgetConfigs() async {
     return await _widgetConfigRepository.getAllWidgetConfigs();
+  }
+
+  // Method to handle widget button presses
+  Future<void> handleWidgetAction(String action, int? widgetId) async {
+    try {
+      await _logger.logInfo('Handling widget action: $action for widget: $widgetId');
+      
+      switch (action) {
+        case 'refresh':
+          if (widgetId != null) {
+            await updateWidget(widgetId);
+          } else {
+            await updateAllWidgets();
+          }
+          break;
+        case 'add_task':
+          // This would typically open the add task screen
+          // Implementation depends on how you want to handle navigation from widgets
+          await _logger.logInfo('Add task action triggered from widget');
+          break;
+        case 'widget_settings':
+          // This would typically open widget settings
+          await _logger.logInfo('Widget settings action triggered from widget');
+          break;
+      }
+    } catch (e, stackTrace) {
+      await _logger.logError('Error handling widget action', e, stackTrace);
+    }
   }
 }

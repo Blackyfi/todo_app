@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/widget_background"
+    android:padding="8dp"
+    android:clickable="false"
+    android:focusable="false">
+
+    <!-- Header Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="@drawable/widget_header_background"
+        android:padding="8dp"
+        android:gravity="center_vertical"
+        android:clickable="false"
+        android:focusable="false">
+
+        <!-- Widget Title -->
+        <TextView
+            android:id="@+id/widget_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Todo App"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="#FF000000"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:clickable="false"
+            android:focusable="false" />
+
+        <!-- Action Buttons -->
+        <ImageButton
+            android:id="@+id/add_task_button"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginEnd="4dp"
+            android:background="@drawable/widget_button_background"
+            android:src="@drawable/ic_add"
+            android:scaleType="fitCenter"
+            android:contentDescription="Add Task"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <ImageButton
+            android:id="@+id/refresh_button"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginEnd="4dp"
+            android:background="@drawable/widget_button_background"
+            android:src="@drawable/ic_refresh"
+            android:scaleType="fitCenter"
+            android:contentDescription="Refresh"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <ImageButton
+            android:id="@+id/settings_button"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:background="@drawable/widget_button_background"
+            android:src="@drawable/ic_settings"
+            android:scaleType="fitCenter"
+            android:contentDescription="Settings"
+            android:clickable="true"
+            android:focusable="true" />
+
+    </LinearLayout>
+
+    <!-- Content Area -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="8dp"
+        android:clickable="false"
+        android:focusable="false">
+
+        <!-- Task Counter -->
+        <TextView
+            android:id="@+id/task_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Loading..."
+            android:textSize="12sp"
+            android:textColor="#FF666666"
+            android:layout_marginBottom="8dp"
+            android:clickable="false"
+            android:focusable="false" />
+
+        <!-- Task List -->
+        <LinearLayout
+            android:id="@+id/task_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:clickable="false"
+            android:focusable="false" />
+
+    </LinearLayout>
+
+</LinearLayout>
