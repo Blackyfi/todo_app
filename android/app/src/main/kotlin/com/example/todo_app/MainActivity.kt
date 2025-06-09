@@ -30,14 +30,22 @@ class MainActivity : FlutterActivity() {
                     val widgetId = intent.getIntExtra("widget_id", -1)
                     sendToFlutter("widget_settings", mapOf("widgetId" to widgetId))
                 }
-                "SYNC_WIDGET_DATA" -> {
+                "BACKGROUND_SYNC" -> {
                     val widgetId = intent.getIntExtra("widget_id", -1)
-                    sendToFlutter("sync_widget", mapOf("widgetId" to widgetId))
+                    sendToFlutter("background_sync", mapOf("widgetId" to widgetId))
+                    // Don't bring app to foreground for background sync
+                    if (!isTaskRoot) {
+                        finish()
+                    }
                 }
-                "TOGGLE_TASK" -> {
+                "BACKGROUND_TOGGLE_TASK" -> {
                     val taskId = intent.getIntExtra("task_id", -1)
                     val widgetId = intent.getIntExtra("widget_id", -1)
-                    sendToFlutter("toggle_task", mapOf("taskId" to taskId, "widgetId" to widgetId))
+                    sendToFlutter("background_toggle_task", mapOf("taskId" to taskId, "widgetId" to widgetId))
+                    // Don't bring app to foreground for background toggle
+                    if (!isTaskRoot) {
+                        finish()
+                    }
                 }
             }
         }

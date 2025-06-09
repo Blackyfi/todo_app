@@ -70,9 +70,9 @@ class TodoWidgetProvider : AppWidgetProvider() {
         )
         views.setOnClickPendingIntent(R.id.add_task_button, addTaskPendingIntent)
         
-        // Refresh button - syncs data and updates widget
+        // Refresh button - syncs data WITHOUT opening app
         val refreshIntent = Intent(context, TodoWidgetProvider::class.java).apply {
-            action = "REFRESH_WIDGET"
+            action = "SYNC_WIDGET_DATA"
             putExtra("widget_id", appWidgetId)
         }
         val refreshPendingIntent = PendingIntent.getBroadcast(
@@ -122,9 +122,9 @@ class TodoWidgetProvider : AppWidgetProvider() {
                 taskView.setTextColor(R.id.task_title, 0xFF000000.toInt())
             }
             
-            // Set up task toggle click handler
+            // Set up task toggle click handler - this should NOT open the app
             val toggleIntent = Intent(context, TodoWidgetProvider::class.java).apply {
-                action = "TOGGLE_TASK"
+                action = "TOGGLE_TASK_COMPLETION"
                 putExtra("task_id", taskId)
                 putExtra("widget_id", appWidgetId)
             }
@@ -144,30 +144,40 @@ class TodoWidgetProvider : AppWidgetProvider() {
         super.onReceive(context, intent)
         
         when (intent.action) {
-            "REFRESH_WIDGET" -> {
+            "SYNC_WIDGET_DATA" -> {
                 val widgetId = intent.getIntExtra("widget_id", -1)
                 if (widgetId != -1) {
-                    // Trigger sync in Flutter app
+                    // Start the app in background to sync data, but don't bring it to foreground
                     val syncIntent = Intent(context, MainActivity::class.java).apply {
-                        action = "SYNC_WIDGET_DATA"
+                        action = "BACKGROUND_SYNC"
                         putExtra("widget_id", widgetId)
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION
                     }
-                    context.startActivity(syncIntent)
+                    try {
+                        context.startActivity(syncIntent)
+                    } catch (e: Exception) {
+                        // If we can't start the activity, just update the widget with current data
+                        val appWidgetManager = AppWidgetManager.getInstance(context)
+                        updateAppWidget(context, appWidgetManager, widgetId)
+                    }
                 }
             }
-            "TOGGLE_TASK" -> {
+            "TOGGLE_TASK_COMPLETION" -> {
                 val taskId = intent.getIntExtra("task_id", -1)
                 val widgetId = intent.getIntExtra("widget_id", -1)
                 if (taskId != -1 && widgetId != -1) {
-                    // Trigger task toggle in Flutter app
+                    // Start the app in background to toggle task
                     val toggleIntent = Intent(context, MainActivity::class.java).apply {
-                        action = "TOGGLE_TASK"
+                        action = "BACKGROUND_TOGGLE_TASK"
                         putExtra("task_id", taskId)
                         putExtra("widget_id", widgetId)
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION
                     }
-                    context.startActivity(toggleIntent)
+                    try {
+                        context.startActivity(toggleIntent)
+                    } catch (e: Exception) {
+                        // Handle error silently
+                    }
                 }
             }
         }

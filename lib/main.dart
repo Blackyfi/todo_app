@@ -76,17 +76,38 @@ void _setupWidgetActionHandling(WidgetService widgetService, LoggerService logge
             try {
               final widgetConfigRepository = WidgetConfigRepository();
               final widgetConfig = await widgetConfigRepository.getWidgetConfig(widgetId);
-              navigatorKey.currentState?.pushNamed('/widget-settings', arguments: widgetConfig);
+              if (widgetConfig != null) {
+                // Navigate to edit screen with existing config
+                navigatorKey.currentState?.pushNamed('/widget-settings', arguments: widgetConfig);
+              } else {
+                await logger.logError('Widget config not found for ID: $widgetId');
+              }
             } catch (e) {
               await logger.logError('Error loading widget config for settings', e);
             }
           }
           break;
           
-        case 'sync_widget':
-        case 'toggle_task':
-          // Handle these actions through the widget service
-          await widgetService.handleWidgetAction(action, data);
+        case 'background_sync':
+          // Handle background sync without showing UI
+          final widgetId = data['widgetId'] as int?;
+          if (widgetId != null) {
+            await widgetService.updateWidget(widgetId);
+          } else {
+            await widgetService.updateAllWidgets();
+          }
+          break;
+          
+        case 'background_toggle_task':
+          // Handle background task toggle without showing UI
+          final taskId = data['taskId'] as int?;
+          final widgetId = data['widgetId'] as int?;
+          if (taskId != null) {
+            await widgetService.handleWidgetAction('toggle_task', {
+              'taskId': taskId,
+              'widgetId': widgetId,
+            });
+          }
           break;
       }
     }
