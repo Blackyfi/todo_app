@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart' as mat;
 import 'dart:ui';
+import 'dart:async';
 import 'package:todo_app/features/tasks/models/task.dart' as task_model;
 import 'package:todo_app/features/categories/models/category.dart' as category_model;
 import 'package:todo_app/common/widgets/priority_badge.dart' as priority_badge;
@@ -7,9 +8,9 @@ import 'package:intl/intl.dart' as intl;
 import 'package:provider/provider.dart';
 import 'package:todo_app/core/providers/time_format_provider.dart';
 
-class TaskCard extends mat.StatelessWidget {
+class TaskCard extends mat.StatefulWidget {
   final task_model.Task task;
-  final category_model.Category? category; // Now nullable
+  final category_model.Category? category;
   final VoidCallback onTap;
   final Function(bool?) onCompletedChanged;
   final VoidCallback? onDelete;
@@ -17,11 +18,87 @@ class TaskCard extends mat.StatelessWidget {
   const TaskCard({
     super.key,
     required this.task,
-    this.category, // Now optional
+    this.category,
     required this.onTap,
     required this.onCompletedChanged,
     this.onDelete,
   });
+
+  @override
+  mat.State<TaskCard> createState() => _TaskCardState();
+}
+
+class _TaskCardState extends mat.State<TaskCard> {
+  Timer? _timer;
+  DateTime _currentTime = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    _startTimer();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _startTimer() {
+    // Only start timer if task has a due date and is not completed
+    if (widget.task.dueDate != null && !widget.task.isCompleted) {
+      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (mounted) {
+          final now = DateTime.now();
+          final previousTime = _currentTime;
+          _currentTime = now;
+          
+          // Check if we need to update the UI
+          if (_shouldUpdateUI(previousTime, now)) {
+            setState(() {});
+          }
+        }
+      });
+    }
+  }
+
+  bool _shouldUpdateUI(DateTime previousTime, DateTime currentTime) {
+    if (widget.task.dueDate == null) return false;
+    
+    final dueDate = widget.task.dueDate!;
+    
+    // Check if we crossed the due time boundary
+    final wasOverdue = previousTime.isAfter(dueDate);
+    final isNowOverdue = currentTime.isAfter(dueDate);
+    
+    // Update if overdue status changed
+    if (wasOverdue != isNowOverdue) {
+      return true;
+    }
+    
+    // Check if we crossed a day boundary that affects the display
+    final previousDay = DateTime(previousTime.year, previousTime.month, previousTime.day);
+    final currentDay = DateTime(currentTime.year, currentTime.month, currentTime.day);
+    
+    // Update if the day changed (for day counter updates)
+    if (previousDay != currentDay) {
+      return true;
+    }
+    
+    return false;
+  }
+
+  @override
+  void didUpdateWidget(TaskCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    
+    // Restart timer if task properties changed
+    if (oldWidget.task.dueDate != widget.task.dueDate ||
+        oldWidget.task.isCompleted != widget.task.isCompleted) {
+      _timer?.cancel();
+      _startTimer();
+    }
+  }
 
   @override
   mat.Widget build(mat.BuildContext context) {
@@ -30,10 +107,10 @@ class TaskCard extends mat.StatelessWidget {
     final timeFormatProvider = Provider.of<TimeFormatProvider>(context);
     
     // Use theme primary color if no category is selected
-    final categoryColor = category?.color ?? theme.colorScheme.primary;
+    final categoryColor = widget.category?.color ?? theme.colorScheme.primary;
     
     return mat.Dismissible(
-      key: mat.Key('task-${task.id}'),
+      key: mat.Key('task-${widget.task.id}'),
       direction: mat.DismissDirection.endToStart,
       background: mat.Container(
         alignment: mat.Alignment.centerRight,
@@ -45,7 +122,7 @@ class TaskCard extends mat.StatelessWidget {
         ),
       ),
       confirmDismiss: (direction) async {
-        if (onDelete == null) return false;
+        if (widget.onDelete == null) return false;
         
         final confirmed = await mat.showDialog<bool>(
           context: context,
@@ -70,17 +147,17 @@ class TaskCard extends mat.StatelessWidget {
         
         return confirmed ?? false;
       },
-      onDismissed: (direction) => onDelete?.call(),
+      onDismissed: (direction) => widget.onDelete?.call(),
       child: mat.Card(
         margin: const mat.EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         child: mat.InkWell(
-          onTap: onTap,
+          onTap: widget.onTap,
           borderRadius: mat.BorderRadius.circular(16),
           child: mat.Stack(
             children: [
               // Background indicator for overdue/days left
-              if (task.dueDate != null && !task.isCompleted)
-                _buildBackgroundIndicator(task.dueDate!, theme),
+              if (widget.task.dueDate != null && !widget.task.isCompleted)
+                _buildBackgroundIndicator(widget.task.dueDate!, theme, _currentTime),
               
               // Main card content
               mat.Padding(
@@ -89,10 +166,10 @@ class TaskCard extends mat.StatelessWidget {
                   crossAxisAlignment: mat.CrossAxisAlignment.start,
                   children: [
                     mat.Checkbox(
-                      value: task.isCompleted,
-                      onChanged: onCompletedChanged,
+                      value: widget.task.isCompleted,
+                      onChanged: widget.onCompletedChanged,
                       shape: const mat.CircleBorder(),
-                      activeColor: categoryColor, // Use category color or default
+                      activeColor: categoryColor,
                     ),
                     const mat.SizedBox(width: 8),
                     mat.Expanded(
@@ -103,12 +180,12 @@ class TaskCard extends mat.StatelessWidget {
                             children: [
                               mat.Expanded(
                                 child: mat.Text(
-                                  task.title,
+                                  widget.task.title,
                                   style: theme.textTheme.titleMedium?.copyWith(
-                                    decoration: task.isCompleted
+                                    decoration: widget.task.isCompleted
                                         ? mat.TextDecoration.lineThrough
                                         : null,
-                                    color: task.isCompleted
+                                    color: widget.task.isCompleted
                                         ? theme.colorScheme.onSurface.withAlpha(128)
                                         : null,
                                     fontWeight: mat.FontWeight.bold,
@@ -117,18 +194,18 @@ class TaskCard extends mat.StatelessWidget {
                                   overflow: mat.TextOverflow.ellipsis,
                                 ),
                               ),
-                              priority_badge.PriorityBadge(priority: task.priority),
+                              priority_badge.PriorityBadge(priority: widget.task.priority),
                             ],
                           ),
-                          if (task.description.isNotEmpty) ...[
+                          if (widget.task.description.isNotEmpty) ...[
                             const mat.SizedBox(height: 8),
                             mat.Text(
-                              task.description,
+                              widget.task.description,
                               style: theme.textTheme.bodyMedium?.copyWith(
-                                color: task.isCompleted
+                                color: widget.task.isCompleted
                                     ? theme.colorScheme.onSurface.withAlpha(128)
                                     : null,
-                                decoration: task.isCompleted
+                                decoration: widget.task.isCompleted
                                     ? mat.TextDecoration.lineThrough
                                     : null,
                               ),
@@ -140,35 +217,35 @@ class TaskCard extends mat.StatelessWidget {
                           mat.Row(
                             children: [
                               // Only show category if one is assigned
-                              if (category != null) 
+                              if (widget.category != null) 
                                 mat.Container(
                                   padding: const mat.EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                   decoration: mat.BoxDecoration(
-                                    color: category!.color.withAlpha(51),
+                                    color: widget.category!.color.withAlpha(51),
                                     borderRadius: mat.BorderRadius.circular(8),
                                   ),
                                   child: mat.Text(
-                                    category!.name,
+                                    widget.category!.name,
                                     style: mat.TextStyle(
-                                      color: category!.color,
+                                      color: widget.category!.color,
                                       fontSize: 12,
                                       fontWeight: mat.FontWeight.bold,
                                     ),
                                   ),
                                 ),
-                              if (category != null && task.dueDate != null)
+                              if (widget.category != null && widget.task.dueDate != null)
                                 const mat.SizedBox(width: 8),
-                              if (task.dueDate != null) ...[
+                              if (widget.task.dueDate != null) ...[
                                 mat.Icon(
                                   mat.Icons.access_time,
                                   size: 14,
-                                  color: _getDueDateColor(task.dueDate!, theme),
+                                  color: _getDueDateColor(widget.task.dueDate!, theme, _currentTime),
                                 ),
                                 const mat.SizedBox(width: 4),
                                 mat.Text(
-                                  _formatDueDate(task.dueDate!, timeFormatProvider.isEuropean),
+                                  _formatDueDate(widget.task.dueDate!, timeFormatProvider.isEuropean),
                                   style: mat.TextStyle(
-                                    color: _getDueDateColor(task.dueDate!, theme),
+                                    color: _getDueDateColor(widget.task.dueDate!, theme, _currentTime),
                                     fontSize: 12,
                                   ),
                                 ),
@@ -188,9 +265,8 @@ class TaskCard extends mat.StatelessWidget {
     );
   }
 
-  mat.Widget _buildBackgroundIndicator(DateTime dueDate, mat.ThemeData theme) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
+  mat.Widget _buildBackgroundIndicator(DateTime dueDate, mat.ThemeData theme, DateTime currentTime) {
+    final today = DateTime(currentTime.year, currentTime.month, currentTime.day);
     final taskDate = DateTime(dueDate.year, dueDate.month, dueDate.day);
     
     String text;
@@ -199,17 +275,17 @@ class TaskCard extends mat.StatelessWidget {
     if (taskDate.isBefore(today)) {
       // Task is overdue (date is in the past)
       text = 'OVERDUE';
-      color = mat.Colors.red.withAlpha(51); // 20% opacity
+      color = mat.Colors.red.withAlpha(51);
     } else if (taskDate.isAtSameMomentAs(today)) {
       // Task is due today - check if the time has passed
-      if (dueDate.isBefore(now)) {
+      if (dueDate.isBefore(currentTime)) {
         // Time has passed, task is overdue
         text = 'OVERDUE';
-        color = mat.Colors.red.withAlpha(51); // 20% opacity
+        color = mat.Colors.red.withAlpha(51);
       } else {
         // Time hasn't passed yet, task is due today
         text = 'TODAY';
-        color = mat.Colors.red.withAlpha(51); // 20% opacity
+        color = mat.Colors.red.withAlpha(51);
       }
     } else {
       // Task is in the future - calculate days left
@@ -217,9 +293,9 @@ class TaskCard extends mat.StatelessWidget {
       text = '$daysLeft DAYS LEFT';
       
       if (daysLeft <= 5) {
-        color = mat.Colors.yellow.withAlpha(51); // 20% opacity
+        color = mat.Colors.yellow.withAlpha(51);
       } else {
-        color = mat.Colors.green.withAlpha(51); // 20% opacity
+        color = mat.Colors.green.withAlpha(51);
       }
     }
     
@@ -227,13 +303,13 @@ class TaskCard extends mat.StatelessWidget {
       child: mat.Container(
         alignment: mat.Alignment.center,
         child: mat.Transform.rotate(
-          angle: -0.1, // Slight rotation for visual effect
+          angle: -0.1,
           child: mat.Text(
             text,
             style: mat.TextStyle(
               fontSize: 24,
               fontWeight: mat.FontWeight.bold,
-              color: color.withAlpha(77), // More faded for background effect
+              color: color.withAlpha(77),
               letterSpacing: 2.0,
             ),
           ),
@@ -251,39 +327,37 @@ class TaskCard extends mat.StatelessWidget {
     return '${dateFormat.format(dueDate)} · ${timeFormat.format(dueDate)}';
   }
 
-  mat.Color _getDueDateColor(DateTime dueDate, mat.ThemeData theme) {
-    final now = DateTime.now();
-    
+  mat.Color _getDueDateColor(DateTime dueDate, mat.ThemeData theme, DateTime currentTime) {
     // If the task is completed, use a muted color
-    if (task.isCompleted) {
+    if (widget.task.isCompleted) {
       return theme.colorScheme.onSurface.withAlpha(128);
     }
     
     // If the due date is today
-    if (dueDate.year == now.year && dueDate.month == now.month && dueDate.day == now.day) {
-      return task.priority == task_model.Priority.high
+    if (dueDate.year == currentTime.year && dueDate.month == currentTime.month && dueDate.day == currentTime.day) {
+      return widget.task.priority == task_model.Priority.high
           ? mat.Colors.red
           : mat.Colors.orange;
     }
     
     // If the due date is in the past
-    if (dueDate.isBefore(now)) {
+    if (dueDate.isBefore(currentTime)) {
       return mat.Colors.red;
     }
     
     // If the due date is tomorrow
-    final tomorrow = now.add(const Duration(days: 1));
+    final tomorrow = currentTime.add(const Duration(days: 1));
     if (dueDate.year == tomorrow.year && dueDate.month == tomorrow.month && dueDate.day == tomorrow.day) {
       return mat.Colors.orange;
     }
     
     // If the due date is within the next 3 days
-    final threeDaysLater = now.add(const Duration(days: 3));
+    final threeDaysLater = currentTime.add(const Duration(days: 3));
     if (dueDate.isBefore(threeDaysLater)) {
       return theme.colorScheme.secondary;
     }
     
     // Otherwise, use the default text color
-    return theme.colorScheme.onSurface.withAlpha(179); // Equivalent to 70% opacity
+    return theme.colorScheme.onSurface.withAlpha(179);
   }
 }
