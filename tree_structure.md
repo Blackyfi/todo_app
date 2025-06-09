@@ -14,169 +14,200 @@ todo_app/
 ├── technical-details.md           # Technical implementation details
 ├── todo_app.iml                   # IntelliJ module file
 ├── tree_structure.md              # Project structure documentation
+├── android/                       # Android platform configuration
+│   ├── .gitignore
+│   ├── build.gradle.kts           # Project-level Gradle build script
+│   ├── gradle.properties          # Gradle configuration properties
+│   ├── settings.gradle.kts        # Gradle settings with Flutter plugin
+│   ├── todo_app_android.iml       # Android module configuration
+│   ├── app/                       # Android app module
+│   │   ├── build.gradle.kts       # App-level Gradle build script with API 35 support
+│   │   └── src/                   # Android source code
+│   │       ├── debug/
+│   │       │   └── AndroidManifest.xml # Debug manifest with internet permission
+│   │       ├── main/
+│   │       │   ├── AndroidManifest.xml # Main manifest with notification permissions
+│   │       │   ├── kotlin/com/example/todo_app/
+│   │       │   │   └── MainActivity.kt  # Main Android activity
+│   │       │   └── res/            # Android resources
+│   │       │       ├── drawable/   # Launch background drawables
+│   │       │       ├── drawable-v21/
+│   │       │       └── values/     # Themes and styles
+│   │       └── profile/
+│   │           └── AndroidManifest.xml # Profile manifest
+│   └── gradle/wrapper/
+│       └── gradle-wrapper.properties # Gradle wrapper configuration
 ├── lib/                           # Source code
-│   ├── main.dart                  # Application entry point
-│   ├── app.dart                   # Main app configuration
+│   ├── main.dart                  # Application entry point with error handling
+│   ├── app.dart                   # Main app configuration with providers
 │   ├── app_initializer.dart       # Application initialization service
 │   ├── routes.dart                # Navigation routes
 │   ├── common/                    # Common utilities and widgets
 │   │   ├── constants/
-│   │   │   └── app_constants.dart # Application constants
+│   │   │   └── app_constants.dart # Application constants and routes
 │   │   ├── theme/
-│   │   │   └── app_theme.dart     # Theme configuration
+│   │   │   └── app_theme.dart     # Material 3 theme configuration
 │   │   └── widgets/               # Reusable widgets
 │   │       ├── app_bar_with_time.dart # Custom app bar with time display
-│   │       ├── category_chip.dart # Category display widget
-│   │       ├── current_time_display.dart # Current time widget
-│   │       ├── empty_state.dart   # Empty state widget
-│   │       └── priority_badge.dart# Priority indicator widget
+│   │       ├── category_chip.dart     # Category display widget
+│   │       ├── current_time_display.dart # Real-time clock widget
+│   │       ├── empty_state.dart       # Empty state widget
+│   │       └── priority_badge.dart    # Priority indicator widget
 │   ├── core/                      # Core functionality
 │   │   ├── database/              # Database implementation
-│   │   │   ├── database_config.dart # Database platform configuration
-│   │   │   ├── database_helper.dart # Database initialization
-│   │   │   └── repository/        # Data access repositories
-│   │   │       ├── category_repository.dart
-│   │   │       ├── notification_repository.dart
-│   │   │       └── task_repository.dart
+│   │   │   ├── database_config.dart   # Cross-platform database configuration
+│   │   │   ├── database_helper.dart   # Database initialization with logging
+│   │   │   └── repository/            # Data access repositories
+│   │   │       ├── category_repository.dart    # Category CRUD operations
+│   │   │       ├── notification_repository.dart # Notification settings CRUD
+│   │   │       └── task_repository.dart        # Task CRUD with advanced queries
 │   │   ├── logger/
-│   │   │   └── logger_service.dart # Error logging service
-│   │   ├── notifications/         # Notification system
+│   │   │   └── logger_service.dart    # Comprehensive error logging service
+│   │   ├── notifications/             # Advanced notification system
 │   │   │   ├── models/
-│   │   │   │   └── notification_settings.dart
-│   │   │   ├── notification_scheduler.dart # Notification scheduling logic
-│   │   │   ├── notification_service.dart   # Main notification service
-│   │   │   └── permission_handler.dart     # Notification permission management
+│   │   │   │   └── notification_settings.dart # Notification time options model
+│   │   │   ├── notification_scheduler.dart     # Timezone-aware scheduling
+│   │   │   ├── notification_service.dart       # Main service with fallback support
+│   │   │   ├── notification_service_fallback.dart # Compatibility fallback
+│   │   │   └── permission_handler.dart         # Android 13+ permission management
 │   │   ├── providers/
-│   │   │   └── time_format_provider.dart # Time format state management
+│   │   │   └── time_format_provider.dart # European/American time format provider
 │   │   └── settings/              # Application settings
 │   │       ├── models/
-│   │       │   └── auto_delete_settings.dart
+│   │       │   └── auto_delete_settings.dart  # Auto-deletion configuration model
 │   │       ├── repository/
-│   │       │   └── auto_delete_settings_repository.dart
+│   │       │   └── auto_delete_settings_repository.dart # Settings persistence
 │   │       └── services/
-│   │           └── auto_delete_service.dart
+│   │           └── auto_delete_service.dart    # Automatic task cleanup service
 │   └── features/                  # App features
 │       ├── tasks/                 # Task management
 │       │   ├── models/
-│       │   │   └── task.dart      # Task data model
+│       │   │   └── task.dart      # Task model with priority and completion tracking
 │       │   ├── screens/
-│       │   │   ├── add_edit_task_screen.dart # Task creation/editing
-│       │   │   ├── home_screen.dart          # Main task list
-│       │   │   └── task_details_screen.dart  # Task details
+│       │   │   ├── add_edit_task_screen.dart   # Task creation/editing with notifications
+│       │   │   ├── home_screen.dart            # Main task list with filtering
+│       │   │   └── task_details_screen.dart    # Detailed task view
 │       │   ├── utils/
-│       │   │   └── task_form_helpers.dart    # Helper functions for task forms
+│       │   │   └── task_form_helpers.dart      # Form validation and utilities
 │       │   └── widgets/
-│       │       ├── notification_option_picker.dart # Notification selection UI
-│       │       ├── task_card.dart             # Task list item
-│       │       ├── task_detail_*.dart         # Task detail UI components
-│       │       ├── task_detail_sections.dart  # Combined task detail UI
-│       │       └── task_form_fields.dart      # Form fields for task creation/editing
+│       │       ├── notification_option_picker.dart # Notification timing selection
+│       │       ├── task_card.dart              # Real-time updating task cards
+│       │       ├── task_detail_category.dart   # Task category display
+│       │       ├── task_detail_datetime.dart   # Due date/time display
+│       │       ├── task_detail_description.dart # Task description display
+│       │       ├── task_detail_header.dart     # Task title and priority
+│       │       ├── task_detail_reminders.dart  # Notification settings display
+│       │       ├── task_detail_sections.dart   # Unified detail view
+│       │       ├── task_detail_status.dart     # Completion status display
+│       │       └── task_form_fields.dart       # Form components
 │       ├── categories/            # Category management
 │       │   ├── models/
-│       │   │   └── category.dart  # Category data model
+│       │   │   └── category.dart  # Category model with color support
 │       │   ├── screens/
-│       │   │   └── categories_screen.dart # Category management screen
+│       │   │   └── categories_screen.dart # Category management interface
 │       │   └── widgets/
-│       │       ├── category_dialog.dart   # Dialog for adding/editing categories
-│       │       └── category_list_item.dart # Category list item
+│       │       ├── category_dialog.dart   # Category creation/editing dialog
+│       │       └── category_list_item.dart # Dismissible category list items
 │       ├── settings/              # Settings management
 │       │   └── screens/
-│       │       ├── log_viewer_screen.dart # Log viewing interface
-│       │       └── settings_screen.dart   # App settings screen
+│       │       ├── log_viewer_screen.dart # Comprehensive log viewing interface
+│       │       └── settings_screen.dart   # App settings with notification controls
 │       └── statistics/            # Statistics and reporting
 │           ├── screens/
-│           │   └── statistics_screen.dart # Statistics dashboard
+│           │   └── statistics_screen.dart # Statistics dashboard with charts
 │           ├── utils/
-│           │   └── statistics_helpers.dart # Helper functions for statistics
+│           │   └── statistics_helpers.dart # Statistical calculations
 │           └── widgets/
-│               ├── chart_cards.dart          # Chart components export file
-│               ├── completion_chart.dart     # Task completion chart
-│               ├── priority_chart.dart       # Priority distribution chart
-│               ├── category_chart.dart       # Category distribution chart
-│               ├── weekly_tasks_card.dart    # Weekly tasks display
-│               ├── weekly_completion_chart.dart # Weekly completion chart
-│               └── summary_card.dart         # Summary statistics card
-└── packages/                     # Local package dependencies
-    └── flutter_local_notifications-16.3.3/ # Local notifications package
+│               ├── chart_cards.dart           # Chart components export
+│               ├── completion_chart.dart      # Task completion pie chart
+│               ├── priority_chart.dart        # Priority distribution bar chart
+│               ├── category_chart.dart        # Category distribution pie chart
+│               ├── weekly_tasks_card.dart     # Weekly tasks preview
+│               ├── weekly_completion_chart.dart # Weekly completion bar chart
+│               └── summary_card.dart          # Statistics summary
 ```
 
 ## Key Components
 
 ### Core Modules
 
-- **Database Layer**: SQLite implementation with repository pattern
-  - `DatabaseHelper`: Central database configuration
-  - `DatabaseConfig`: Platform-specific database setup
-  - Repositories: Entity-specific data access (Task, Category, Notification)
+- **Database Layer**: Cross-platform SQLite implementation with repository pattern
+  - `DatabaseHelper`: Central database configuration with comprehensive logging
+  - `DatabaseConfig`: Platform-specific database setup (Android/iOS/Desktop)
+  - Repositories: Entity-specific data access with error handling and logging
 
-- **Notification System**: Enhanced local notification implementation
-  - `NotificationService`: Handles scheduling and management with proper initialization
-  - `NotificationScheduler`: Precise notification scheduling with timezone support
-  - `PermissionHandler`: Comprehensive permission management for Android 13+
-  - `NotificationSetting`: Model for notification preferences
+- **Notification System**: Advanced local notification implementation
+  - `NotificationService`: Main service with proper initialization and fallback support
+  - `NotificationScheduler`: Timezone-aware scheduling with exact alarm permissions
+  - `PermissionHandler`: Android 13+ compatible permission management with app settings
+  - `NotificationSetting`: Flexible notification timing options including custom times
 
-- **Logger System**: Comprehensive error logging functionality
-  - `LoggerService`: Centralized logging with multiple severity levels
-  - Log file management and viewer interface
+- **Logger System**: Production-ready error logging
+  - `LoggerService`: Multi-level logging (ERROR/WARNING/INFO) with daily file rotation
+  - Log viewer with sharing, copying, and JSON export capabilities
 
-- **Settings Management**: Application settings and preferences
-  - `TimeFormatProvider`: Time format preference management
-  - `AutoDeleteService`: Management of completed task cleanup
+- **Settings Management**: Comprehensive application configuration
+  - `TimeFormatProvider`: European (24h) vs American (12h) time format preferences
+  - `AutoDeleteService`: Configurable cleanup of completed tasks
 
 ### Feature Modules
 
-- **Tasks**: Complete task management functionality
-  - Models: Data structures for tasks
-  - Screens: UI for task listing, creation, editing, and viewing
-  - Widgets: Reusable task-specific components
-  - Utils: Helper functions for task operations
+- **Tasks**: Complete task lifecycle management
+  - Models: Task data with priority levels, categories, and completion tracking
+  - Screens: Home screen with filtering, detailed task view, creation/editing interface
+  - Widgets: Real-time updating task cards with overdue indicators
+  - Utils: Form validation and date/time handling utilities
 
-- **Categories**: Category management
-  - Models: Data structures for categories
-  - Screens: UI for category management
-  - Widgets: Reusable category-specific components
+- **Categories**: Visual task organization
+  - Models: Categories with customizable colors
+  - Screens: Category management with task count display
+  - Widgets: Color-coded category chips and dismissible list items
 
-- **Statistics**: Analytics and reporting with enhanced chart components
-  - Screens: Dashboard with charts and metrics
-  - Utils: Helper functions for statistics calculations
-  - Widgets: Individual chart components and summary cards
+- **Statistics**: Data visualization and insights
+  - Screens: Dashboard with multiple chart types
+  - Utils: Statistical calculations and data aggregation
+  - Widgets: Pie charts, bar charts, and summary cards using fl_chart
 
-- **Settings**: Enhanced application settings management
-  - Settings configuration interface
-  - Log viewer and management
-  - Time format and theme preferences
-  - **NEW**: Notification testing and debugging tools
+- **Settings**: User preferences and debugging tools
+  - Enhanced settings interface with notification management
+  - Comprehensive log viewer with export capabilities
+  - Theme and time format preferences
 
 ### Common Elements
 
-- **Constants**: Application-wide constants and configuration values
-- **Theme**: Styling and appearance configuration with Material 3 support
-- **Widgets**: Shared UI components used across multiple features
+- **Constants**: Centralized application configuration and route definitions
+- **Theme**: Material 3 design system implementation with dark/light mode support
+- **Widgets**: Reusable components including real-time clock display and priority badges
 
-### Navigation
+### Platform Support
 
-- **Routes**: Centralized navigation configuration with named routes
+- **Android**: API 35 support with exact alarm permissions and notification channels
+- **iOS**: Native notification support with proper permission handling
+- **Desktop**: Cross-platform database support via sqflite_common_ffi
 
 ## Architecture Overview
 
-The Todo App follows a feature-based architecture with a clear separation of concerns:
+The Todo App follows a feature-based architecture with clear separation of concerns:
 
-1. **Presentation Layer**: Screens and widgets (`features/*/screens`, `features/*/widgets`)
-2. **Business Logic Layer**: Models and utilities (`features/*/models`, `features/*/utils`)
-3. **Data Access Layer**: Repositories and services (`core/database/repository`, `core/services`)
-4. **Core Infrastructure**: Shared functionality and configuration (`core/*`, `common/*`)
+1. **Presentation Layer**: Screens and widgets with proper state management
+2. **Business Logic Layer**: Models, utilities, and service classes
+3. **Data Access Layer**: Repository pattern with comprehensive error handling
+4. **Core Infrastructure**: Cross-platform services and shared functionality
 
-### Recent Enhancements
+### Key Features
 
-- **Enhanced Notification System**: Proper timezone handling, exact alarm permissions, comprehensive error handling
-- **Debugging Tools**: Test notification functionality and pending notification viewer
-- **Permission Management**: Android 13+ compatibility with exact alarm permissions
-- **Error Recovery**: Fallback mechanisms for notification scheduling failures
+- **Real-time UI Updates**: Task cards update automatically for overdue status
+- **Comprehensive Notification System**: Multiple timing options with fallback support
+- **Advanced Filtering**: Tasks can be filtered by status, date, category, and priority
+- **Data Visualization**: Statistical insights with interactive charts
+- **Robust Error Handling**: Comprehensive logging with user-friendly error recovery
+- **Cross-platform Compatibility**: Runs on Android, iOS, and desktop platforms
+- **Accessibility**: Proper semantic markup and contrast considerations
 
-This organization allows for:
+This organization ensures:
 
-- Easy navigation of the codebase
+- Maintainable and scalable codebase
 - Clear component responsibilities
-- Scalable feature development
-- Maintainable and testable code structure
-- **Enhanced debugging capabilities for notification issues**
+- Comprehensive error handling and logging
+- Excellent user experience across platforms
+- Easy debugging and troubleshooting capabilities

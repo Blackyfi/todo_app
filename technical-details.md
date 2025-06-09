@@ -2,237 +2,456 @@
 
 ## Architecture Overview
 
-The Todo App follows a feature-based architecture with a clean separation of concerns. This architecture is designed to be maintainable, testable, and scalable as the application grows.
+The Todo App follows a feature-based architecture with a clean separation of concerns, designed for maintainability, testability, and scalability. The architecture emphasizes cross-platform compatibility and robust error handling.
 
 ### Project Structure
 
-The application is organized by feature rather than by type:
+The application is organized by feature rather than by type, promoting better code organization and team collaboration:
 
 ```bash
 lib/
 ├── common/       # Shared components, constants, themes, widgets
-├── core/         # Core functionality (database, notifications, logging)
-└── features/     # Feature modules (tasks, categories, statistics)
+├── core/         # Core functionality (database, notifications, logging, providers)
+└── features/     # Feature modules (tasks, categories, statistics, settings)
 ```
 
 Each feature contains its own:
 
-- Models (data structures)
-- Screens (UI components)
-- Widgets (reusable UI elements)
-- Utils (helper functions)
+- **Models**: Data structures and business logic
+- **Screens**: UI components and user interactions
+- **Widgets**: Reusable UI elements specific to the feature
+- **Utils**: Helper functions and utilities
 
-### Design Patterns
+### Design Patterns & Principles
 
-The app employs several design patterns:
+The app employs several proven design patterns:
 
-1. **Repository Pattern**: Abstracts data access logic
-2. **Singleton Pattern**: Used for services that should have only one instance
+1. **Repository Pattern**: Abstracts data access logic with comprehensive error handling
+2. **Singleton Pattern**: Used for services that should have only one instance (Logger, Database)
 3. **Factory Pattern**: Used for creating instances of models from different data sources
-4. **Observer Pattern**: Used with ChangeNotifier for state management
+4. **Provider Pattern**: Used for state management with ChangeNotifier
+5. **Dependency Injection**: Services are injected where needed for better testability
 
-### State Management
+## Advanced Code Standards & Conventions
 
-The application uses a pragmatic approach to state management:
+### Import Aliasing Strategy
 
-- **Stateful Widgets**: For local UI state
-- **Provider**: For time format preferences
-- **Repository Pattern**: For data access and persistence
-
-## Code Standards & Conventions
-
-### Import Conventions
-
-All imports follow a strict aliasing pattern to prevent name conflicts and improve readability:
+All imports follow a strict aliasing pattern to prevent name conflicts and improve code readability:
 
 ```dart
 import 'package:flutter/material.dart' as mat;
 import 'package:todo_app/features/tasks/models/task.dart' as task_model;
+import 'package:todo_app/core/database/repository/task_repository.dart' as task_repository;
 ```
 
-### Code Organization
+### Code Organization Principles
 
-- Absolute limit of 200 lines of code per .dart file
-- Each class has a single responsibility
-- Related functionality is grouped together
-- Private methods and variables are prefixed with underscore
+- **File Size Limit**: Strict 200-line limit per .dart file for maintainability
+- **Single Responsibility**: Each class has one clear purpose and responsibility
+- **Functional Grouping**: Related functionality is grouped together logically
+- **Private Encapsulation**: Private methods and variables are prefixed with underscore
 
 ### Naming Conventions
 
-- **Files**: snake_case.dart
-- **Classes**: PascalCase
-- **Variables and methods**: camelCase
+- **Files**: snake_case.dart for all file names
+- **Classes**: PascalCase for all class names
+- **Variables and methods**: camelCase for all variables and method names
 - **Constants**:
+
   - SCREAMING_SNAKE_CASE for top-level constants
-  - camelCase within constant classes
+  - camelCase within constant classes for consistency
 
-## Database Implementation
+## Enhanced Database Implementation
 
-### SQLite Integration
+### Cross-Platform SQLite Integration
 
-The app uses SQLite for local data storage through the `sqflite` package:
+The app uses SQLite for local data storage with cross-platform support:
 
-- **Database Version**: 1
+- **Mobile Platforms**: Native sqflite package for Android and iOS
+- **Desktop Platforms**: sqflite_common_ffi for Windows, macOS, and Linux
+- **Database Version**: 1 (with migration support for future versions)
 - **Database Name**: todo_app.db
-- **Foreign Key Support**: Enabled
+- **Features**: Foreign key support, ACID transactions, automatic indexing
 
-### Database Schema
+### Comprehensive Database Schema
 
-The database consists of four main tables:
+The database consists of four interconnected tables:
 
-1. **categories**: Stores category information
-2. **tasks**: Stores task information
-3. **notificationSettings**: Stores notification preferences
-4. **autoDeleteSettings**: Stores settings for automatic deletion of completed tasks
+1. **categories**: Stores category information with color coding
+2. **tasks**: Stores task information with optional category relationships
+3. **notificationSettings**: Stores flexible notification preferences per task
+4. **autoDeleteSettings**: Stores application-wide cleanup configuration
 
-### Repository Pattern
+### Advanced Repository Pattern
 
-Each entity has a dedicated repository that handles:
+Each entity has a dedicated repository with comprehensive functionality:
 
-- CRUD operations (Create, Read, Update, Delete)
-- Custom queries (filter by category, priority, date, etc.)
-- Data transformation between database and application models
-- Error handling and logging
+- **CRUD Operations**: Create, Read, Update, Delete with proper error handling
+- **Complex Queries**: Advanced filtering by category, priority, date ranges, completion status
+- **Data Transformation**: Seamless conversion between database and application models
+- **Transaction Management**: Atomic operations for data consistency
+- **Comprehensive Logging**: All operations are logged with contextual information
 
-Example repositories:
+Example repositories include:
 
-- `TaskRepository`
-- `CategoryRepository`
-- `NotificationRepository`
+- `TaskRepository`: Advanced task operations with completion tracking
+- `CategoryRepository`: Category management with task relationship handling
+- `NotificationRepository`: Notification settings with cascade delete support
+- `AutoDeleteSettingsRepository`: Application settings persistence
 
-## UI Framework
+## Modern UI Framework Implementation
 
-### Material Design 3
+### Material Design 3 Integration
 
-The app implements Material Design 3 principles:
+The app fully implements Material Design 3 principles:
 
-- **Dynamic Color**: Colors adapt based on device theme
-- **Component Styling**: Updated Material 3 component designs
-- **Typography**: Material 3 type scale
-- **Elevation**: Updated elevation system with container surfaces
+- **Dynamic Color System**: Colors adapt based on device theme and user preferences
+- **Updated Components**: Latest Material 3 component designs and behaviors
+- **Typography Scale**: Complete Material 3 type scale implementation
+- **Elevation System**: Modern container surfaces with proper depth indication
+- **Accessibility**: Built-in support for screen readers and high contrast modes
 
-### Responsive Design
+### Cross-Platform Responsive Design
 
-The UI adapts to different screen sizes:
+The UI adapts seamlessly to different screen sizes and platforms:
 
-- Responsive layouts with flexible widgets
-- Size-aware components
-- Appropriate spacing and padding for different form factors
-- Appropriate spacing and padding for different form factors
+- **Flexible Layouts**: Responsive widgets that adapt to available space
+- **Size-Aware Components**: Components that scale appropriately for different devices
+- **Platform-Specific Optimizations**: Native look and feel on each platform
+- **Touch Target Optimization**: Appropriate sizing for different input methods
 
-### Custom Components
+### Advanced Custom Components
 
-The app features several custom reusable UI components:
+The app features sophisticated reusable UI components:
 
-- `CategoryChip`: Visual representation of categories
-- `PriorityBadge`: Visual indicator for task priority levels
-- `TaskCard`: Card view for task items in lists
-- `EmptyState`: Consistent empty state UI pattern
-- `AppBarWithTime`: Custom app bar with current time display
+- `CategoryChip`: Interactive category selection with color coding
+- `PriorityBadge`: Visual priority indicators with semantic colors
+- `TaskCard`: Real-time updating task displays with overdue detection
+- `EmptyState`: Consistent empty state UI with actionable guidance
+- `AppBarWithTime`: Custom app bar with live time display and time format support
+- `CurrentTimeDisplay`: Real-time clock with automatic updates and format preferences
 
-## Notification System
+## Sophisticated Notification System
 
-### Local Notifications
+### Advanced Local Notifications
 
-The app uses `flutter_local_notifications` package to manage notifications:
+The app uses `flutter_local_notifications` with enhanced capabilities:
 
-- **Channel Creation**: Platform-specific notification channels
-- **Scheduling**: Time-based notification scheduling
-- **Permissions**: Automated permission handling
+- **Cross-Platform Channels**: Platform-specific notification channels with proper configuration
+- **Timezone Integration**: Accurate scheduling using the timezone package
+- **Permission Management**: Automated permission handling with Android 13+ support
+- **Exact Alarm Support**: Precise timing with exact alarm permissions on Android
 
-### Notification Features
+### Comprehensive Notification Features
 
-- **Multiple Settings**: Each task can have multiple notification settings
-- **Flexible Timing**: Options like "15 minutes before", "1 day before", etc.
-- **Custom Time**: Option to set a custom notification time
+- **Multiple Settings Per Task**: Each task can have unlimited notification configurations
+- **Flexible Timing Options**: Predefined options plus custom time selection
+- **Smart Scheduling**: Automatic calculation based on due dates and preferences
+- **Error Recovery**: Graceful fallback when advanced features aren't available
+- **Background Processing**: Proper handling of app state changes
 
-### Scheduling Logic
+### Robust Scheduling Logic
 
-- **Timezone Handling**: Using the timezone package for accurate scheduling
-- **Auto-Calculation**: Times are calculated based on due date and notification preference
-- **Error Handling**: Robust error handling for scheduling failures
+- **Timezone Awareness**: Proper handling of daylight saving time and timezone changes
+- **Auto-Calculation**: Intelligent time calculation based on task due dates
+- **Comprehensive Error Handling**: Robust error recovery with detailed logging
+- **Permission Integration**: Seamless permission requests with user guidance
+- **Fallback Mechanisms**: Alternative notification methods when exact timing fails
 
-## Performance Optimizations
+## Performance Optimizations & Scalability
 
-### Database Efficiency
+### Database Performance
 
-- **Indexing**: Key fields are indexed for faster queries
-- **Transactions**: Used for operations that require multiple changes
-- **Batch Operations**: For bulk inserts or updates
-- **Query Optimization**: Specific queries to minimize data transfer
+- **Strategic Indexing**: Key fields are indexed for optimal query performance
+- **Transaction Optimization**: Grouped operations for better performance
+- **Query Optimization**: Specific queries minimize data transfer and processing
+- **Connection Pooling**: Efficient database connection management
+- **Batch Operations**: Optimized bulk inserts and updates
 
-### UI Performance
+### UI Performance Enhancements
 
-- **Widget Keys**: Proper use of keys for efficient list updates
-- **Lazy Loading**: Load on demand where appropriate
-- **Minimal Rebuilds**: Careful state management to avoid unnecessary rebuilds
+- **Widget Key Strategy**: Proper use of keys for efficient list updates and state preservation
+- **Smart State Management**: Minimal rebuilds through careful state organization
+- **Lazy Loading**: Load data on demand to improve initial app startup time
+- **Image Optimization**: Efficient image handling and caching strategies
 
 ### Memory Management
 
-- **Image Optimization**: Appropriate image resolutions and formats
-- **Proper Disposal**: Resources are properly disposed when no longer needed
-- **Widget Tree Optimization**: Minimize unnecessary widget nesting
+- **Resource Disposal**: Proper cleanup of controllers, streams, and other resources
+- **Widget Tree Optimization**: Minimized unnecessary widget nesting for better performance
+- **State Optimization**: Efficient state management to prevent memory leaks
+- **Background Processing**: Proper handling of background tasks and timers
 
-## Error Handling & Logging
+## Comprehensive Error Handling & Logging
 
-### Global Error Handling
+### Global Error Capture
 
-- **Unhandled Exceptions**: Captured using FlutterError.onError and runZonedGuarded
-- **Error Recovery**: Attempt to recover from non-fatal errors
-- **User Feedback**: Appropriate error messages for users
+- **Flutter Error Handling**: Comprehensive capture using FlutterError.onError
+- **Zone Error Handling**: Asynchronous error capture with runZonedGuarded
+- **Error Recovery**: Intelligent recovery from non-fatal errors
+- **User Communication**: Appropriate error messages with actionable guidance
 
-### Comprehensive Logging
+### Production-Ready Logging System
 
-- **LoggerService**: Centralized logging service
-- **Log Levels**: ERROR, WARNING, INFO
-- **Structured Logs**: Timestamps, severity levels, and contextual information
-- **Log Files**: Daily log files for easier debugging
+- **LoggerService**: Centralized logging service with multiple severity levels
+- **Structured Logging**: ERROR, WARNING, INFO with timestamps and context
+- **Daily Log Rotation**: Automatic file management with date-based organization
+- **Log Management**: Viewing, sharing, and export capabilities with multiple formats
 
-## Testing Strategy
+### Error Classification
 
-### Unit Tests
+- **Critical Errors**: Database failures, initialization problems
+- **Warning Conditions**: Potential issues that don't prevent core functionality
+- **Informational Logs**: Normal operation tracking and debugging information
 
-- Repository methods
-- Model transformations
-- Utility functions
+## Testing Strategy & Quality Assurance
 
-### Widget Tests
+### Comprehensive Testing Approach
 
-- Form validation
-- UI component behavior
-- Navigation logic
+#### Unit Testing
 
-### Integration Tests
+- **Repository Testing**: Complete coverage of data access layer
+- **Model Testing**: Validation of data transformations and business logic
+- **Utility Testing**: Helper functions and calculation methods
+- **Service Testing**: Core services like logging and notifications
 
-- End-to-end task creation and management
-- Database operations
-- Notification scheduling
+#### Widget Testing
 
-## Dependencies
+- **Form Validation**: Input validation and error handling
+- **Component Behavior**: Interactive elements and state changes
+- **Navigation Testing**: Route handling and parameter passing
+- **UI State Testing**: Component rendering under different conditions
+
+#### Integration Testing
+
+- **End-to-End Workflows**: Complete task lifecycle testing
+- **Database Integration**: Multi-table operations and transactions
+- **Notification Integration**: Scheduling and delivery verification
+- **Cross-Platform Testing**: Consistent behavior across platforms
+
+### Quality Metrics
+
+- **Code Coverage**: Minimum 80% coverage for critical paths
+- **Performance Benchmarks**: Startup time, operation speed, memory usage
+- **Error Rate Monitoring**: Tracking and reduction of error occurrences
+- **User Experience Metrics**: App responsiveness and user satisfaction
+
+## Dependencies & External Libraries
 
 ### Core Dependencies
 
-- **sqflite (^2.3.2)**: Local SQLite database
-- **sqflite_common_ffi (^2.3.2+1)**: SQLite support for desktop platforms
-- **flutter_local_notifications (^16.0.1)**: Push notifications
-- **intl (^0.20.2)**: Localization and date formatting
-- **fl_chart (^0.70.2)**: Chart visualizations for statistics
-- **shared_preferences (^2.2.2)**: Simple data persistence
-- **timezone (^0.9.2)**: Timezone handling for notifications
-- **path_provider (^2.1.2)**: File system path access
-- **provider (^6.1.1)**: Simple state management
-- **share_plus (^10.1.4)**: Content sharing functionality
+| Package | Version | Purpose |
+|---------|---------|---------|
+| **sqflite** | ^2.3.2 | Local SQLite database for mobile platforms |
+| **sqflite_common_ffi** | ^2.3.2+1 | SQLite support for desktop platforms |
+| **flutter_local_notifications** | ^19.2.1 | Advanced push notification system |
+| **timezone** | ^0.10.0 | Timezone handling for accurate scheduling |
+| **intl** | ^0.20.2 | Internationalization and date formatting |
+| **fl_chart** | ^0.70.2 | Professional chart visualizations |
+| **shared_preferences** | ^2.2.2 | Simple key-value data persistence |
+| **path_provider** | ^2.1.2 | File system path access across platforms |
+| **provider** | ^6.1.1 | State management solution |
+| **share_plus** | ^10.1.4 | Content sharing functionality |
+| **package_info_plus** | ^8.3.0 | App version and build information |
+| **app_settings** | ^6.1.1 | Direct access to system app settings |
 
 ### Development Dependencies
 
-- **flutter_lints (^5.0.0)**: Linting rules for code quality
+- **flutter_lints** | ^5.0.0: Comprehensive linting rules for code quality
 
-## Platform Support
+### Platform-Specific Integrations
 
-The application is designed to run on multiple platforms:
+#### Android
 
-- **Mobile**: Android and iOS
-- **Desktop**: Windows, macOS, and Linux
-Each platform has specific optimizations and configurations to ensure the best user experience.
+- **API Level 35**: Latest Android support with material design
+- **Exact Alarm Permissions**: Android 13+ compatible notification scheduling
+- **Notification Channels**: Proper categorization and user control
+- **Background Processing**: Optimized for battery efficiency
 
-Each platform has specific optimizations and configurations to ensure the best user experience.
+#### iOS
+
+- **Native Notifications**: Seamless integration with iOS notification system
+- **Permission Handling**: Proper iOS permission request patterns
+- **Background App Refresh**: Appropriate background processing
+
+#### Desktop
+
+- **Window Management**: Proper window sizing and state management
+- **Keyboard Shortcuts**: Desktop-appropriate navigation patterns
+- **File System Access**: Native file operations for logging and export
+
+## Advanced Platform Support & Compatibility
+
+### Multi-Platform Architecture
+
+The application is designed for comprehensive platform support:
+
+#### Mobile Platforms
+
+- **Android**: API 21+ with Material Design 3 implementation
+- **iOS**: iOS 12+ with native design patterns and notification integration
+
+#### Desktop Platforms
+
+- **Windows**: Full Windows 10+ support with native window management
+- **macOS**: Native macOS experience with proper system integration
+- **Linux**: Ubuntu and other distributions with proper theming
+
+#### Web Platform
+
+- **Progressive Web App**: Responsive design with offline capabilities
+- **Browser Compatibility**: Modern browser support with feature detection
+
+### Platform-Specific Optimizations
+
+Each platform receives tailored optimizations:
+
+- **Performance Tuning**: Platform-specific performance optimizations
+- **Native Integration**: Proper integration with platform conventions
+- **User Experience**: Consistent yet platform-appropriate user experiences
+- **Security**: Platform-specific security best practices
+
+## Security & Privacy Considerations
+
+### Data Protection
+
+- **Local Storage**: All data stored locally with no external transmission
+- **Encryption**: Sensitive data protection with proper encryption methods
+- **Permission Management**: Minimal permission requests with clear explanations
+- **Privacy by Design**: No user tracking or data collection
+
+### Security Best Practices
+
+- **Input Validation**: Comprehensive validation of all user inputs with sanitization
+- **SQL Injection Prevention**: Parameterized queries and prepared statements
+- **Error Information**: Secure error handling that doesn't expose sensitive system information
+- **Permission Principle**: Minimal permission requests with clear user benefit explanations
+
+## Deployment & Distribution
+
+### Build Configuration
+
+#### Android Deployment
+
+- **Target SDK**: API 35 (Android 14+) with backward compatibility
+- **Minimum SDK**: API 21 (Android 5.0) for broad device support
+- **Build Types**: Debug, release, and profile builds with appropriate optimizations
+- **Signing**: Proper app signing for Play Store distribution
+- **ProGuard**: Code obfuscation and optimization for release builds
+
+#### iOS Deployment
+
+- **Target iOS**: iOS 12+ with latest Xcode compatibility
+- **Universal Apps**: Support for both iPhone and iPad form factors
+- **App Store**: Proper provisioning profiles and certificates
+- **Bitcode**: Enabled for App Store optimization
+
+#### Desktop Distribution
+
+- **Windows**: MSI installer with proper Windows integration
+- **macOS**: DMG distribution with notarization for security
+- **Linux**: AppImage and Snap package support for easy installation
+
+### Continuous Integration & Deployment
+
+- **Automated Testing**: CI/CD pipeline with comprehensive test coverage
+- **Quality Gates**: Code quality checks and performance benchmarks
+- **Multi-Platform Builds**: Automated builds for all supported platforms
+- **Release Management**: Semantic versioning with automated changelog generation
+
+## Scalability & Future Enhancements
+
+### Architectural Scalability
+
+The current architecture supports future enhancements:
+
+- **Modular Design**: Easy addition of new features without affecting existing code
+- **Service Layer**: Clear separation allows for future service integrations
+- **Database Schema**: Designed for migration and extension
+- **Plugin Architecture**: Support for future plugin development
+
+### Planned Enhancements
+
+#### Cloud Integration
+
+- **Backup & Sync**: Optional cloud backup with end-to-end encryption
+- **Multi-Device Sync**: Seamless synchronization across user devices
+- **Collaborative Features**: Shared task lists and team collaboration
+
+#### Advanced Features
+
+- **AI Integration**: Smart task suggestions and deadline predictions
+- **Voice Commands**: Voice-controlled task creation and management
+- **Calendar Integration**: Bidirectional sync with system calendars
+- **Advanced Analytics**: Machine learning insights for productivity optimization
+
+#### Enterprise Features
+
+- **Team Management**: User roles and permission systems
+- **Advanced Reporting**: Comprehensive productivity reports and insights
+- **API Integration**: RESTful API for third-party integrations
+- **Single Sign-On**: Enterprise authentication system integration
+
+### Performance Scaling
+
+- **Database Optimization**: Advanced indexing and query optimization strategies
+- **Caching Layer**: Intelligent caching for improved performance
+- **Background Processing**: Advanced background task management
+- **Memory Optimization**: Advanced memory management for large datasets
+
+## Development Workflow & Best Practices
+
+### Code Quality Standards
+
+- **Linting**: Comprehensive Flutter lints with custom rules
+- **Code Review**: Mandatory peer review process for all changes
+- **Documentation**: Inline documentation and comprehensive README files
+- **Version Control**: Git workflow with semantic versioning
+
+### Development Environment
+
+- **IDE Configuration**: Optimized VS Code and Android Studio configurations
+- **Debugging Tools**: Comprehensive debugging and profiling setup
+- **Testing Environment**: Local testing setup with CI/CD integration
+- **Dependency Management**: Automated dependency updates and security scanning
+
+### Release Process
+
+- **Feature Branches**: Git flow with feature branch development
+- **Release Candidates**: Staged release process with beta testing
+- **Rollback Strategy**: Safe deployment with quick rollback capabilities
+- **User Communication**: Clear release notes and feature announcements
+
+## Monitoring & Analytics
+
+### Application Monitoring
+
+- **Performance Metrics**: App startup time, memory usage, and operation speed
+- **Error Tracking**: Comprehensive error monitoring with automated reporting
+- **User Experience**: App responsiveness and user interaction patterns
+- **Resource Usage**: Battery usage optimization and monitoring
+
+### Usage Analytics
+
+- **Feature Usage**: Understanding which features are most valuable to users
+- **Performance Insights**: Identifying performance bottlenecks and optimization opportunities
+- **User Journey**: Understanding how users interact with the application
+- **Privacy Compliant**: All analytics respect user privacy and follow GDPR guidelines
+
+## Maintenance & Support
+
+### Long-term Maintenance
+
+- **Regular Updates**: Scheduled feature updates and security patches
+- **Platform Updates**: Keeping up with iOS and Android platform changes
+- **Dependency Updates**: Regular library updates for security and performance
+- **Performance Optimization**: Ongoing optimization based on usage patterns
+
+### User Support
+
+- **Documentation**: Comprehensive user guides and troubleshooting information
+- **Error Reporting**: Built-in error reporting with user consent
+- **Feature Requests**: System for collecting and prioritizing user feedback
+- **Community Support**: Active community engagement and support
+
+This technical architecture ensures that the Todo App is not only a robust, feature-rich application today, but also a foundation that can grow and evolve with user needs and technological advances.
