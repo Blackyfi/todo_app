@@ -7,7 +7,6 @@ import 'package:todo_app/app.dart' as app;
 import 'package:todo_app/core/logger/logger_service.dart';
 import 'package:todo_app/core/database/database_config.dart';
 import 'package:todo_app/core/settings/services/auto_delete_service.dart';
-import 'package:todo_app/core/notifications/notification_service.dart';
 
 void main() async {
   // Capture Flutter errors
@@ -27,10 +26,6 @@ void main() async {
     // Initialize database factory for the appropriate platform
     await DatabaseConfig.initDatabaseFactory();
     
-    // Initialize notification service early
-    final notificationService = NotificationService();
-    await notificationService.init();
-    
     // Set preferred orientations
     await services.SystemChrome.setPreferredOrientations([
       services.DeviceOrientation.portraitUp,
@@ -49,9 +44,6 @@ void main() async {
     // Process auto-delete for completed tasks
     final autoDeleteService = AutoDeleteService();
     await autoDeleteService.processCompletedTasks();
-    
-    // Request notification permissions
-    await notificationService.requestNotificationPermission();
     
     mat.runApp(const app.TodoApp());
   }, (error, stackTrace) {

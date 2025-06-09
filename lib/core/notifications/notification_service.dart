@@ -21,12 +21,19 @@ class NotificationService {
   final flutter_notifications.FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       flutter_notifications.FlutterLocalNotificationsPlugin();
   
-  late final PermissionHandler _permissionHandler;
-  late final NotificationScheduler _scheduler;
+  PermissionHandler? _permissionHandler;
+  NotificationScheduler? _scheduler;
+  bool _isInitialized = false;
   
   static const String _notificationPermissionRequestedKey = 'notification_permission_requested';
 
   Future<void> init() async {
+    // Prevent duplicate initialization
+    if (_isInitialized) {
+      await _logger.logInfo('NotificationService already initialized, skipping');
+      return;
+    }
+
     try {
       await _logger.logInfo('Initializing NotificationService');
       
@@ -42,6 +49,7 @@ class NotificationService {
       // Configure platform-specific settings
       await _initializePluginSettings();
       
+      _isInitialized = true;
       await _logger.logInfo('NotificationService initialized successfully');
     } catch (e, stackTrace) {
       await _logger.logError('Error initializing NotificationService', e, stackTrace);
@@ -97,37 +105,72 @@ class NotificationService {
   }
 
   Future<void> requestNotificationPermission() async {
-    await _permissionHandler.requestPermission(
+    if (!_isInitialized) {
+      await _logger.logWarning('NotificationService not initialized, cannot request permissions');
+      return;
+    }
+
+    await _permissionHandler!.requestPermission(
       _isFirstRun,
       _markPermissionRequested,
     );
   }
 
   Future<bool> areNotificationPermissionsGranted() async {
-    return await _permissionHandler.arePermissionsGranted();
+    if (!_isInitialized) {
+      await _logger.logWarning('NotificationService not initialized, assuming permissions not granted');
+      return false;
+    }
+
+    return await _permissionHandler!.arePermissionsGranted();
   }
   
   Future<void> showNotificationPermissionDialog(mat.BuildContext context) async {
-    await _permissionHandler.showPermissionDialog(context);
+    if (!_isInitialized) {
+      await _logger.logWarning('NotificationService not initialized, cannot show permission dialog');
+      return;
+    }
+
+    await _permissionHandler!.showPermissionDialog(context);
   }
 
   Future<void> requestPermissions() async {
-    await _permissionHandler.requestPermissions();
+    if (!_isInitialized) {
+      await _logger.logWarning('NotificationService not initialized, cannot request permissions');
+      return;
+    }
+
+    await _permissionHandler!.requestPermissions();
   }
 
   /// New method to open app settings directly
   Future<void> openAppSettings() async {
-    await _permissionHandler.openAppSettings();
+    if (!_isInitialized) {
+      await _logger.logWarning('NotificationService not initialized, cannot open app settings');
+      return;
+    }
+
+    await _permissionHandler!.openAppSettings();
   }
 
   Future<void> scheduleTaskNotification(
     task_model.Task task,
     notification_model.NotificationSetting setting,
   ) async {
-    await _scheduler.scheduleNotification(task, setting);
+    if (!_isInitialized) {
+      await _logger.logWarning('NotificationService not initialized, cannot schedule notification');
+      return;
+    }
+
+    await _scheduler!.scheduleNotification(task, setting);
   }
 
   Future<void> cancelNotification(int id) async {
+    if (!_isInitialized) {
+      await _logger.logWarning('NotificationService not initialized, cannot cancel notification');
+      return;
+    }
+
     try {
       await flutterLocalNotificationsPlugin.cancel(id);
       await _logger.logInfo('Notification canceled: ID=$id');
@@ -138,6 +181,11 @@ class NotificationService {
   }
 
   Future<void> cancelAllNotifications() async {
+    if (!_isInitialized) {
+      await _logger.logWarning('NotificationService not initialized, cannot cancel all notifications');
+      return;
+    }
+
     try {
       await flutterLocalNotificationsPlugin.cancelAll();
       await _logger.logInfo('All notifications canceled');
