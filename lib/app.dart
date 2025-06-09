@@ -9,7 +9,9 @@ import 'package:todo_app/core/providers/time_format_provider.dart';
 import 'package:todo_app/app_initializer.dart';
 
 class TodoApp extends mat.StatefulWidget {
-  const TodoApp({super.key});
+  final mat.GlobalKey<mat.NavigatorState> navigatorKey;
+  
+  const TodoApp({super.key, required this.navigatorKey});
 
   @override
   mat.State<TodoApp> createState() => _TodoAppState();
@@ -37,6 +39,7 @@ class _TodoAppState extends mat.State<TodoApp> {
     return ChangeNotifierProvider.value(
       value: _timeFormatProvider,
       child: mat.MaterialApp(
+        navigatorKey: widget.navigatorKey,
         title: app_constants.AppConstants.appName,
         theme: app_theme.AppTheme.lightTheme,
         darkTheme: app_theme.AppTheme.darkTheme,

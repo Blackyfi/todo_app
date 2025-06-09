@@ -10,13 +10,12 @@ class MainActivity : FlutterActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
-        // Handle widget intents
         handleWidgetIntent(intent)
     }
     
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        setIntent(intent)
         handleWidgetIntent(intent)
     }
     
@@ -24,25 +23,39 @@ class MainActivity : FlutterActivity() {
         if (intent?.action != null) {
             when (intent.action) {
                 "ADD_TASK" -> {
-                    // Navigate to add task screen
                     val widgetId = intent.getIntExtra("widget_id", -1)
-                    // You can pass this to Flutter via method channel if needed
-                    sendToFlutter("add_task", widgetId)
+                    sendToFlutter("add_task", mapOf("widgetId" to widgetId))
                 }
                 "WIDGET_SETTINGS" -> {
-                    // Navigate to widget settings
                     val widgetId = intent.getIntExtra("widget_id", -1)
-                    sendToFlutter("widget_settings", widgetId)
+                    sendToFlutter("widget_settings", mapOf("widgetId" to widgetId))
+                }
+                "BACKGROUND_SYNC" -> {
+                    val widgetId = intent.getIntExtra("widget_id", -1)
+                    sendToFlutter("background_sync", mapOf("widgetId" to widgetId))
+                    // Don't bring app to foreground for background sync
+                    if (!isTaskRoot) {
+                        finish()
+                    }
+                }
+                "BACKGROUND_TOGGLE_TASK" -> {
+                    val taskId = intent.getIntExtra("task_id", -1)
+                    val widgetId = intent.getIntExtra("widget_id", -1)
+                    sendToFlutter("background_toggle_task", mapOf("taskId" to taskId, "widgetId" to widgetId))
+                    // Don't bring app to foreground for background toggle
+                    if (!isTaskRoot) {
+                        finish()
+                    }
                 }
             }
         }
     }
     
-    private fun sendToFlutter(action: String, widgetId: Int) {
+    private fun sendToFlutter(action: String, data: Map<String, Any>) {
         flutterEngine?.dartExecutor?.let { dartExecutor ->
             MethodChannel(dartExecutor.binaryMessenger, CHANNEL).invokeMethod(
                 "handleWidgetAction", 
-                mapOf("action" to action, "widgetId" to widgetId)
+                mapOf("action" to action, "data" to data)
             )
         }
     }

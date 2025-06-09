@@ -8,6 +8,8 @@ import 'package:todo_app/features/categories/screens/categories_screen.dart' as 
 import 'package:todo_app/features/statistics/screens/statistics_screen.dart' as statistics_screen;
 import 'package:todo_app/features/settings/screens/settings_screen.dart';
 import 'package:todo_app/features/settings/screens/log_viewer_screen.dart';
+import 'package:todo_app/features/widgets/screens/widget_creation_screen.dart';
+import 'package:todo_app/core/widgets/models/widget_config.dart';
 
 class AppRouter {
   static mat.Route<dynamic> generateRoute(mat.RouteSettings settings) {
@@ -50,6 +52,12 @@ class AppRouter {
       case app_constants.AppConstants.logViewerRoute:
         return mat.MaterialPageRoute(
           builder: (_) => const LogViewerScreen(),
+        );
+
+      case '/widget-settings':
+        final widgetConfig = settings.arguments as WidgetConfig?;
+        return mat.MaterialPageRoute(
+          builder: (_) => WidgetCreationScreen(existingConfig: widgetConfig),
         );
         
       default:
