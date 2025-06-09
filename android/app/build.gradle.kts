@@ -7,18 +7,18 @@ plugins {
 
 android {
     namespace = "com.example.todo_app"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 35  // Updated for version 19 (API level 36 is still not stable as of today - 09 june 2025)
     ndkVersion = "27.0.12077973"
 
     compileOptions {
         // Enable desugaring
         isCoreLibraryDesugaringEnabled = true
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_11  // Updated to Java 11
+        targetCompatibility = JavaVersion.VERSION_11  // Updated to Java 11
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+        jvmTarget = JavaVersion.VERSION_11.toString()  // Updated to Java 11
     }
 
     defaultConfig {
@@ -30,7 +30,6 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        multiDexEnabled = true
     }
 
     buildTypes {
@@ -42,7 +41,7 @@ android {
     }
 }
 
-// Add desugaring dependency
+// Add desugaring dependency - updated version for version 19
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }

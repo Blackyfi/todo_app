@@ -4,6 +4,7 @@ import 'package:todo_app/features/tasks/models/task.dart' as task_model;
 import 'package:todo_app/core/notifications/models/notification_settings.dart' as notification_model;
 import 'package:todo_app/core/logger/logger_service.dart';
 import 'package:intl/intl.dart' as intl;
+import 'dart:io';
 
 class NotificationScheduler {
   final LoggerService _logger;
@@ -19,6 +20,20 @@ class NotificationScheduler {
       if (task.dueDate == null) {
         await _logger.logWarning('Cannot schedule notification: task has no due date, TaskID=${task.id}');
         return;
+      }
+
+      // Check permissions before scheduling
+      if (Platform.isAndroid) {
+        final androidPlugin = _flutterLocalNotificationsPlugin
+            .resolvePlatformSpecificImplementation<flutter_notifications.AndroidFlutterLocalNotificationsPlugin>();
+        
+        if (androidPlugin != null) {
+          final canScheduleExact = await androidPlugin.canScheduleExactNotifications();
+          if (canScheduleExact != true) {
+            await _logger.logWarning('Cannot schedule exact notifications: permission not granted, TaskID=${task.id}');
+            return;
+          }
+        }
       }
 
       final notificationTime = setting.timeOption.calculateNotificationTime(
@@ -81,9 +96,7 @@ class NotificationScheduler {
           iOS: flutter_notifications.DarwinNotificationDetails(),
         ),
         androidScheduleMode: flutter_notifications.AndroidScheduleMode.exactAllowWhileIdle,
-        matchDateTimeComponents:
-            flutter_notifications.DateTimeComponents.dateAndTime,
-        payload: task.title,
+        payload: task.title, // Add the task title as the payload
       );
       
       await _logger.logInfo(
@@ -91,20 +104,60 @@ class NotificationScheduler {
         'NotificationID=$notificationId, NotificationTime=${notificationTime.toIso8601String()}, '
         'TimeOption=${setting.timeOption.name}'
       );
-    } catch (e, stackTrace) {
-      await _logger.logError(
-        'Failed to schedule notification for TaskID=${task.id}. '
-        'Notification scheduling may not be supported on this platform.',
-        e,
-        stackTrace
+    } catch (e) {
+      // Handle case when zonedSchedule is not implemented
+      await _logger.logWarning(
+        'Advanced notification scheduling not available on this platform. '
+        'Using basic notification instead for TaskID=${task.id}'
       );
       
-      // Do NOT show immediate notification as fallback
-      // Just log the failure and continue
-      await _logger.logWarning(
-        'Notification scheduling failed for TaskID=${task.id}. '
-        'Task saved but no notification will be shown.'
-      );
+      // Try to use a simpler notification method as fallback
+      await _showBasicNotification(task, setting, notificationId);
+    }
+  }
+  
+  Future<void> _showBasicNotification(
+    task_model.Task task,
+    notification_model.NotificationSetting setting,
+    int notificationId,
+  ) async {
+    if (await _isNotificationPluginInitialized()) {
+      try {
+        final currentTime = DateTime.now();
+        final formattedTime = intl.DateFormat('yyyy-MM-dd HH:mm:ss.SSS').format(currentTime);
+        
+        await _logger.logInfo(
+          'Showing basic notification: Time=$formattedTime, TaskID=${task.id}, '
+          'Title="${task.title}", NotificationID=$notificationId'
+        );
+        
+        await _flutterLocalNotificationsPlugin.show(
+          notificationId,
+          'Task Reminder: ${task.title}',
+          task.description.isNotEmpty ? task.description : 'This task is due soon.',
+          const flutter_notifications.NotificationDetails(
+            android: flutter_notifications.AndroidNotificationDetails(
+              'todo_app_channel',
+              'Task Reminders',
+              channelDescription: 'Notifications for task reminders',
+              importance: flutter_notifications.Importance.high,
+              priority: flutter_notifications.Priority.high,
+            ),
+            iOS: flutter_notifications.DarwinNotificationDetails(),
+          ),
+          payload: task.title, // Add task title as payload
+        );
+        
+        await _logger.logInfo(
+          'Basic notification used as fallback: TaskID=${task.id}, SettingID=${setting.id}, '
+          'NotificationID=$notificationId'
+        );
+      } catch (innerError, innerStackTrace) {
+        await _logger.logError('Error showing basic notification', innerError, innerStackTrace);
+        // Don't rethrow here - let the task be saved even if notification fails
+      }
+    } else {
+      await _logger.logWarning('Cannot show fallback notification: plugin not initialized');
     }
   }
 

@@ -227,6 +227,40 @@ class NotificationService {
     }
   }
 
+  Future<void> testNotificationPermissions() async {
+    try {
+      final androidPlugin = flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<flutter_notifications.AndroidFlutterLocalNotificationsPlugin>();
+      
+      if (androidPlugin != null) {
+        final notificationsEnabled = await androidPlugin.areNotificationsEnabled();
+        final exactAlarmsAllowed = await androidPlugin.canScheduleExactNotifications();
+        
+        await _logger.logInfo('Test notification shown');
+        await _logger.logInfo('Notifications enabled: $notificationsEnabled');
+        await _logger.logInfo('Exact alarms allowed: $exactAlarmsAllowed');
+        
+        // Show a test notification immediately
+        await flutterLocalNotificationsPlugin.show(
+          9999,
+          'Permission Test',
+          'If you see this, basic notifications work!',
+          const flutter_notifications.NotificationDetails(
+            android: flutter_notifications.AndroidNotificationDetails(
+              'todo_app_channel',
+              'Task Reminders',
+              channelDescription: 'Notifications for task reminders',
+              importance: flutter_notifications.Importance.high,
+              priority: flutter_notifications.Priority.high,
+            ),
+          ),
+        );
+      }
+    } catch (e, stackTrace) {
+      await _logger.logError('Error testing notification permissions', e, stackTrace);
+    }
+  }
+
   // Method to get pending notifications for debugging
   Future<List<flutter_notifications.PendingNotificationRequest>> getPendingNotifications() async {
     try {
