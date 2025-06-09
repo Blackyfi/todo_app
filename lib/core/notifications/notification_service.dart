@@ -43,7 +43,6 @@ class NotificationService {
       await _initializePluginSettings();
       
       await _logger.logInfo('NotificationService initialized successfully');
-      await requestPermissions();
     } catch (e, stackTrace) {
       await _logger.logError('Error initializing NotificationService', e, stackTrace);
       rethrow;
@@ -114,6 +113,11 @@ class NotificationService {
 
   Future<void> requestPermissions() async {
     await _permissionHandler.requestPermissions();
+  }
+
+  /// New method to open app settings directly
+  Future<void> openAppSettings() async {
+    await _permissionHandler.openAppSettings();
   }
 
   Future<void> scheduleTaskNotification(

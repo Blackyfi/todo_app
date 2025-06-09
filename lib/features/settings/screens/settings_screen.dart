@@ -6,7 +6,8 @@ import 'package:todo_app/features/settings/screens/log_viewer_screen.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:todo_app/core/settings/models/auto_delete_settings.dart';
 import 'package:todo_app/core/settings/repository/auto_delete_settings_repository.dart';
-import 'package:flutter/services.dart'; // This includes FilteringTextInputFormatter
+import 'package:flutter/services.dart';
+import 'package:todo_app/core/notifications/notification_service.dart'; // Add this import
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -23,6 +24,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _isLoadingAutoDeleteSettings = true;
   final _autoDeleteSettingsRepository = AutoDeleteSettingsRepository();
   final _autoDeleteDaysController = TextEditingController();
+  final _notificationService = NotificationService(); // Add this
 
   @override
   void initState() {
@@ -139,6 +141,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ],
                 ),
                 _buildSection(
+                  title: 'Notifications', // Add this section
+                  children: [
+                    _buildNotificationSettings(),
+                  ],
+                ),
+                _buildSection(
                   title: 'Debugging',
                   children: [
                     ListTile(
@@ -247,6 +255,50 @@ class _SettingsScreenState extends State<SettingsScreen> {
           value: TimeFormat.american,
           groupValue: provider.timeFormat,
           onChanged: (value) => provider.setTimeFormat(value!),
+        ),
+      ],
+    );
+  }
+
+  // Add this new method
+  Widget _buildNotificationSettings() {
+    return Column(
+      children: [
+        ListTile(
+          leading: const Icon(Icons.notifications),
+          title: const Text('Notification Settings'),
+          subtitle: const Text('Manage app notification permissions'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () async {
+            await _notificationService.openAppSettings();
+          },
+        ),
+        FutureBuilder<bool>(
+          future: _notificationService.areNotificationPermissionsGranted(),
+          builder: (context, snapshot) {
+            final isEnabled = snapshot.data ?? false;
+            return ListTile(
+              leading: Icon(
+                isEnabled ? Icons.notifications_active : Icons.notifications_off,
+                color: isEnabled ? Colors.green : Colors.red,
+              ),
+              title: Text('Notifications ${isEnabled ? 'Enabled' : 'Disabled'}'),
+              subtitle: Text(
+                isEnabled 
+                  ? 'You will receive task reminders'
+                  : 'Enable notifications to receive task reminders',
+              ),
+              trailing: !isEnabled 
+                ? TextButton(
+                    onPressed: () async {
+                      await _notificationService.showNotificationPermissionDialog(context);
+                      setState(() {}); // Refresh the UI
+                    },
+                    child: const Text('Enable'),
+                  )
+                : null,
+            );
+          },
         ),
       ],
     );

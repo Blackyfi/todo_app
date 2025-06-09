@@ -76,102 +76,165 @@ class TaskCard extends mat.StatelessWidget {
         child: mat.InkWell(
           onTap: onTap,
           borderRadius: mat.BorderRadius.circular(16),
-          child: mat.Padding(
-            padding: const mat.EdgeInsets.all(16.0),
-            child: mat.Row(
-              crossAxisAlignment: mat.CrossAxisAlignment.start,
-              children: [
-                mat.Checkbox(
-                  value: task.isCompleted,
-                  onChanged: onCompletedChanged,
-                  shape: const mat.CircleBorder(),
-                  activeColor: categoryColor, // Use category color or default
-                ),
-                const mat.SizedBox(width: 8),
-                mat.Expanded(
-                  child: mat.Column(
-                    crossAxisAlignment: mat.CrossAxisAlignment.start,
-                    children: [
-                      mat.Row(
+          child: mat.Stack(
+            children: [
+              // Background indicator for overdue/days left
+              if (task.dueDate != null && !task.isCompleted)
+                _buildBackgroundIndicator(task.dueDate!, theme),
+              
+              // Main card content
+              mat.Padding(
+                padding: const mat.EdgeInsets.all(16.0),
+                child: mat.Row(
+                  crossAxisAlignment: mat.CrossAxisAlignment.start,
+                  children: [
+                    mat.Checkbox(
+                      value: task.isCompleted,
+                      onChanged: onCompletedChanged,
+                      shape: const mat.CircleBorder(),
+                      activeColor: categoryColor, // Use category color or default
+                    ),
+                    const mat.SizedBox(width: 8),
+                    mat.Expanded(
+                      child: mat.Column(
+                        crossAxisAlignment: mat.CrossAxisAlignment.start,
                         children: [
-                          mat.Expanded(
-                            child: mat.Text(
-                              task.title,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                decoration: task.isCompleted
-                                    ? mat.TextDecoration.lineThrough
-                                    : null,
+                          mat.Row(
+                            children: [
+                              mat.Expanded(
+                                child: mat.Text(
+                                  task.title,
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    decoration: task.isCompleted
+                                        ? mat.TextDecoration.lineThrough
+                                        : null,
+                                    color: task.isCompleted
+                                        ? theme.colorScheme.onSurface.withAlpha(128)
+                                        : null,
+                                    fontWeight: mat.FontWeight.bold,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: mat.TextOverflow.ellipsis,
+                                ),
+                              ),
+                              priority_badge.PriorityBadge(priority: task.priority),
+                            ],
+                          ),
+                          if (task.description.isNotEmpty) ...[
+                            const mat.SizedBox(height: 8),
+                            mat.Text(
+                              task.description,
+                              style: theme.textTheme.bodyMedium?.copyWith(
                                 color: task.isCompleted
                                     ? theme.colorScheme.onSurface.withAlpha(128)
                                     : null,
-                                fontWeight: mat.FontWeight.bold,
+                                decoration: task.isCompleted
+                                    ? mat.TextDecoration.lineThrough
+                                    : null,
                               ),
-                              maxLines: 1,
+                              maxLines: 2,
                               overflow: mat.TextOverflow.ellipsis,
                             ),
-                          ),
-                          priority_badge.PriorityBadge(priority: task.priority),
-                        ],
-                      ),
-                      if (task.description.isNotEmpty) ...[
-                        const mat.SizedBox(height: 8),
-                        mat.Text(
-                          task.description,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: task.isCompleted
-                                ? theme.colorScheme.onSurface.withAlpha(128)
-                                : null,
-                            decoration: task.isCompleted
-                                ? mat.TextDecoration.lineThrough
-                                : null,
-                          ),
-                          maxLines: 2,
-                          overflow: mat.TextOverflow.ellipsis,
-                        ),
-                      ],
-                      const mat.SizedBox(height: 8),
-                      mat.Row(
-                        children: [
-                          // Only show category if one is assigned
-                          if (category != null) 
-                            mat.Container(
-                              padding: const mat.EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                              decoration: mat.BoxDecoration(
-                                color: category!.color.withAlpha(51),
-                                borderRadius: mat.BorderRadius.circular(8),
-                              ),
-                              child: mat.Text(
-                                category!.name,
-                                style: mat.TextStyle(
-                                  color: category!.color,
-                                  fontSize: 12,
-                                  fontWeight: mat.FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          if (category != null && task.dueDate != null)
-                            const mat.SizedBox(width: 8),
-                          if (task.dueDate != null) ...[
-                            mat.Icon(
-                              mat.Icons.access_time,
-                              size: 14,
-                              color: _getDueDateColor(task.dueDate!, theme),
-                            ),
-                            const mat.SizedBox(width: 4),
-                            mat.Text(
-                              _formatDueDate(task.dueDate!, timeFormatProvider.isEuropean),
-                              style: mat.TextStyle(
-                                color: _getDueDateColor(task.dueDate!, theme),
-                                fontSize: 12,
-                              ),
-                            ),
                           ],
+                          const mat.SizedBox(height: 8),
+                          mat.Row(
+                            children: [
+                              // Only show category if one is assigned
+                              if (category != null) 
+                                mat.Container(
+                                  padding: const mat.EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  decoration: mat.BoxDecoration(
+                                    color: category!.color.withAlpha(51),
+                                    borderRadius: mat.BorderRadius.circular(8),
+                                  ),
+                                  child: mat.Text(
+                                    category!.name,
+                                    style: mat.TextStyle(
+                                      color: category!.color,
+                                      fontSize: 12,
+                                      fontWeight: mat.FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              if (category != null && task.dueDate != null)
+                                const mat.SizedBox(width: 8),
+                              if (task.dueDate != null) ...[
+                                mat.Icon(
+                                  mat.Icons.access_time,
+                                  size: 14,
+                                  color: _getDueDateColor(task.dueDate!, theme),
+                                ),
+                                const mat.SizedBox(width: 4),
+                                mat.Text(
+                                  _formatDueDate(task.dueDate!, timeFormatProvider.isEuropean),
+                                  style: mat.TextStyle(
+                                    color: _getDueDateColor(task.dueDate!, theme),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
                         ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  mat.Widget _buildBackgroundIndicator(DateTime dueDate, mat.ThemeData theme) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final taskDate = DateTime(dueDate.year, dueDate.month, dueDate.day);
+    
+    String text;
+    mat.Color color;
+    
+    if (taskDate.isBefore(today)) {
+      // Task is overdue (date is in the past)
+      text = 'OVERDUE';
+      color = mat.Colors.red.withAlpha(51); // 20% opacity
+    } else if (taskDate.isAtSameMomentAs(today)) {
+      // Task is due today - check if the time has passed
+      if (dueDate.isBefore(now)) {
+        // Time has passed, task is overdue
+        text = 'OVERDUE';
+        color = mat.Colors.red.withAlpha(51); // 20% opacity
+      } else {
+        // Time hasn't passed yet, task is due today
+        text = 'TODAY';
+        color = mat.Colors.red.withAlpha(51); // 20% opacity
+      }
+    } else {
+      // Task is in the future - calculate days left
+      final daysLeft = taskDate.difference(today).inDays;
+      text = '$daysLeft DAYS LEFT';
+      
+      if (daysLeft <= 5) {
+        color = mat.Colors.yellow.withAlpha(51); // 20% opacity
+      } else {
+        color = mat.Colors.green.withAlpha(51); // 20% opacity
+      }
+    }
+    
+    return mat.Positioned.fill(
+      child: mat.Container(
+        alignment: mat.Alignment.center,
+        child: mat.Transform.rotate(
+          angle: -0.1, // Slight rotation for visual effect
+          child: mat.Text(
+            text,
+            style: mat.TextStyle(
+              fontSize: 24,
+              fontWeight: mat.FontWeight.bold,
+              color: color.withAlpha(77), // More faded for background effect
+              letterSpacing: 2.0,
             ),
           ),
         ),

@@ -4,6 +4,7 @@ import 'package:todo_app/features/tasks/models/task.dart' as task_model;
 import 'package:todo_app/core/notifications/models/notification_settings.dart' as notification_model;
 import 'package:todo_app/core/logger/logger_service.dart';
 import 'package:intl/intl.dart' as intl;
+import 'dart:io';
 
 class NotificationScheduler {
   final LoggerService _logger;
@@ -19,6 +20,20 @@ class NotificationScheduler {
       if (task.dueDate == null) {
         await _logger.logWarning('Cannot schedule notification: task has no due date, TaskID=${task.id}');
         return;
+      }
+
+      // Check permissions before scheduling
+      if (Platform.isAndroid) {
+        final androidPlugin = _flutterLocalNotificationsPlugin
+            .resolvePlatformSpecificImplementation<flutter_notifications.AndroidFlutterLocalNotificationsPlugin>();
+        
+        if (androidPlugin != null) {
+          final canScheduleExact = await androidPlugin.canScheduleExactNotifications();
+          if (canScheduleExact != true) {
+            await _logger.logWarning('Cannot schedule exact notifications: permission not granted, TaskID=${task.id}');
+            return;
+          }
+        }
       }
 
       final notificationTime = setting.timeOption.calculateNotificationTime(
@@ -81,13 +96,11 @@ class NotificationScheduler {
           iOS: flutter_notifications.DarwinNotificationDetails(),
         ),
         androidScheduleMode: flutter_notifications.AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            flutter_notifications.UILocalNotificationDateInterpretation.absoluteTime,
         payload: task.title, // Add the task title as the payload
       );
       
       await _logger.logInfo(
-        'Notification scheduled: TaskID=${task.id}, SettingID=${setting.id}, '
+        'Notification scheduled successfully: TaskID=${task.id}, SettingID=${setting.id}, '
         'NotificationID=$notificationId, NotificationTime=${notificationTime.toIso8601String()}, '
         'TimeOption=${setting.timeOption.name}'
       );

@@ -25,12 +25,13 @@ The system supports three log levels:
 
 Log entries are stored in text files with the following format:
 
-```
+```bash
 [YYYY-MM-DD HH:MM:SS] LEVEL: Message
 ```
 
 ### Example:
-```
+
+```bash
 [2025-03-20 15:30:45] INFO: Application initialization started
 [2025-03-20 15:30:46] ERROR: Database initialization error: No such table: tasks
 [2025-03-20 15:30:46] STACK: #0 DatabaseHelper._initDatabase (file:///app/lib/core/database/database_helper.dart:35:7)
@@ -40,7 +41,7 @@ Log entries are stored in text files with the following format:
 
 Log files are stored in the application's documents directory under a `logs` subfolder. A new log file is created each day with the naming pattern:
 
-```
+```bash
 app_log_YYYY_MM_DD.log
 ```
 
@@ -60,6 +61,7 @@ The app includes a built-in Log Viewer that can be accessed from the Settings sc
 6. Export logs as JSON
 
 #### Accessing the Log Viewer:
+
 1. Tap the gear icon (⚙️) in the top-right corner of the Home screen to open Settings
 2. In the Settings screen, under the "Debugging" section, tap "View Logs"
 

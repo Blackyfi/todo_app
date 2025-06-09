@@ -27,6 +27,10 @@ void main() async {
     // Initialize database factory for the appropriate platform
     await DatabaseConfig.initDatabaseFactory();
     
+    // Initialize notification service early
+    final notificationService = NotificationService();
+    await notificationService.init();
+    
     // Set preferred orientations
     await services.SystemChrome.setPreferredOrientations([
       services.DeviceOrientation.portraitUp,
@@ -46,9 +50,7 @@ void main() async {
     final autoDeleteService = AutoDeleteService();
     await autoDeleteService.processCompletedTasks();
     
-    // Request notification permissions as early as possible
-    final notificationService = NotificationService();
-    await notificationService.init();
+    // Request notification permissions
     await notificationService.requestNotificationPermission();
     
     mat.runApp(const app.TodoApp());

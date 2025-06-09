@@ -17,6 +17,7 @@ todo_app/
 ├── lib/                           # Source code
 │   ├── main.dart                  # Application entry point
 │   ├── app.dart                   # Main app configuration
+│   ├── app_initializer.dart       # Application initialization service
 │   ├── routes.dart                # Navigation routes
 │   ├── common/                    # Common utilities and widgets
 │   │   ├── constants/
@@ -42,7 +43,9 @@ todo_app/
 │   │   ├── notifications/         # Notification system
 │   │   │   ├── models/
 │   │   │   │   └── notification_settings.dart
-│   │   │   └── notification_service.dart
+│   │   │   ├── notification_scheduler.dart # Notification scheduling logic
+│   │   │   ├── notification_service.dart   # Main notification service
+│   │   │   └── permission_handler.dart     # Notification permission management
 │   │   ├── providers/
 │   │   │   └── time_format_provider.dart # Time format state management
 │   │   └── settings/              # Application settings
@@ -65,7 +68,8 @@ todo_app/
 │       │   └── widgets/
 │       │       ├── notification_option_picker.dart # Notification selection UI
 │       │       ├── task_card.dart             # Task list item
-│       │       ├── task_detail_sections.dart  # Task detail UI components
+│       │       ├── task_detail_*.dart         # Task detail UI components
+│       │       ├── task_detail_sections.dart  # Combined task detail UI
 │       │       └── task_form_fields.dart      # Form fields for task creation/editing
 │       ├── categories/            # Category management
 │       │   ├── models/
@@ -85,8 +89,13 @@ todo_app/
 │           ├── utils/
 │           │   └── statistics_helpers.dart # Helper functions for statistics
 │           └── widgets/
-│               ├── chart_cards.dart       # Chart components
-│               └── summary_card.dart      # Summary statistics card
+│               ├── chart_cards.dart          # Chart components export file
+│               ├── completion_chart.dart     # Task completion chart
+│               ├── priority_chart.dart       # Priority distribution chart
+│               ├── category_chart.dart       # Category distribution chart
+│               ├── weekly_tasks_card.dart    # Weekly tasks display
+│               ├── weekly_completion_chart.dart # Weekly completion chart
+│               └── summary_card.dart         # Summary statistics card
 └── packages/                     # Local package dependencies
     └── flutter_local_notifications-16.3.3/ # Local notifications package
 ```
@@ -100,8 +109,10 @@ todo_app/
   - `DatabaseConfig`: Platform-specific database setup
   - Repositories: Entity-specific data access (Task, Category, Notification)
 
-- **Notification System**: Local notification implementation
-  - `NotificationService`: Handles scheduling and management
+- **Notification System**: Enhanced local notification implementation
+  - `NotificationService`: Handles scheduling and management with proper initialization
+  - `NotificationScheduler`: Precise notification scheduling with timezone support
+  - `PermissionHandler`: Comprehensive permission management for Android 13+
   - `NotificationSetting`: Model for notification preferences
 
 - **Logger System**: Comprehensive error logging functionality
@@ -125,15 +136,16 @@ todo_app/
   - Screens: UI for category management
   - Widgets: Reusable category-specific components
 
-- **Statistics**: Analytics and reporting
+- **Statistics**: Analytics and reporting with enhanced chart components
   - Screens: Dashboard with charts and metrics
   - Utils: Helper functions for statistics calculations
-  - Widgets: Chart and summary components
+  - Widgets: Individual chart components and summary cards
 
-- **Settings**: Application settings management
+- **Settings**: Enhanced application settings management
   - Settings configuration interface
   - Log viewer and management
   - Time format and theme preferences
+  - **NEW**: Notification testing and debugging tools
 
 ### Common Elements
 
@@ -154,9 +166,17 @@ The Todo App follows a feature-based architecture with a clear separation of con
 3. **Data Access Layer**: Repositories and services (`core/database/repository`, `core/services`)
 4. **Core Infrastructure**: Shared functionality and configuration (`core/*`, `common/*`)
 
+### Recent Enhancements
+
+- **Enhanced Notification System**: Proper timezone handling, exact alarm permissions, comprehensive error handling
+- **Debugging Tools**: Test notification functionality and pending notification viewer
+- **Permission Management**: Android 13+ compatibility with exact alarm permissions
+- **Error Recovery**: Fallback mechanisms for notification scheduling failures
+
 This organization allows for:
 
 - Easy navigation of the codebase
 - Clear component responsibilities
 - Scalable feature development
 - Maintainable and testable code structure
+- **Enhanced debugging capabilities for notification issues**
