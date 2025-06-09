@@ -41,7 +41,7 @@ class WidgetService {
   Future<bool> isWidgetSupported() async {
     try {
       // Check if the platform supports widgets
-      final isSupported = await HomeWidget.getWidgetData('test_key') != null || true;
+      const isSupported = true; // Assume supported for now
       await _logger.logInfo('Widget support check: $isSupported');
       return isSupported;
     } catch (e, stackTrace) {
@@ -232,11 +232,11 @@ class WidgetService {
         'isCompleted': task.isCompleted,
         'priority': task.priority.index,
         'priorityLabel': task.priority.label,
-        'priorityColor': task.priority.color.toARGB32(),
+        'priorityColor': task.priority.color.value,
         'dueDate': task.dueDate?.millisecondsSinceEpoch,
         'category': category != null ? {
           'name': category.name,
-          'color': category.color.toARGB32(),
+          'color': category.color.value,
         } : null,
       };
     }).toList();
@@ -250,5 +250,33 @@ class WidgetService {
 
   Future<List<WidgetConfig>> getAllWidgetConfigs() async {
     return await _widgetConfigRepository.getAllWidgetConfigs();
+  }
+
+  // Method to handle widget button presses
+  Future<void> handleWidgetAction(String action, int? widgetId) async {
+    try {
+      await _logger.logInfo('Handling widget action: $action for widget: $widgetId');
+      
+      switch (action) {
+        case 'refresh':
+          if (widgetId != null) {
+            await updateWidget(widgetId);
+          } else {
+            await updateAllWidgets();
+          }
+          break;
+        case 'add_task':
+          // This would typically open the add task screen
+          // Implementation depends on how you want to handle navigation from widgets
+          await _logger.logInfo('Add task action triggered from widget');
+          break;
+        case 'settings':
+          // This would typically open widget settings
+          await _logger.logInfo('Settings action triggered from widget');
+          break;
+      }
+    } catch (e, stackTrace) {
+      await _logger.logError('Error handling widget action', e, stackTrace);
+    }
   }
 }
