@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">todo_app</string>
+    <string name="appwidget_text">Todo Tasks</string>
+</resources>
