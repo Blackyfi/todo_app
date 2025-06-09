@@ -9,6 +9,8 @@ import 'package:todo_app/core/database/repository/category_repository.dart' as c
 import 'package:todo_app/core/logger/logger_service.dart';
 import 'package:todo_app/core/settings/repository/auto_delete_settings_repository.dart';
 import 'package:todo_app/core/notifications/notification_service.dart' as notification_service;
+import 'package:todo_app/features/categories/screens/categories_screen.dart';
+import 'package:todo_app/features/statistics/screens/statistics_screen.dart';
 
 class HomeScreen extends mat.StatefulWidget {
   const HomeScreen({super.key});
@@ -231,7 +233,7 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
     return mat.Scaffold(
       appBar: mat.AppBar(
         title: const mat.Text('Todo App'),
-        actions: [
+        actions: _tabController.index == 0 ? [
           mat.PopupMenuButton<String>(
             onSelected: (value) {
               setState(() {
@@ -266,9 +268,18 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
             onPressed: _navigateToSettings,
             tooltip: 'Settings',
           ),
+        ] : [
+          mat.IconButton(
+            icon: const mat.Icon(mat.Icons.settings),
+            onPressed: _navigateToSettings,
+            tooltip: 'Settings',
+          ),
         ],
         bottom: mat.TabBar(
           controller: _tabController,
+          onTap: (index) {
+            setState(() {}); // Refresh to update app bar actions
+          },
           tabs: const [
             mat.Tab(text: 'Tasks'),
             mat.Tab(text: 'Categories'),
@@ -306,35 +317,17 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
                         },
                       ),
                 
-                // Categories Tab
-                mat.Center(
-                  child: mat.TextButton(
-                    onPressed: () {
-                      mat.Navigator.of(context).pushNamed(
-                        app_constants.AppConstants.categoriesRoute,
-                      ).then((_) => _loadData());
-                    },
-                    child: const mat.Text('View All Categories'),
-                  ),
-                ),
+                // Categories Tab - directly embed the screen
+                const CategoriesScreen(),
                 
-                // Statistics Tab
-                mat.Center(
-                  child: mat.TextButton(
-                    onPressed: () {
-                      mat.Navigator.of(context).pushNamed(
-                        app_constants.AppConstants.statisticsRoute,
-                      );
-                    },
-                    child: const mat.Text('View Statistics'),
-                  ),
-                ),
+                // Statistics Tab - directly embed the screen
+                const StatisticsScreen(),
               ],
             ),
-      floatingActionButton: mat.FloatingActionButton(
+      floatingActionButton: _tabController.index == 0 ? mat.FloatingActionButton(
         onPressed: _navigateToAddTask,
         child: const mat.Icon(mat.Icons.add),
-      ),
+      ) : null,
     );
   }
 }

@@ -9,6 +9,7 @@ import 'package:todo_app/core/settings/services/auto_delete_service.dart';
 import 'package:todo_app/core/widgets/services/widget_service.dart';
 import 'package:todo_app/core/widgets/repository/widget_config_repository.dart';
 import 'package:todo_app/common/constants/app_constants.dart' as app_constants;
+import 'package:todo_app/features/widgets/screens/widget_creation_screen.dart';
 
 // Global navigator key to handle navigation from widget actions
 final mat.GlobalKey<mat.NavigatorState> navigatorKey = mat.GlobalKey<mat.NavigatorState>();
@@ -77,8 +78,12 @@ void _setupWidgetActionHandling(WidgetService widgetService, LoggerService logge
               final widgetConfigRepository = WidgetConfigRepository();
               final widgetConfig = await widgetConfigRepository.getWidgetConfig(widgetId);
               if (widgetConfig != null) {
-                // Navigate to edit screen with existing config
-                navigatorKey.currentState?.pushNamed('/widget-settings', arguments: widgetConfig);
+                // Navigate to widget settings screen with existing config
+                navigatorKey.currentState?.push(
+                  mat.MaterialPageRoute(
+                    builder: (_) => WidgetCreationScreen(existingConfig: widgetConfig),
+                  ),
+                );
               } else {
                 await logger.logError('Widget config not found for ID: $widgetId');
               }
@@ -90,24 +95,12 @@ void _setupWidgetActionHandling(WidgetService widgetService, LoggerService logge
           
         case 'background_sync':
           // Handle background sync without showing UI
-          final widgetId = data['widgetId'] as int?;
-          if (widgetId != null) {
-            await widgetService.updateWidget(widgetId);
-          } else {
-            await widgetService.updateAllWidgets();
-          }
+          await widgetService.handleWidgetAction('background_sync', data);
           break;
           
         case 'background_toggle_task':
           // Handle background task toggle without showing UI
-          final taskId = data['taskId'] as int?;
-          final widgetId = data['widgetId'] as int?;
-          if (taskId != null) {
-            await widgetService.handleWidgetAction('toggle_task', {
-              'taskId': taskId,
-              'widgetId': widgetId,
-            });
-          }
+          await widgetService.handleWidgetAction('background_toggle_task', data);
           break;
       }
     }

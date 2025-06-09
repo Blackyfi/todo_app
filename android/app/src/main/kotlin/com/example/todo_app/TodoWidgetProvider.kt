@@ -83,11 +83,11 @@ class TodoWidgetProvider : AppWidgetProvider() {
         )
         views.setOnClickPendingIntent(R.id.refresh_button, refreshPendingIntent)
         
-        // Settings button - opens the app to widget settings for this specific widget
+        // Settings button - opens widget settings WITHOUT bringing app to foreground
         val settingsIntent = Intent(context, MainActivity::class.java).apply {
             action = "WIDGET_SETTINGS"
             putExtra("widget_id", appWidgetId)
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION
         }
         val settingsPendingIntent = PendingIntent.getActivity(
             context, 

@@ -285,7 +285,7 @@ class WidgetService {
       await _logger.logInfo('Handling widget action: $action with data: $data');
       
       switch (action) {
-        case 'sync_widget':
+        case 'background_sync':
           final widgetId = data['widgetId'] as int?;
           if (widgetId != null) {
             await updateWidget(widgetId);
@@ -297,16 +297,16 @@ class WidgetService {
         case 'add_task':
           final widgetId = data['widgetId'] as int?;
           await _logger.logInfo('Add task action triggered from widget: $widgetId');
-          // Navigate to add task screen - this will be handled by the app router
+          // This will be handled by main.dart navigation
           break;
           
         case 'widget_settings':
           final widgetId = data['widgetId'] as int?;
           await _logger.logInfo('Widget settings action triggered for widget: $widgetId');
-          // Navigate to widget settings - this will be handled by the app router
+          // This will be handled by main.dart navigation
           break;
           
-        case 'toggle_task':
+        case 'background_toggle_task':
           final taskId = data['taskId'] as int?;
           final widgetId = data['widgetId'] as int?;
           if (taskId != null) {
