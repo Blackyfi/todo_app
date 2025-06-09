@@ -93,6 +93,21 @@ class DatabaseHelper {
         )
       ''');
 
+      // Create widget configurations table
+      await db.execute('''
+        CREATE TABLE widgetConfigs(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          size INTEGER NOT NULL DEFAULT 1,
+          showCompleted INTEGER NOT NULL DEFAULT 0,
+          showCategories INTEGER NOT NULL DEFAULT 1,
+          showPriority INTEGER NOT NULL DEFAULT 1,
+          categoryFilter TEXT,
+          maxTasks INTEGER NOT NULL DEFAULT 5,
+          createdAt INTEGER
+        )
+      ''');
+
       // Insert default categories
       await db.insert('categories', {'name': 'Work', 'color': 0xFF2196F3});
       await db.insert('categories', {'name': 'Personal', 'color': 0xFF4CAF50});

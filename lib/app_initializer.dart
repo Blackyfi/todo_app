@@ -1,6 +1,7 @@
 import 'package:todo_app/core/logger/logger_service.dart';
 import 'package:todo_app/core/notifications/notification_service.dart';
 import 'package:todo_app/core/providers/time_format_provider.dart';
+import 'package:todo_app/core/widgets/services/widget_service.dart';
 
 class AppInitializer {
   static bool _isInitialized = false;
@@ -44,6 +45,11 @@ class AppInitializer {
     // Initialize time format provider
     await timeFormatProvider.init();
     await loggerService.logInfo('Time format provider initialized');
+    
+    // Initialize widget service
+    final widgetService = WidgetService();
+    await widgetService.init();
+    await loggerService.logInfo('Widget service initialized');
     
     // Request notification permissions after initialization
     await notificationService.requestNotificationPermission();
