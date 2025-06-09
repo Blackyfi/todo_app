@@ -7,7 +7,8 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:todo_app/core/settings/models/auto_delete_settings.dart';
 import 'package:todo_app/core/settings/repository/auto_delete_settings_repository.dart';
 import 'package:flutter/services.dart'; // This includes FilteringTextInputFormatter
-import 'package:todo_app/core/notifications/notification_service.dart';
+import 'package:todo_app/core/notifications/notification_service.dart' as notification_service;
+import 'package:flutter_local_notifications/flutter_local_notifications.dart' as flutter_notifications;
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -24,7 +25,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _isLoadingAutoDeleteSettings = true;
   final _autoDeleteSettingsRepository = AutoDeleteSettingsRepository();
   final _autoDeleteDaysController = TextEditingController();
-  final _notificationService = NotificationService();
 
   @override
   void initState() {
@@ -104,7 +104,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _testNotification() async {
     try {
-      await _notificationService.showTestNotification();
+      final notificationService = notification_service.NotificationService();
+      
+      // Show a simple test notification immediately
+      await notificationService.flutterLocalNotificationsPlugin.show(
+        9999,
+        'Test Notification',
+        'This is a test notification from the settings screen!',
+        const flutter_notifications.NotificationDetails(
+          android: flutter_notifications.AndroidNotificationDetails(
+            'todo_app_channel',
+            'Task Reminders',
+            channelDescription: 'Notifications for task reminders',
+            importance: flutter_notifications.Importance.high,
+            priority: flutter_notifications.Priority.high,
+          ),
+          iOS: flutter_notifications.DarwinNotificationDetails(),
+        ),
+      );
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Test notification sent')),
@@ -121,7 +139,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _checkPendingNotifications() async {
     try {
-      final pending = await _notificationService.getPendingNotifications();
+      final notificationService = notification_service.NotificationService();
+      
+      // Get pending notifications
+      final pending = await notificationService.flutterLocalNotificationsPlugin.pendingNotificationRequests();
       
       if (mounted) {
         showDialog(
@@ -230,6 +251,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       subtitle: const Text('View scheduled notifications'),
                       trailing: const Icon(Icons.list),
                       onTap: _checkPendingNotifications,
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.notifications),
+                      title: const Text('Request Notification Permissions'),
+                      subtitle: const Text('Manually request notification and exact alarm permissions'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () async {
+                        try {
+                          final notificationService = notification_service.NotificationService();
+                          await notificationService.requestAllPermissions();
+                          
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Permission request completed. Check your notification settings.'),
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Error requesting permissions'),
+                              ),
+                            );
+                          }
+                        }
+                      },
                     ),
                   ],
                 ),

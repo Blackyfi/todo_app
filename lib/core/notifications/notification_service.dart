@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter/material.dart' as mat;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart' as flutter_notifications;
 import 'package:timezone/data/latest.dart' as tz_data;
-import 'package:timezone/timezone.dart' as tz;
 import 'package:todo_app/features/tasks/models/task.dart' as task_model;
 import 'package:todo_app/core/notifications/models/notification_settings.dart' as notification_model;
 import 'package:todo_app/core/logger/logger_service.dart';
@@ -26,58 +25,133 @@ class NotificationService {
   late final NotificationScheduler _scheduler;
   
   static const String _notificationPermissionRequestedKey = 'notification_permission_requested';
-  bool _isInitialized = false;
+  static const String _exactAlarmPermissionRequestedKey = 'exact_alarm_permission_requested';
 
   Future<void> init() async {
-    if (_isInitialized) {
-      await _logger.logInfo('NotificationService already initialized');
-      return;
-    }
-
     try {
       await _logger.logInfo('Initializing NotificationService');
       
       // Initialize timezone data
       tz_data.initializeTimeZones();
       
-      // Set local timezone
-      final String timeZoneName = await _getLocalTimeZone();
-      tz.setLocalLocation(tz.getLocation(timeZoneName));
-      await _logger.logInfo('Timezone set to: $timeZoneName');
-      
       _permissionHandler = PermissionHandler(_logger, flutterLocalNotificationsPlugin);
       _scheduler = NotificationScheduler(_logger, flutterLocalNotificationsPlugin);
 
-      // Initialize plugin settings first
-      await _initializePluginSettings();
-      
       // Create notification channels
       await _createNotificationChannels();
+
+      // Configure platform-specific settings
+      await _initializePluginSettings();
       
-      _isInitialized = true;
       await _logger.logInfo('NotificationService initialized successfully');
       
-      // Request permissions after initialization
-      await requestPermissions();
+      // Automatically request permissions on first run
+      await _autoRequestPermissionsOnFirstRun();
+      
     } catch (e, stackTrace) {
       await _logger.logError('Error initializing NotificationService', e, stackTrace);
       rethrow;
     }
   }
 
-  Future<String> _getLocalTimeZone() async {
+  Future<void> _autoRequestPermissionsOnFirstRun() async {
     try {
-      // Try to get system timezone
-      if (Platform.isAndroid || Platform.isIOS) {
-        // For mobile platforms, use a default timezone or implement platform-specific code
-        return 'UTC'; // You might want to use a location-based timezone
-      } else {
-        // For other platforms, use UTC as fallback
-        return 'UTC';
+      final prefs = await SharedPreferences.getInstance();
+      final hasRequestedBasic = prefs.getBool(_notificationPermissionRequestedKey) ?? false;
+      final hasRequestedExact = prefs.getBool(_exactAlarmPermissionRequestedKey) ?? false;
+      
+      // Check current permission status
+      final hasBasicPermissions = await _hasBasicNotificationPermissions();
+      final hasExactPermissions = await _hasExactAlarmPermissions();
+      
+      await _logger.logInfo('Permission status - Basic: $hasBasicPermissions, Exact: $hasExactPermissions');
+      await _logger.logInfo('Previously requested - Basic: $hasRequestedBasic, Exact: $hasRequestedExact');
+      
+      // Request basic notifications first if not granted and not previously requested
+      if (!hasBasicPermissions && !hasRequestedBasic) {
+        await _logger.logInfo('Auto-requesting basic notification permissions on first run');
+        await _requestBasicNotificationPermissions();
+        await prefs.setBool(_notificationPermissionRequestedKey, true);
       }
-    } catch (e) {
-      await _logger.logWarning('Could not determine local timezone, using UTC: $e');
-      return 'UTC';
+      
+      // Then request exact alarm permissions if basic are granted but exact are not
+      if (hasBasicPermissions && !hasExactPermissions && !hasRequestedExact) {
+        await _logger.logInfo('Auto-requesting exact alarm permissions');
+        await _requestExactAlarmPermissions();
+        await prefs.setBool(_exactAlarmPermissionRequestedKey, true);
+      }
+      
+    } catch (e, stackTrace) {
+      await _logger.logError('Error in auto permission request', e, stackTrace);
+    }
+  }
+
+  Future<bool> _hasBasicNotificationPermissions() async {
+    if (Platform.isAndroid) {
+      final androidPlugin = flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<flutter_notifications.AndroidFlutterLocalNotificationsPlugin>();
+      if (androidPlugin != null) {
+        return await androidPlugin.areNotificationsEnabled() ?? false;
+      }
+    } else if (Platform.isIOS) {
+      // For iOS, we can check if permissions were granted before
+      // This is a simplified check - you might want to implement a more robust solution
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getBool('ios_notifications_granted') ?? false;
+    }
+    return false;
+  }
+
+  Future<bool> _hasExactAlarmPermissions() async {
+    if (Platform.isAndroid) {
+      final androidPlugin = flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<flutter_notifications.AndroidFlutterLocalNotificationsPlugin>();
+      if (androidPlugin != null) {
+        return await androidPlugin.canScheduleExactNotifications() ?? false;
+      }
+    }
+    return true; // iOS doesn't need exact alarm permissions
+  }
+
+  Future<void> _requestBasicNotificationPermissions() async {
+    try {
+      if (Platform.isAndroid) {
+        // Android handles this automatically when the app tries to show notifications
+        await _logger.logInfo('Basic notification permissions will be requested when showing first notification');
+      } else if (Platform.isIOS) {
+        final iosPlugin = flutterLocalNotificationsPlugin
+            .resolvePlatformSpecificImplementation<flutter_notifications.IOSFlutterLocalNotificationsPlugin>();
+        if (iosPlugin != null) {
+          final granted = await iosPlugin.requestPermissions(
+            alert: true,
+            badge: true,
+            sound: true,
+          );
+          
+          // Store the result for future reference
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setBool('ios_notifications_granted', granted ?? false);
+          
+          await _logger.logInfo('iOS basic notification permission granted: $granted');
+        }
+      }
+    } catch (e, stackTrace) {
+      await _logger.logError('Error requesting basic notification permissions', e, stackTrace);
+    }
+  }
+
+  Future<void> _requestExactAlarmPermissions() async {
+    try {
+      if (Platform.isAndroid) {
+        final androidPlugin = flutterLocalNotificationsPlugin
+            .resolvePlatformSpecificImplementation<flutter_notifications.AndroidFlutterLocalNotificationsPlugin>();
+        if (androidPlugin != null) {
+          final granted = await androidPlugin.requestExactAlarmsPermission();
+          await _logger.logInfo('Android exact alarm permission granted: $granted');
+        }
+      }
+    } catch (e, stackTrace) {
+      await _logger.logError('Error requesting exact alarm permissions', e, stackTrace);
     }
   }
 
@@ -88,6 +162,9 @@ class NotificationService {
       requestAlertPermission: false,
       requestBadgePermission: false,
       requestSoundPermission: false,
+      defaultPresentAlert: false,
+      defaultPresentBadge: false,
+      defaultPresentSound: false,
     );
     
     const initSettings = flutter_notifications.InitializationSettings(
@@ -101,10 +178,7 @@ class NotificationService {
     );
     
     if (!(success ?? false)) {
-      await _logger.logError('NotificationService initialization failed');
-      throw Exception('Failed to initialize notification plugin');
-    } else {
-      await _logger.logInfo('Notification plugin initialized successfully');
+      await _logger.logWarning('NotificationService initialization failed');
     }
   }
 
@@ -118,6 +192,14 @@ class NotificationService {
     );
   }
 
+  // Keep the existing manual permission request methods for settings screen
+  Future<void> requestNotificationPermission() async {
+    await _permissionHandler.requestPermission(
+      _isFirstRun,
+      _markPermissionRequested,
+    );
+  }
+
   Future<bool> _isFirstRun() async {
     final prefs = await SharedPreferences.getInstance();
     return !prefs.containsKey(_notificationPermissionRequestedKey);
@@ -126,13 +208,6 @@ class NotificationService {
   Future<void> _markPermissionRequested() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_notificationPermissionRequestedKey, true);
-  }
-
-  Future<void> requestNotificationPermission() async {
-    await _permissionHandler.requestPermission(
-      _isFirstRun,
-      _markPermissionRequested,
-    );
   }
 
   Future<bool> areNotificationPermissionsGranted() async {
@@ -147,15 +222,31 @@ class NotificationService {
     await _permissionHandler.requestPermissions();
   }
 
+  // Method to manually trigger permission requests (for settings or when user denies initially)
+  Future<void> requestAllPermissions() async {
+    try {
+      await _logger.logInfo('Manually requesting all notification permissions');
+      
+      // Request basic permissions first
+      await _requestBasicNotificationPermissions();
+      
+      // Then request exact alarm permissions
+      await _requestExactAlarmPermissions();
+      
+      // Mark as requested
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_notificationPermissionRequestedKey, true);
+      await prefs.setBool(_exactAlarmPermissionRequestedKey, true);
+      
+    } catch (e, stackTrace) {
+      await _logger.logError('Error requesting all permissions manually', e, stackTrace);
+    }
+  }
+
   Future<void> scheduleTaskNotification(
     task_model.Task task,
     notification_model.NotificationSetting setting,
   ) async {
-    if (!_isInitialized) {
-      await _logger.logError('NotificationService not initialized, cannot schedule notification');
-      return;
-    }
-
     await _scheduler.scheduleNotification(task, setting);
   }
 
@@ -186,90 +277,30 @@ class NotificationService {
         'Task Reminders',
         description: 'Notifications for task reminders',
         importance: flutter_notifications.Importance.high,
-        playSound: true,
-        enableVibration: true,
       );
       
       final androidPlugin = flutterLocalNotificationsPlugin
           .resolvePlatformSpecificImplementation<flutter_notifications.AndroidFlutterLocalNotificationsPlugin>();
       if (androidPlugin != null) {
         await androidPlugin.createNotificationChannel(androidChannel);
-        await _logger.logInfo('Notification channel created for Android');
-      } else {
-        await _logger.logError('Could not get Android notification plugin');
       }
+          
+      await _logger.logInfo('Notification channel created for Android');
     }
   }
 
-  // Method to test immediate notification
-  Future<void> showTestNotification() async {
+  // Method to check and show permission dialog if needed (call this from HomeScreen)
+  Future<void> checkAndRequestPermissionsIfNeeded(mat.BuildContext context) async {
     try {
-      await flutterLocalNotificationsPlugin.show(
-        999999, // Test notification ID
-        'Test Notification',
-        'This is a test notification to verify the system is working.',
-        const flutter_notifications.NotificationDetails(
-          android: flutter_notifications.AndroidNotificationDetails(
-            'todo_app_channel',
-            'Task Reminders',
-            channelDescription: 'Notifications for task reminders',
-            importance: flutter_notifications.Importance.high,
-            priority: flutter_notifications.Priority.high,
-            playSound: true,
-            enableVibration: true,
-          ),
-          iOS: flutter_notifications.DarwinNotificationDetails(),
-        ),
-      );
-      await _logger.logInfo('Test notification shown');
-    } catch (e, stackTrace) {
-      await _logger.logError('Error showing test notification', e, stackTrace);
-    }
-  }
-
-  Future<void> testNotificationPermissions() async {
-    try {
-      final androidPlugin = flutterLocalNotificationsPlugin
-          .resolvePlatformSpecificImplementation<flutter_notifications.AndroidFlutterLocalNotificationsPlugin>();
+      final hasBasicPermissions = await _hasBasicNotificationPermissions();
+      final hasExactPermissions = await _hasExactAlarmPermissions();
       
-      if (androidPlugin != null) {
-        final notificationsEnabled = await androidPlugin.areNotificationsEnabled();
-        final exactAlarmsAllowed = await androidPlugin.canScheduleExactNotifications();
-        
-        await _logger.logInfo('Test notification shown');
-        await _logger.logInfo('Notifications enabled: $notificationsEnabled');
-        await _logger.logInfo('Exact alarms allowed: $exactAlarmsAllowed');
-        
-        // Show a test notification immediately
-        await flutterLocalNotificationsPlugin.show(
-          9999,
-          'Permission Test',
-          'If you see this, basic notifications work!',
-          const flutter_notifications.NotificationDetails(
-            android: flutter_notifications.AndroidNotificationDetails(
-              'todo_app_channel',
-              'Task Reminders',
-              channelDescription: 'Notifications for task reminders',
-              importance: flutter_notifications.Importance.high,
-              priority: flutter_notifications.Priority.high,
-            ),
-          ),
-        );
+      if (!hasBasicPermissions || !hasExactPermissions) {
+        await _logger.logInfo('Missing permissions detected, showing dialog');
+        await showNotificationPermissionDialog(context);
       }
     } catch (e, stackTrace) {
-      await _logger.logError('Error testing notification permissions', e, stackTrace);
-    }
-  }
-
-  // Method to get pending notifications for debugging
-  Future<List<flutter_notifications.PendingNotificationRequest>> getPendingNotifications() async {
-    try {
-      final pending = await flutterLocalNotificationsPlugin.pendingNotificationRequests();
-      await _logger.logInfo('Found ${pending.length} pending notifications');
-      return pending;
-    } catch (e, stackTrace) {
-      await _logger.logError('Error getting pending notifications', e, stackTrace);
-      return [];
+      await _logger.logError('Error checking permissions', e, stackTrace);
     }
   }
 }
