@@ -17,6 +17,7 @@ class TodoWidgetProvider : AppWidgetProvider() {
         private const val ACTION_TOGGLE_TASK = "ACTION_TOGGLE_TASK"
         private const val ACTION_ADD_TASK = "ACTION_ADD_TASK"
         private const val ACTION_WIDGET_SETTINGS = "ACTION_WIDGET_SETTINGS"
+        private const val ACTION_REFRESH_WIDGET = "ACTION_REFRESH_WIDGET"
         
         private const val EXTRA_TASK_ID = "task_id"
         private const val EXTRA_WIDGET_ID = "widget_id"
@@ -81,9 +82,9 @@ class TodoWidgetProvider : AppWidgetProvider() {
         )
         views.setOnClickPendingIntent(R.id.add_task_button, addTaskPendingIntent)
         
-        // Refresh button - uses broadcast to avoid opening app
+        // Refresh button - uses broadcast to refresh widget without opening app
         val refreshIntent = Intent(context, TodoWidgetProvider::class.java).apply {
-            action = ACTION_SYNC_WIDGET
+            action = ACTION_REFRESH_WIDGET
             putExtra(EXTRA_WIDGET_ID, 1) // Always use widget ID 1 for now
         }
         val refreshPendingIntent = PendingIntent.getBroadcast(
@@ -157,6 +158,18 @@ class TodoWidgetProvider : AppWidgetProvider() {
         super.onReceive(context, intent)
         
         when (intent.action) {
+            ACTION_REFRESH_WIDGET -> {
+                // Handle refresh without opening the app
+                val widgetId = intent.getIntExtra(EXTRA_WIDGET_ID, -1)
+                
+                // Simply trigger a widget update with current data
+                val appWidgetManager = AppWidgetManager.getInstance(context)
+                val appWidgetIds = appWidgetManager.getAppWidgetIds(
+                    android.content.ComponentName(context, TodoWidgetProvider::class.java)
+                )
+                onUpdate(context, appWidgetManager, appWidgetIds)
+            }
+            
             ACTION_SYNC_WIDGET -> {
                 val widgetId = intent.getIntExtra(EXTRA_WIDGET_ID, -1)
                 
