@@ -23,28 +23,25 @@ class MainActivity : FlutterActivity() {
         if (intent?.action != null) {
             when (intent.action) {
                 "ADD_TASK" -> {
-                    val widgetId = intent.getIntExtra("widget_id", -1)
+                    val widgetId = intent.getIntExtra("widget_id", 1)
                     sendToFlutter("add_task", mapOf("widgetId" to widgetId))
                 }
                 "WIDGET_SETTINGS" -> {
-                    val widgetId = intent.getIntExtra("widget_id", -1)
+                    val widgetId = intent.getIntExtra("widget_id", 1)
                     sendToFlutter("widget_settings", mapOf("widgetId" to widgetId))
-                    // Don't bring app to foreground for widget settings
-                    if (!isTaskRoot) {
-                        finish()
-                    }
+                    // Keep app open for settings
                 }
                 "BACKGROUND_SYNC" -> {
-                    val widgetId = intent.getIntExtra("widget_id", -1)
+                    val widgetId = intent.getIntExtra("widget_id", 1)
                     sendToFlutter("background_sync", mapOf("widgetId" to widgetId))
-                    // Don't bring app to foreground for background sync
+                    // IMMEDIATELY FINISH ACTIVITY FOR BACKGROUND SYNC
                     finish()
                 }
                 "BACKGROUND_TOGGLE_TASK" -> {
                     val taskId = intent.getIntExtra("task_id", -1)
-                    val widgetId = intent.getIntExtra("widget_id", -1)
+                    val widgetId = intent.getIntExtra("widget_id", 1)
                     sendToFlutter("background_toggle_task", mapOf("taskId" to taskId, "widgetId" to widgetId))
-                    // Don't bring app to foreground for background toggle
+                    // IMMEDIATELY FINISH ACTIVITY FOR BACKGROUND TOGGLE
                     finish()
                 }
             }

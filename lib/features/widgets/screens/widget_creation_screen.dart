@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:todo_app/core/widgets/models/widget_config.dart';
 import 'package:todo_app/core/widgets/services/widget_service.dart';
+import 'package:todo_app/core/widgets/repository/widget_config_repository.dart';
 import 'package:todo_app/core/database/repository/category_repository.dart' as category_repository;
 import 'package:todo_app/features/categories/models/category.dart' as category_model;
 import 'package:todo_app/core/logger/logger_service.dart';
@@ -110,7 +111,15 @@ class _WidgetCreationScreenState extends State<WidgetCreationScreen> {
       );
 
       if (_isEditing) {
+        // UPDATE THE CONFIG FIRST
+        await _logger.logInfo('Updating existing widget config: ID=${config.id}');
+        final configRepository = WidgetConfigRepository();
+        await configRepository.updateWidgetConfig(config);
+        
+        // THEN UPDATE THE WIDGET DISPLAY
+        await _logger.logInfo('Updating widget display after config change');
         await _widgetService.updateWidget(config.id!);
+        
         await _logger.logInfo('Widget updated: ID=${config.id}, Name=${config.name}');
       } else {
         await _widgetService.createWidget(config);
