@@ -410,6 +410,7 @@ class WidgetService {
     }
   }
 
+  // Ajouter cette méthode dans handleWidgetAction
   Future<void> handleWidgetAction(String action, Map<dynamic, dynamic> data) async {
     try {
       await _logger.logInfo('=== Handling Widget Action: $action ===');
@@ -424,6 +425,10 @@ class WidgetService {
         case 'add_task':
           final widgetId = data['widgetId'] as int?;
           await _logger.logInfo('Add task action triggered from widget: $widgetId');
+          // FORCE UPDATE AFTER TASK CREATION
+          Future.delayed(const Duration(milliseconds: 500), () async {
+            await forceWidgetUpdate();
+          });
           break;
           
         case 'widget_settings':
@@ -437,7 +442,7 @@ class WidgetService {
           
           if (taskId != null) {
             await _toggleTaskCompletion(taskId);
-            await forceWidgetUpdate(); // Force update after toggle
+            await forceWidgetUpdate();
           }
           break;
       }

@@ -59,7 +59,7 @@ class TodoWidgetProvider : AppWidgetProvider() {
         // Add Task button - opens the app to add task screen
         val addTaskIntent = Intent(context, MainActivity::class.java).apply {
             action = "ADD_TASK"
-            putExtra("widget_id", 1) // FORCE WIDGET ID TO 1 FOR NOW
+            putExtra("widget_id", 1)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
         val addTaskPendingIntent = PendingIntent.getActivity(
@@ -70,10 +70,11 @@ class TodoWidgetProvider : AppWidgetProvider() {
         )
         views.setOnClickPendingIntent(R.id.add_task_button, addTaskPendingIntent)
         
-        // Refresh button - syncs data WITHOUT opening app
+        // Refresh button - syncs data WITHOUT opening app - USE BROADCAST RECEIVER
         val refreshIntent = Intent(context, TodoWidgetProvider::class.java).apply {
             action = "SYNC_WIDGET_DATA"
-            putExtra("widget_id", 1) // FORCE WIDGET ID TO 1 FOR NOW
+            putExtra("widget_id", 1)
+            // NO ACTIVITY FLAGS - This stays as broadcast
         }
         val refreshPendingIntent = PendingIntent.getBroadcast(
             context, 
@@ -83,10 +84,10 @@ class TodoWidgetProvider : AppWidgetProvider() {
         )
         views.setOnClickPendingIntent(R.id.refresh_button, refreshPendingIntent)
         
-        // Settings button - opens widget settings WITHOUT bringing app to foreground
+        // Settings button
         val settingsIntent = Intent(context, MainActivity::class.java).apply {
             action = "WIDGET_SETTINGS"
-            putExtra("widget_id", 1) // FORCE WIDGET ID TO 1 FOR NOW
+            putExtra("widget_id", 1)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
         val settingsPendingIntent = PendingIntent.getActivity(
@@ -145,24 +146,32 @@ class TodoWidgetProvider : AppWidgetProvider() {
         
         when (intent.action) {
             "SYNC_WIDGET_DATA" -> {
-                val widgetId = intent.getIntExtra("widget_id", 1) // DEFAULT TO 1
-                // Start the app in background to sync data, but don't bring it to foreground
-                val syncIntent = Intent(context, MainActivity::class.java).apply {
-                    action = "BACKGROUND_SYNC"
-                    putExtra("widget_id", widgetId)
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION
-                }
+                val widgetId = intent.getIntExtra("widget_id", 1)
+                
+                // TRY DIRECT WIDGET UPDATE FIRST
                 try {
-                    context.startActivity(syncIntent)
-                } catch (e: Exception) {
-                    // If we can't start the activity, just update the widget with current data
                     val appWidgetManager = AppWidgetManager.getInstance(context)
                     val appWidgetIds = appWidgetManager.getAppWidgetIds(
                         android.content.ComponentName(context, TodoWidgetProvider::class.java)
                     )
-                    for (appWidgetId in appWidgetIds) {
-                        updateAppWidget(context, appWidgetManager, appWidgetId)
+                    
+                    // Force widget update directly
+                    onUpdate(context, appWidgetManager, appWidgetIds)
+                    
+                    // ALSO trigger background sync to update data
+                    val syncIntent = Intent(context, MainActivity::class.java).apply {
+                        action = "BACKGROUND_SYNC"
+                        putExtra("widget_id", widgetId)
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_USER_ACTION
                     }
+                    context.startActivity(syncIntent)
+                } catch (e: Exception) {
+                    // Fallback to just updating widget with current data
+                    val appWidgetManager = AppWidgetManager.getInstance(context)
+                    val appWidgetIds = appWidgetManager.getAppWidgetIds(
+                        android.content.ComponentName(context, TodoWidgetProvider::class.java)
+                    )
+                    onUpdate(context, appWidgetManager, appWidgetIds)
                 }
             }
             "TOGGLE_TASK_COMPLETION" -> {

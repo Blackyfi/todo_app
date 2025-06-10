@@ -21,13 +21,22 @@ class WidgetConfigRepository {
   Future<int> updateWidgetConfig(WidgetConfig config) async {
     try {
       final db = await _databaseHelper.database;
+      
+      await _logger.logInfo('=== UPDATING Widget Config ===');
+      await _logger.logInfo('Updating widget ID: ${config.id}');
+      await _logger.logInfo('New config: Name=${config.name}, Size=${config.size.label}, MaxTasks=${config.maxTasks}');
+      await _logger.logInfo('Display options: ShowCompleted=${config.showCompleted}, ShowCategories=${config.showCategories}, ShowPriority=${config.showPriority}');
+      
       final result = await db.update(
         'widgetConfigs',
         config.toMap(),
         where: 'id = ?',
         whereArgs: [config.id],
       );
-      await _logger.logInfo('Widget config updated: ID=${config.id}, Name=${config.name}');
+      
+      await _logger.logInfo('Widget config update result: Rows affected=$result');
+      await _logger.logInfo('=== Widget Config Update Complete ===');
+      
       return result;
     } catch (e, stackTrace) {
       await _logger.logError('Error updating widget config', e, stackTrace);
