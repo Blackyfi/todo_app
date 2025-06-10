@@ -110,8 +110,8 @@ class _CategoriesScreenState extends mat.State<CategoriesScreen> {
         title: const mat.Text('Delete Category'),
         content: mat.Text(
           taskCount > 0
-              ? 'This category contains $taskCount task(s). Deleting it will also delete all associated tasks. Are you sure?'
-              : 'Are you sure you want to delete this category?',
+              ? 'Are you sure you want to delete "${category.name}"? This category contains $taskCount task(s) and deleting it will also delete all associated tasks.'
+              : 'Are you sure you want to delete "${category.name}"?',
         ),
         actions: [
           mat.TextButton(
