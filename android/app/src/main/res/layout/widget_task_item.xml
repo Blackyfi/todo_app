@@ -1,26 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/task_item_container"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:padding="4dp"
     android:background="@drawable/widget_task_background"
-    android:layout_marginBottom="2dp"
-    android:clickable="true"
-    android:focusable="true">
+    android:layout_marginBottom="2dp">
 
+    <!-- Clickable checkbox area - ONLY this should be clickable for toggling -->
     <TextView
         android:id="@+id/task_checkbox"
-        android:layout_width="16dp"
-        android:layout_height="16dp"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
         android:text="○"
-        android:textSize="12sp"
+        android:textSize="14sp"
         android:gravity="center"
         android:layout_marginEnd="8dp"
-        android:clickable="false"
-        android:focusable="false" />
+        android:background="@drawable/widget_checkbox_background"
+        android:clickable="true"
+        android:focusable="true"
+        android:padding="2dp" />
 
+    <!-- Task title - NOT clickable to avoid conflicts -->
     <TextView
         android:id="@+id/task_title"
         android:layout_width="match_parent"

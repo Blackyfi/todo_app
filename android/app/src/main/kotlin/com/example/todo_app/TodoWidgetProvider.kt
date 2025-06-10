@@ -11,6 +11,17 @@ import org.json.JSONObject
 import org.json.JSONArray
 
 class TodoWidgetProvider : AppWidgetProvider() {
+    
+    companion object {
+        private const val ACTION_SYNC_WIDGET = "ACTION_SYNC_WIDGET"
+        private const val ACTION_TOGGLE_TASK = "ACTION_TOGGLE_TASK"
+        private const val ACTION_ADD_TASK = "ACTION_ADD_TASK"
+        private const val ACTION_WIDGET_SETTINGS = "ACTION_WIDGET_SETTINGS"
+        
+        private const val EXTRA_TASK_ID = "task_id"
+        private const val EXTRA_WIDGET_ID = "widget_id"
+    }
+
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         for (appWidgetId in appWidgetIds) {
             updateAppWidget(context, appWidgetManager, appWidgetId)
@@ -49,17 +60,17 @@ class TodoWidgetProvider : AppWidgetProvider() {
             views.setTextViewText(R.id.task_count, "Error loading tasks")
         }
         
-        // Set up button click handlers - USE CORRECT WIDGET ID
+        // Set up button click handlers
         setupButtonClickHandlers(context, views, appWidgetId)
         
         appWidgetManager.updateAppWidget(appWidgetId, views)
     }
     
     private fun setupButtonClickHandlers(context: Context, views: RemoteViews, appWidgetId: Int) {
-        // Add Task button - opens the app to add task screen
+        // Add Task button - opens the app 
         val addTaskIntent = Intent(context, MainActivity::class.java).apply {
             action = "ADD_TASK"
-            putExtra("widget_id", 1)
+            putExtra(EXTRA_WIDGET_ID, 1) // Always use widget ID 1 for now
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
         val addTaskPendingIntent = PendingIntent.getActivity(
@@ -70,11 +81,10 @@ class TodoWidgetProvider : AppWidgetProvider() {
         )
         views.setOnClickPendingIntent(R.id.add_task_button, addTaskPendingIntent)
         
-        // Refresh button - syncs data WITHOUT opening app - USE BROADCAST RECEIVER
+        // Refresh button - uses broadcast to avoid opening app
         val refreshIntent = Intent(context, TodoWidgetProvider::class.java).apply {
-            action = "SYNC_WIDGET_DATA"
-            putExtra("widget_id", 1)
-            // NO ACTIVITY FLAGS - This stays as broadcast
+            action = ACTION_SYNC_WIDGET
+            putExtra(EXTRA_WIDGET_ID, 1) // Always use widget ID 1 for now
         }
         val refreshPendingIntent = PendingIntent.getBroadcast(
             context, 
@@ -84,10 +94,10 @@ class TodoWidgetProvider : AppWidgetProvider() {
         )
         views.setOnClickPendingIntent(R.id.refresh_button, refreshPendingIntent)
         
-        // Settings button
+        // Settings button - opens the app
         val settingsIntent = Intent(context, MainActivity::class.java).apply {
             action = "WIDGET_SETTINGS"
-            putExtra("widget_id", 1)
+            putExtra(EXTRA_WIDGET_ID, 1) // Always use widget ID 1 for now
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
         val settingsPendingIntent = PendingIntent.getActivity(
@@ -123,19 +133,21 @@ class TodoWidgetProvider : AppWidgetProvider() {
                 taskView.setTextColor(R.id.task_title, 0xFF000000.toInt())
             }
             
-            // Set up task toggle click handler - this should NOT open the app
+            // IMPORTANT: Set click listeners for specific parts
+            // Click listener for checkbox ONLY - to toggle task
             val toggleIntent = Intent(context, TodoWidgetProvider::class.java).apply {
-                action = "TOGGLE_TASK_COMPLETION"
-                putExtra("task_id", taskId)
-                putExtra("widget_id", 1) // FORCE WIDGET ID TO 1 FOR NOW
+                action = ACTION_TOGGLE_TASK
+                putExtra(EXTRA_TASK_ID, taskId)
+                putExtra(EXTRA_WIDGET_ID, 1) // Always use widget ID 1 for now
             }
             val togglePendingIntent = PendingIntent.getBroadcast(
                 context,
-                taskId * 1000 + appWidgetId,
+                taskId * 1000 + appWidgetId, // Unique request code
                 toggleIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-            taskView.setOnClickPendingIntent(R.id.task_item_container, togglePendingIntent)
+            // Only set click listener on the checkbox, NOT the entire container
+            taskView.setOnClickPendingIntent(R.id.task_checkbox, togglePendingIntent)
             
             views.addView(R.id.task_list, taskView)
         }
@@ -145,28 +157,20 @@ class TodoWidgetProvider : AppWidgetProvider() {
         super.onReceive(context, intent)
         
         when (intent.action) {
-            "SYNC_WIDGET_DATA" -> {
-                val widgetId = intent.getIntExtra("widget_id", 1)
+            ACTION_SYNC_WIDGET -> {
+                val widgetId = intent.getIntExtra(EXTRA_WIDGET_ID, -1)
                 
-                // TRY DIRECT WIDGET UPDATE FIRST
+                // Force a sync by starting the app in background
+                val syncIntent = Intent(context, MainActivity::class.java).apply {
+                    action = "BACKGROUND_SYNC"
+                    putExtra(EXTRA_WIDGET_ID, widgetId)
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_USER_ACTION
+                }
+                
                 try {
-                    val appWidgetManager = AppWidgetManager.getInstance(context)
-                    val appWidgetIds = appWidgetManager.getAppWidgetIds(
-                        android.content.ComponentName(context, TodoWidgetProvider::class.java)
-                    )
-                    
-                    // Force widget update directly
-                    onUpdate(context, appWidgetManager, appWidgetIds)
-                    
-                    // ALSO trigger background sync to update data
-                    val syncIntent = Intent(context, MainActivity::class.java).apply {
-                        action = "BACKGROUND_SYNC"
-                        putExtra("widget_id", widgetId)
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_USER_ACTION
-                    }
                     context.startActivity(syncIntent)
                 } catch (e: Exception) {
-                    // Fallback to just updating widget with current data
+                    // If can't start activity, just refresh widget with current data
                     val appWidgetManager = AppWidgetManager.getInstance(context)
                     val appWidgetIds = appWidgetManager.getAppWidgetIds(
                         android.content.ComponentName(context, TodoWidgetProvider::class.java)
@@ -174,17 +178,20 @@ class TodoWidgetProvider : AppWidgetProvider() {
                     onUpdate(context, appWidgetManager, appWidgetIds)
                 }
             }
-            "TOGGLE_TASK_COMPLETION" -> {
-                val taskId = intent.getIntExtra("task_id", -1)
-                val widgetId = intent.getIntExtra("widget_id", 1) // DEFAULT TO 1
+            
+            ACTION_TOGGLE_TASK -> {
+                val taskId = intent.getIntExtra(EXTRA_TASK_ID, -1)
+                val widgetId = intent.getIntExtra(EXTRA_WIDGET_ID, -1)
+                
                 if (taskId != -1) {
                     // Start the app in background to toggle task
                     val toggleIntent = Intent(context, MainActivity::class.java).apply {
                         action = "BACKGROUND_TOGGLE_TASK"
-                        putExtra("task_id", taskId)
-                        putExtra("widget_id", widgetId)
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION
+                        putExtra(EXTRA_TASK_ID, taskId)
+                        putExtra(EXTRA_WIDGET_ID, widgetId)
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_USER_ACTION
                     }
+                    
                     try {
                         context.startActivity(toggleIntent)
                     } catch (e: Exception) {
@@ -192,6 +199,7 @@ class TodoWidgetProvider : AppWidgetProvider() {
                     }
                 }
             }
+            
             AppWidgetManager.ACTION_APPWIDGET_UPDATE -> {
                 val appWidgetManager = AppWidgetManager.getInstance(context)
                 val appWidgetIds = intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS) 

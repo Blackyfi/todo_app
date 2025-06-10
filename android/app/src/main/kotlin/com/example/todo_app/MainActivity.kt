@@ -25,6 +25,7 @@ class MainActivity : FlutterActivity() {
                 "ADD_TASK" -> {
                     val widgetId = intent.getIntExtra("widget_id", 1)
                     sendToFlutter("add_task", mapOf("widgetId" to widgetId))
+                    // Keep app open for add task
                 }
                 "WIDGET_SETTINGS" -> {
                     val widgetId = intent.getIntExtra("widget_id", 1)
@@ -34,15 +35,25 @@ class MainActivity : FlutterActivity() {
                 "BACKGROUND_SYNC" -> {
                     val widgetId = intent.getIntExtra("widget_id", 1)
                     sendToFlutter("background_sync", mapOf("widgetId" to widgetId))
-                    // IMMEDIATELY FINISH ACTIVITY FOR BACKGROUND SYNC
-                    finish()
+                    
+                    // For background sync, finish after a short delay to allow sync
+                    android.os.Handler(mainLooper).postDelayed({
+                        if (!isFinishing) {
+                            finish()
+                        }
+                    }, 800) // Reduced to 800ms
                 }
                 "BACKGROUND_TOGGLE_TASK" -> {
                     val taskId = intent.getIntExtra("task_id", -1)
                     val widgetId = intent.getIntExtra("widget_id", 1)
                     sendToFlutter("background_toggle_task", mapOf("taskId" to taskId, "widgetId" to widgetId))
-                    // IMMEDIATELY FINISH ACTIVITY FOR BACKGROUND TOGGLE
-                    finish()
+                    
+                    // For background toggle, finish after a short delay
+                    android.os.Handler(mainLooper).postDelayed({
+                        if (!isFinishing) {
+                            finish()
+                        }
+                    }, 800) // Reduced to 800ms
                 }
             }
         }

@@ -410,7 +410,6 @@ class WidgetService {
     }
   }
 
-  // Ajouter cette méthode dans handleWidgetAction
   Future<void> handleWidgetAction(String action, Map<dynamic, dynamic> data) async {
     try {
       await _logger.logInfo('=== Handling Widget Action: $action ===');
@@ -425,15 +424,13 @@ class WidgetService {
         case 'add_task':
           final widgetId = data['widgetId'] as int?;
           await _logger.logInfo('Add task action triggered from widget: $widgetId');
-          // FORCE UPDATE AFTER TASK CREATION
-          Future.delayed(const Duration(milliseconds: 500), () async {
-            await forceWidgetUpdate();
-          });
+          // The app will stay open for task creation
           break;
           
         case 'widget_settings':
           final widgetId = data['widgetId'] as int?;
           await _logger.logInfo('Widget settings action triggered for widget: $widgetId');
+          // The app will stay open for settings
           break;
           
         case 'background_toggle_task':
@@ -442,6 +439,7 @@ class WidgetService {
           
           if (taskId != null) {
             await _toggleTaskCompletion(taskId);
+            // Force widget update after toggle
             await forceWidgetUpdate();
           }
           break;
@@ -479,7 +477,7 @@ class WidgetService {
     try {
       await _logger.logInfo('=== Forcing Widget Update ===');
       
-      // Update widget data for ID 1 (our main widget)
+      // Update widget data for the default widget (ID 1)
       await _prepareWidgetData(1);
       
       // Force native widget update
