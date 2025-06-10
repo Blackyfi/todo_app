@@ -11,6 +11,7 @@ import 'package:todo_app/core/settings/repository/auto_delete_settings_repositor
 import 'package:todo_app/core/notifications/notification_service.dart' as notification_service;
 import 'package:todo_app/features/categories/screens/categories_screen.dart';
 import 'package:todo_app/features/statistics/screens/statistics_screen.dart';
+import 'package:todo_app/core/widgets/services/widget_service.dart';
 
 class HomeScreen extends mat.StatefulWidget {
   const HomeScreen({super.key});
@@ -19,11 +20,12 @@ class HomeScreen extends mat.StatefulWidget {
   mat.State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProviderStateMixin {
+class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProviderStateMixin, mat.WidgetsBindingObserver {
   final _taskRepository = task_repository.TaskRepository();
   final _categoryRepository = category_repository.CategoryRepository();
   final _logger = LoggerService();
   final _autoDeleteSettingsRepository = AutoDeleteSettingsRepository();
+  final _widgetService = WidgetService();
   
   List<task_model.Task> _tasks = [];
   List<category_model.Category> _categories = [];
@@ -36,6 +38,10 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
   void initState() {
     super.initState();
     _tabController = mat.TabController(length: 3, vsync: this);
+    
+    // Add observer to listen for app lifecycle changes
+    mat.WidgetsBinding.instance.addObserver(this);
+    
     _loadData();
     
     // Check for notification permissions after a short delay to ensure the UI is built
@@ -47,7 +53,22 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
   @override
   void dispose() {
     _tabController.dispose();
+    // Remove observer when disposing
+    mat.WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(mat.AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    
+    // Refresh data when app becomes active/resumed
+    if (state == mat.AppLifecycleState.resumed) {
+      _logger.logInfo('App resumed - refreshing data and updating widgets');
+      _loadData();
+      // Also update widgets when app resumes to ensure they show latest data
+      _widgetService.updateAllWidgets();
+    }
   }
   
   Future<void> _loadData() async {
@@ -91,6 +112,9 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
         await _taskRepository.toggleTaskCompletion(task.id!, !task.isCompleted);
         await _loadData();
         
+        // Update widgets after task completion change
+        await _widgetService.updateAllWidgets();
+        
         // If task was marked as completed, show a snackbar indicating it will be auto-deleted
         if (!task.isCompleted) {
           final autoDeleteSettings = await _autoDeleteSettingsRepository.getSettings();
@@ -133,6 +157,9 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
       await _taskRepository.deleteTask(taskId);
       await _loadData();
       
+      // Update widgets after task deletion
+      await _widgetService.updateAllWidgets();
+      
       await _logger.logInfo('Task deleted: ID=$taskId');
       
       if (mounted) {
@@ -165,7 +192,11 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
   void _navigateToAddTask() {
     mat.Navigator.of(context).pushNamed(
       app_constants.AppConstants.addTaskRoute,
-    ).then((_) => _loadData());
+    ).then((_) {
+      _loadData();
+      // Update widgets after potentially adding a new task
+      _widgetService.updateAllWidgets();
+    });
   }
   
   void _navigateToSettings() {
