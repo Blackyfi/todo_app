@@ -16,26 +16,6 @@ class CategoryListItem extends mat.StatelessWidget {
     required this.onDelete,
   });
 
-  Future<bool> _confirmDeletion(mat.BuildContext context) async {
-    return await mat.showDialog<bool>(
-      context: context,
-      builder: (context) => mat.AlertDialog(
-        title: const mat.Text('Delete Category'),
-        content: mat.Text('Are you sure you want to delete "${category.name}"?'),
-        actions: [
-          mat.TextButton(
-            onPressed: () => mat.Navigator.of(context).pop(false),
-            child: const mat.Text('Cancel'),
-          ),
-          mat.TextButton(
-            onPressed: () => mat.Navigator.of(context).pop(true),
-            child: const mat.Text('Delete'),
-          ),
-        ],
-      ),
-    ) ?? false;
-  }
-
   @override
   mat.Widget build(mat.BuildContext context) {
     return mat.Dismissible(
@@ -51,10 +31,9 @@ class CategoryListItem extends mat.StatelessWidget {
         ),
       ),
       confirmDismiss: (direction) async {
-        final confirmed = await _confirmDeletion(context);
-        if (confirmed) {
-          onDelete();
-        }
+        // Call the delete callback and return false to prevent automatic dismissal
+        // The parent will handle the confirmation dialog and actual deletion
+        onDelete();
         return false;
       },
       child: mat.Card(
@@ -85,11 +64,7 @@ class CategoryListItem extends mat.StatelessWidget {
               ),
               mat.IconButton(
                 icon: const mat.Icon(mat.Icons.delete),
-                onPressed: () async {
-                  if (await _confirmDeletion(context)) {
-                    onDelete();
-                  }
-                },
+                onPressed: onDelete,
               ),
             ],
           ),
