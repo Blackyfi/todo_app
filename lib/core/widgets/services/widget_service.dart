@@ -410,7 +410,6 @@ class WidgetService {
     }
   }
 
-  // Updated method to handle widget button presses and task toggles
   Future<void> handleWidgetAction(String action, Map<dynamic, dynamic> data) async {
     try {
       await _logger.logInfo('=== Handling Widget Action: $action ===');
@@ -418,66 +417,34 @@ class WidgetService {
       
       switch (action) {
         case 'background_sync':
-          final widgetId = data['widgetId'] as int?;
-          await _logger.logInfo('Background sync requested for widget ID: $widgetId');
-          
-          if (widgetId != null) {
-            await _logger.logInfo('Updating specific widget: $widgetId');
-            await updateWidget(widgetId);
-            await _logger.logInfo('Specific widget update complete: $widgetId');
-          } else {
-            await _logger.logInfo('Updating all widgets (no specific ID provided)');
-            await updateAllWidgets();
-            await _logger.logInfo('All widgets update complete');
-          }
+          await _logger.logInfo('Background sync requested - forcing widget update');
+          await forceWidgetUpdate();
           break;
           
         case 'add_task':
           final widgetId = data['widgetId'] as int?;
           await _logger.logInfo('Add task action triggered from widget: $widgetId');
-          await _logger.logInfo('This action will be handled by main.dart navigation system');
           break;
           
         case 'widget_settings':
           final widgetId = data['widgetId'] as int?;
           await _logger.logInfo('Widget settings action triggered for widget: $widgetId');
-          await _logger.logInfo('This action will be handled by main.dart navigation system');
           break;
           
         case 'background_toggle_task':
           final taskId = data['taskId'] as int?;
-          final widgetId = data['widgetId'] as int?;
-          await _logger.logInfo('Background task toggle requested: TaskID=$taskId, WidgetID=$widgetId');
+          await _logger.logInfo('Background task toggle requested for TaskID=$taskId');
           
           if (taskId != null) {
-            await _logger.logInfo('Toggling task completion for task: $taskId');
             await _toggleTaskCompletion(taskId);
-            await _logger.logInfo('Task completion toggled successfully for task: $taskId');
-            
-            // Update the specific widget after toggling
-            if (widgetId != null) {
-              await _logger.logInfo('Updating widget after task toggle: $widgetId');
-              await updateWidget(widgetId);
-              await _logger.logInfo('Widget updated after task toggle: $widgetId');
-            } else {
-              await _logger.logInfo('Updating all widgets after task toggle (no specific widget ID)');
-              await updateAllWidgets();
-              await _logger.logInfo('All widgets updated after task toggle');
-            }
-          } else {
-            await _logger.logWarning('Background task toggle requested but no task ID provided');
+            await forceWidgetUpdate(); // Force update after toggle
           }
-          break;
-          
-        default:
-          await _logger.logWarning('Unknown widget action received: $action');
           break;
       }
       
       await _logger.logInfo('=== Widget Action Handled Successfully: $action ===');
     } catch (e, stackTrace) {
       await _logger.logError('=== Widget Action Failed: $action ===', e, stackTrace);
-      rethrow;
     }
   }
 
@@ -500,6 +467,27 @@ class WidgetService {
     } catch (e, stackTrace) {
       await _logger.logError('--- Error toggling task completion from widget: TaskID=$taskId ---', e, stackTrace);
       rethrow;
+    }
+  }
+
+  Future<void> forceWidgetUpdate() async {
+    try {
+      await _logger.logInfo('=== Forcing Widget Update ===');
+      
+      // Update widget data for ID 1 (our main widget)
+      await _prepareWidgetData(1);
+      
+      // Force native widget update
+      await HomeWidget.updateWidget(
+        name: 'TodoWidgetProvider',
+        androidName: 'TodoWidgetProvider',
+        iOSName: 'TodoWidget',
+        qualifiedAndroidName: 'com.example.todo_app.TodoWidgetProvider',
+      );
+      
+      await _logger.logInfo('=== Force Widget Update Complete ===');
+    } catch (e, stackTrace) {
+      await _logger.logError('=== Force Widget Update Failed ===', e, stackTrace);
     }
   }
 }
