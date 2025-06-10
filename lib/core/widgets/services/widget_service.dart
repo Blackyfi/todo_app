@@ -24,51 +24,74 @@ class WidgetService {
 
   Future<void> init() async {
     if (_isInitialized) {
-      await _logger.logInfo('WidgetService already initialized');
+      await _logger.logInfo('WidgetService already initialized, skipping initialization');
       return;
     }
 
     try {
-      await _logger.logInfo('Initializing WidgetService');
+      await _logger.logInfo('=== Starting WidgetService Initialization ===');
       
       // Set up method channel handler for widget actions
+      await _logger.logInfo('Setting up method channel handler for widget actions');
       platform.setMethodCallHandler(_handleMethodCall);
       
       // Initialize home widget without app group for Android
       try {
+        await _logger.logInfo('Attempting to set app group ID for widgets');
         await HomeWidget.setAppGroupId('group.com.example.todo_app');
+        await _logger.logInfo('App group ID set successfully');
       } catch (e) {
         // Ignore app group errors on Android
-        await _logger.logWarning('App group not supported on this platform: $e');
+        await _logger.logWarning('App group not supported on this platform (likely Android): $e');
+      }
+      
+      // Test widget plugin availability
+      try {
+        await _logger.logInfo('Testing widget plugin availability');
+        await HomeWidget.saveWidgetData<String>('test_key', 'test_value');
+        await _logger.logInfo('Widget plugin test successful - can save data');
+      } catch (e) {
+        await _logger.logError('Widget plugin test failed - may not work properly', e);
       }
       
       _isInitialized = true;
-      await _logger.logInfo('WidgetService initialized successfully');
+      await _logger.logInfo('=== WidgetService Initialization Complete ===');
     } catch (e, stackTrace) {
-      await _logger.logError('Error initializing WidgetService', e, stackTrace);
+      await _logger.logError('=== WidgetService Initialization Failed ===', e, stackTrace);
       rethrow;
     }
   }
 
   Future<dynamic> _handleMethodCall(MethodCall call) async {
-    switch (call.method) {
-      case 'handleWidgetAction':
-        final String action = call.arguments['action'];
-        final Map<dynamic, dynamic> data = call.arguments['data'] ?? {};
-        await handleWidgetAction(action, data);
-        break;
-      default:
-        throw PlatformException(
-          code: 'UNIMPLEMENTED',
-          details: 'Method ${call.method} not implemented',
-        );
+    await _logger.logInfo('Widget method call received: ${call.method} with arguments: ${call.arguments}');
+    
+    try {
+      switch (call.method) {
+        case 'handleWidgetAction':
+          final String action = call.arguments['action'];
+          final Map<dynamic, dynamic> data = call.arguments['data'] ?? {};
+          await _logger.logInfo('Processing widget action: $action with data: $data');
+          await handleWidgetAction(action, data);
+          await _logger.logInfo('Widget action processed successfully: $action');
+          break;
+        default:
+          await _logger.logWarning('Unimplemented widget method called: ${call.method}');
+          throw PlatformException(
+            code: 'UNIMPLEMENTED',
+            details: 'Method ${call.method} not implemented',
+          );
+      }
+    } catch (e, stackTrace) {
+      await _logger.logError('Error handling widget method call: ${call.method}', e, stackTrace);
+      rethrow;
     }
   }
 
   Future<bool> isWidgetSupported() async {
     try {
+      await _logger.logInfo('Checking widget support on this platform');
       const isSupported = true;
-      await _logger.logInfo('Widget support check: $isSupported');
+      await _logger.logInfo('Widget support check result: $isSupported');
       return isSupported;
     } catch (e, stackTrace) {
       await _logger.logError('Error checking widget support', e, stackTrace);
@@ -78,164 +101,237 @@ class WidgetService {
 
   Future<void> createWidget(WidgetConfig config) async {
     if (!_isInitialized) {
+      await _logger.logWarning('WidgetService not initialized, initializing now for widget creation');
       await init();
     }
 
     try {
-      await _logger.logInfo('Creating widget: Name=${config.name}, Size=${config.size.label}');
+      await _logger.logInfo('=== Starting Widget Creation ===');
+      await _logger.logInfo('Creating widget with config: Name=${config.name}, Size=${config.size.label}, MaxTasks=${config.maxTasks}');
+      await _logger.logInfo('Widget display options: ShowCompleted=${config.showCompleted}, ShowCategories=${config.showCategories}, ShowPriority=${config.showPriority}');
+      if (config.categoryFilter != null) {
+        await _logger.logInfo('Widget category filter: ${config.categoryFilter}');
+      }
       
       final configWithTimestamp = config.copyWith(
         createdAt: DateTime.now(),
       );
-      final widgetId = await _widgetConfigRepository.insertWidgetConfig(configWithTimestamp);
       
+      await _logger.logInfo('Inserting widget config into database');
+      final widgetId = await _widgetConfigRepository.insertWidgetConfig(configWithTimestamp);
+      await _logger.logInfo('Widget config inserted with ID: $widgetId');
+      
+      await _logger.logInfo('Preparing widget data for display');
       await _prepareWidgetData(widgetId);
       
-      await _logger.logInfo('Widget created successfully: ID=$widgetId');
+      await _logger.logInfo('=== Widget Creation Complete: ID=$widgetId ===');
     } catch (e, stackTrace) {
-      await _logger.logError('Error creating widget', e, stackTrace);
+      await _logger.logError('=== Widget Creation Failed ===', e, stackTrace);
       rethrow;
     }
   }
 
   Future<void> _prepareWidgetData(int widgetId) async {
     try {
+      await _logger.logInfo('--- Preparing Widget Data for ID: $widgetId ---');
+      
       final config = await _widgetConfigRepository.getWidgetConfig(widgetId);
       if (config == null) {
-        await _logger.logWarning('Widget config not found for data preparation: ID=$widgetId');
+        await _logger.logError('Widget config not found for data preparation: ID=$widgetId');
         return;
       }
+      await _logger.logInfo('Widget config loaded: ${config.name}');
 
+      await _logger.logInfo('Loading tasks for widget with filters');
       final tasks = await _getTasksForWidget(config);
+      await _logger.logInfo('Loaded ${tasks.length} tasks for widget after filtering');
+      
+      await _logger.logInfo('Loading all categories for widget data');
       final categories = await _categoryRepository.getAllCategories();
+      await _logger.logInfo('Loaded ${categories.length} categories for widget');
       
+      await _logger.logInfo('Building widget data structure');
       final widgetData = await _buildWidgetData(config, tasks, categories);
+      await _logger.logInfo('Widget data structure built with ${(widgetData['tasks'] as List).length} tasks');
       
-      await HomeWidget.saveWidgetData<String>('widget_data', jsonEncode(widgetData));
-      await HomeWidget.saveWidgetData<String>('widget_config', jsonEncode(config.toMap()));
+      await _logger.logInfo('Saving widget data to home widget plugin');
+      final dataJson = jsonEncode(widgetData);
+      await _logger.logInfo('Widget data JSON size: ${dataJson.length} characters');
+      await HomeWidget.saveWidgetData<String>('widget_data', dataJson);
+      await _logger.logInfo('Widget data saved successfully');
       
-      await _logger.logInfo('Widget data prepared successfully: ID=$widgetId');
+      final configJson = jsonEncode(config.toMap());
+      await _logger.logInfo('Widget config JSON size: ${configJson.length} characters');
+      await HomeWidget.saveWidgetData<String>('widget_config', configJson);
+      await _logger.logInfo('Widget config saved successfully');
+      
+      await _logger.logInfo('--- Widget Data Preparation Complete for ID: $widgetId ---');
     } catch (e, stackTrace) {
-      await _logger.logError('Error preparing widget data', e, stackTrace);
+      await _logger.logError('--- Widget Data Preparation Failed for ID: $widgetId ---', e, stackTrace);
+      rethrow;
     }
   }
 
   Future<void> updateWidget(int widgetId) async {
     if (!_isInitialized) {
+      await _logger.logWarning('WidgetService not initialized, initializing now for widget update');
       await init();
     }
 
     try {
-      await _logger.logInfo('Updating widget: ID=$widgetId');
+      await _logger.logInfo('=== Starting Widget Update for ID: $widgetId ===');
       
+      await _logger.logInfo('Preparing updated widget data');
       await _prepareWidgetData(widgetId);
       
+      await _logger.logInfo('Triggering native widget update via home_widget plugin');
       await HomeWidget.updateWidget(
         name: 'TodoWidgetProvider',
         androidName: 'TodoWidgetProvider',
         iOSName: 'TodoWidget',
         qualifiedAndroidName: 'com.example.todo_app.TodoWidgetProvider',
       );
+      await _logger.logInfo('Native widget update triggered successfully');
       
-      await _logger.logInfo('Widget updated successfully: ID=$widgetId');
+      await _logger.logInfo('=== Widget Update Complete for ID: $widgetId ===');
     } catch (e, stackTrace) {
-      await _logger.logError('Error updating widget', e, stackTrace);
+      await _logger.logError('=== Widget Update Failed for ID: $widgetId ===', e, stackTrace);
       rethrow;
     }
   }
 
   Future<void> updateAllWidgets() async {
     try {
-      await _logger.logInfo('Updating all widgets');
+      await _logger.logInfo('=== Starting Update of All Widgets ===');
       final configs = await _widgetConfigRepository.getAllWidgetConfigs();
+      await _logger.logInfo('Found ${configs.length} widget configurations to update');
       
       if (configs.isEmpty) {
-        await _logger.logInfo('No widgets to update');
+        await _logger.logInfo('No widgets to update, skipping update process');
         return;
       }
       
-      for (final config in configs) {
+      for (int i = 0; i < configs.length; i++) {
+        final config = configs[i];
+        await _logger.logInfo('Updating widget ${i + 1}/${configs.length}: ${config.name} (ID: ${config.id})');
+        
         if (config.id != null) {
-          await _prepareWidgetData(config.id!);
+          try {
+            await _prepareWidgetData(config.id!);
+            await _logger.logInfo('Widget ${i + 1}/${configs.length} data prepared successfully');
+          } catch (e) {
+            await _logger.logError('Failed to prepare data for widget ${i + 1}/${configs.length}: ${config.name}', e);
+          }
+        } else {
+          await _logger.logWarning('Widget ${i + 1}/${configs.length} has no ID, skipping: ${config.name}');
         }
       }
       
+      await _logger.logInfo('Triggering native update for all widgets');
       await HomeWidget.updateWidget(
         name: 'TodoWidgetProvider',
         androidName: 'TodoWidgetProvider',
         iOSName: 'TodoWidget',
         qualifiedAndroidName: 'com.example.todo_app.TodoWidgetProvider',
       );
+      await _logger.logInfo('Native update triggered for all widgets');
       
-      await _logger.logInfo('All widgets updated: Count=${configs.length}');
+      await _logger.logInfo('=== All Widgets Update Complete: ${configs.length} widgets processed ===');
     } catch (e, stackTrace) {
-      await _logger.logError('Error updating all widgets', e, stackTrace);
+      await _logger.logError('=== All Widgets Update Failed ===', e, stackTrace);
+      rethrow;
     }
   }
 
   Future<void> deleteWidget(int widgetId) async {
     try {
-      await _logger.logInfo('Deleting widget: ID=$widgetId');
+      await _logger.logInfo('=== Starting Widget Deletion for ID: $widgetId ===');
       
+      await _logger.logInfo('Deleting widget config from database');
       await _widgetConfigRepository.deleteWidgetConfig(widgetId);
+      await _logger.logInfo('Widget config deleted from database');
       
+      await _logger.logInfo('Clearing widget data from home widget plugin');
       await HomeWidget.saveWidgetData<String>('widget_data_$widgetId', null);
+      await _logger.logInfo('Widget data cleared from plugin');
       
-      await _logger.logInfo('Widget deleted successfully: ID=$widgetId');
+      await _logger.logInfo('=== Widget Deletion Complete for ID: $widgetId ===');
     } catch (e, stackTrace) {
-      await _logger.logError('Error deleting widget', e, stackTrace);
+      await _logger.logError('=== Widget Deletion Failed for ID: $widgetId ===', e, stackTrace);
       rethrow;
     }
   }
 
   Future<List<task_model.Task>> _getTasksForWidget(WidgetConfig config) async {
-    List<task_model.Task> tasks;
-    
-    if (config.categoryFilter != null) {
-      final categories = await _categoryRepository.getAllCategories();
-      final category = categories.firstWhere(
-        (cat) => cat.name == config.categoryFilter,
-        orElse: () => category_model.Category(id: -1, name: '', color: const Color(0xFF000000)),
-      );
+    try {
+      await _logger.logInfo('--- Getting Tasks for Widget: ${config.name} ---');
+      List<task_model.Task> tasks;
       
-      if (category.id != null && category.id! > 0) {
-        tasks = await _taskRepository.getTasksByCategory(category.id!);
+      if (config.categoryFilter != null) {
+        await _logger.logInfo('Applying category filter: ${config.categoryFilter}');
+        final categories = await _categoryRepository.getAllCategories();
+        final category = categories.firstWhere(
+          (cat) => cat.name == config.categoryFilter,
+          orElse: () => category_model.Category(id: -1, name: '', color: const Color(0xFF000000)),
+        );
+        
+        if (category.id != null && category.id! > 0) {
+          await _logger.logInfo('Found category for filter: ${category.name} (ID: ${category.id})');
+          tasks = await _taskRepository.getTasksByCategory(category.id!);
+          await _logger.logInfo('Retrieved ${tasks.length} tasks for category: ${category.name}');
+        } else {
+          await _logger.logWarning('Category not found for filter: ${config.categoryFilter}, using all tasks');
+          tasks = await _taskRepository.getAllTasks();
+          await _logger.logInfo('Retrieved ${tasks.length} tasks (all categories)');
+        }
       } else {
+        await _logger.logInfo('No category filter applied, getting all tasks');
         tasks = await _taskRepository.getAllTasks();
+        await _logger.logInfo('Retrieved ${tasks.length} tasks (all categories)');
       }
-    } else {
-      tasks = await _taskRepository.getAllTasks();
-    }
 
-    if (!config.showCompleted) {
-      tasks = tasks.where((task) => !task.isCompleted).toList();
-    }
-
-    tasks.sort((a, b) {
-      if (a.isCompleted != b.isCompleted) {
-        return a.isCompleted ? 1 : -1;
-      }
+      final initialTaskCount = tasks.length;
       
-      if (a.priority != b.priority) {
-        return a.priority.index.compareTo(b.priority.index);
+      if (!config.showCompleted) {
+        await _logger.logInfo('Filtering out completed tasks');
+        tasks = tasks.where((task) => !task.isCompleted).toList();
+        await _logger.logInfo('After completion filter: ${tasks.length} tasks (removed ${initialTaskCount - tasks.length} completed)');
       }
-      
-      if (a.dueDate != null && b.dueDate != null) {
-        return a.dueDate!.compareTo(b.dueDate!);
-      } else if (a.dueDate != null) {
-        return -1;
-      } else if (b.dueDate != null) {
-        return 1;
-      }
-      
-      return 0;
-    });
 
-    if (tasks.length > config.maxTasks) {
-      tasks = tasks.take(config.maxTasks).toList();
+      await _logger.logInfo('Sorting tasks by completion, priority, and due date');
+      tasks.sort((a, b) {
+        if (a.isCompleted != b.isCompleted) {
+          return a.isCompleted ? 1 : -1;
+        }
+        
+        if (a.priority != b.priority) {
+          return a.priority.index.compareTo(b.priority.index);
+        }
+        
+        if (a.dueDate != null && b.dueDate != null) {
+          return a.dueDate!.compareTo(b.dueDate!);
+        } else if (a.dueDate != null) {
+          return -1;
+        } else if (b.dueDate != null) {
+          return 1;
+        }
+        
+        return 0;
+      });
+      await _logger.logInfo('Tasks sorted successfully');
+
+      if (tasks.length > config.maxTasks) {
+        await _logger.logInfo('Limiting tasks to ${config.maxTasks} (was ${tasks.length})');
+        tasks = tasks.take(config.maxTasks).toList();
+        await _logger.logInfo('Tasks limited to ${tasks.length}');
+      }
+
+      await _logger.logInfo('--- Final task count for widget: ${tasks.length} ---');
+      return tasks;
+    } catch (e, stackTrace) {
+      await _logger.logError('--- Error getting tasks for widget ---', e, stackTrace);
+      rethrow;
     }
-
-    return tasks;
   }
 
   Future<Map<String, dynamic>> _buildWidgetData(
@@ -243,96 +339,167 @@ class WidgetService {
     List<task_model.Task> tasks,
     List<category_model.Category> categories,
   ) async {
-    final tasksData = tasks.map((task) {
-      final category = task.categoryId != null
-          ? categories.firstWhere(
-              (cat) => cat.id == task.categoryId,
-              orElse: () => category_model.Category(id: 0, name: 'Unknown', color: const Color(0xFF9E9E9E)),
-            )
-          : null;
+    try {
+      await _logger.logInfo('--- Building Widget Data Structure ---');
+      await _logger.logInfo('Processing ${tasks.length} tasks and ${categories.length} categories');
+      
+      final tasksData = <Map<String, dynamic>>[];
+      
+      for (int i = 0; i < tasks.length; i++) {
+        final task = tasks[i];
+        await _logger.logInfo('Processing task ${i + 1}/${tasks.length}: ${task.title} (ID: ${task.id})');
+        
+        category_model.Category? category;
+        if (task.categoryId != null) {
+          category = categories.firstWhere(
+            (cat) => cat.id == task.categoryId,
+            orElse: () => category_model.Category(
+              id: 0,
+              name: 'Unknown',
+              color: const Color(0xFF9E9E9E),
+            ),
+          );
+          await _logger.logInfo('Task category: ${category.name} (ID: ${category.id})');
+        } else {
+          await _logger.logInfo('Task has no category assigned');
+        }
 
-      return {
-        'id': task.id,
-        'title': task.title,
-        'description': task.description,
-        'isCompleted': task.isCompleted,
-        'priority': task.priority.index,
-        'priorityLabel': task.priority.label,
-        'priorityColor': task.priority.color.toARGB32(),
-        'dueDate': task.dueDate?.millisecondsSinceEpoch,
-        'category': category != null ? {
-          'name': category.name,
-          'color': category.color.toARGB32(),
-        } : null,
+        final taskData = {
+          'id': task.id,
+          'title': task.title,
+          'description': task.description,
+          'isCompleted': task.isCompleted,
+          'priority': task.priority.index,
+          'priorityLabel': task.priority.label,
+          'priorityColor': task.priority.color.toARGB32(),
+          'dueDate': task.dueDate?.millisecondsSinceEpoch,
+          'category': category != null ? {
+            'name': category.name,
+            'color': category.color.toARGB32(),
+          } : null,
+        };
+        
+        tasksData.add(taskData);
+      }
+
+      final widgetData = {
+        'config': config.toMap(),
+        'tasks': tasksData,
+        'updatedAt': DateTime.now().millisecondsSinceEpoch,
       };
-    }).toList();
 
-    return {
-      'config': config.toMap(),
-      'tasks': tasksData,
-      'updatedAt': DateTime.now().millisecondsSinceEpoch,
-    };
+      await _logger.logInfo('Widget data structure complete: ${tasksData.length} tasks processed');
+      await _logger.logInfo('--- Widget Data Structure Built Successfully ---');
+      
+      return widgetData;
+    } catch (e, stackTrace) {
+      await _logger.logError('--- Error building widget data structure ---', e, stackTrace);
+      rethrow;
+    }
   }
 
   Future<List<WidgetConfig>> getAllWidgetConfigs() async {
-    return await _widgetConfigRepository.getAllWidgetConfigs();
+    try {
+      await _logger.logInfo('Getting all widget configurations from database');
+      final configs = await _widgetConfigRepository.getAllWidgetConfigs();
+      await _logger.logInfo('Retrieved ${configs.length} widget configurations');
+      return configs;
+    } catch (e, stackTrace) {
+      await _logger.logError('Error getting widget configurations', e, stackTrace);
+      rethrow;
+    }
   }
 
   // Updated method to handle widget button presses and task toggles
   Future<void> handleWidgetAction(String action, Map<dynamic, dynamic> data) async {
     try {
-      await _logger.logInfo('Handling widget action: $action with data: $data');
+      await _logger.logInfo('=== Handling Widget Action: $action ===');
+      await _logger.logInfo('Action data: $data');
       
       switch (action) {
         case 'background_sync':
           final widgetId = data['widgetId'] as int?;
+          await _logger.logInfo('Background sync requested for widget ID: $widgetId');
+          
           if (widgetId != null) {
+            await _logger.logInfo('Updating specific widget: $widgetId');
             await updateWidget(widgetId);
+            await _logger.logInfo('Specific widget update complete: $widgetId');
           } else {
+            await _logger.logInfo('Updating all widgets (no specific ID provided)');
             await updateAllWidgets();
+            await _logger.logInfo('All widgets update complete');
           }
           break;
           
         case 'add_task':
           final widgetId = data['widgetId'] as int?;
           await _logger.logInfo('Add task action triggered from widget: $widgetId');
-          // This will be handled by main.dart navigation
+          await _logger.logInfo('This action will be handled by main.dart navigation system');
           break;
           
         case 'widget_settings':
           final widgetId = data['widgetId'] as int?;
           await _logger.logInfo('Widget settings action triggered for widget: $widgetId');
-          // This will be handled by main.dart navigation
+          await _logger.logInfo('This action will be handled by main.dart navigation system');
           break;
           
         case 'background_toggle_task':
           final taskId = data['taskId'] as int?;
           final widgetId = data['widgetId'] as int?;
+          await _logger.logInfo('Background task toggle requested: TaskID=$taskId, WidgetID=$widgetId');
+          
           if (taskId != null) {
+            await _logger.logInfo('Toggling task completion for task: $taskId');
             await _toggleTaskCompletion(taskId);
+            await _logger.logInfo('Task completion toggled successfully for task: $taskId');
+            
             // Update the specific widget after toggling
             if (widgetId != null) {
+              await _logger.logInfo('Updating widget after task toggle: $widgetId');
               await updateWidget(widgetId);
+              await _logger.logInfo('Widget updated after task toggle: $widgetId');
             } else {
+              await _logger.logInfo('Updating all widgets after task toggle (no specific widget ID)');
               await updateAllWidgets();
+              await _logger.logInfo('All widgets updated after task toggle');
             }
+          } else {
+            await _logger.logWarning('Background task toggle requested but no task ID provided');
           }
           break;
+          
+        default:
+          await _logger.logWarning('Unknown widget action received: $action');
+          break;
       }
+      
+      await _logger.logInfo('=== Widget Action Handled Successfully: $action ===');
     } catch (e, stackTrace) {
-      await _logger.logError('Error handling widget action', e, stackTrace);
+      await _logger.logError('=== Widget Action Failed: $action ===', e, stackTrace);
+      rethrow;
     }
   }
 
   Future<void> _toggleTaskCompletion(int taskId) async {
     try {
+      await _logger.logInfo('--- Toggling Task Completion: TaskID=$taskId ---');
+      
       final task = await _taskRepository.getTask(taskId);
       if (task != null) {
-        await _taskRepository.toggleTaskCompletion(taskId, !task.isCompleted);
-        await _logger.logInfo('Task completion toggled from widget: TaskID=$taskId, NewState=${!task.isCompleted}');
+        final newCompletionState = !task.isCompleted;
+        await _logger.logInfo('Task found: ${task.title}, Current state: ${task.isCompleted}, New state: $newCompletionState');
+        
+        await _taskRepository.toggleTaskCompletion(taskId, newCompletionState);
+        await _logger.logInfo('Task completion toggled successfully from widget: TaskID=$taskId, NewState=$newCompletionState');
+      } else {
+        await _logger.logWarning('Task not found for completion toggle: TaskID=$taskId');
       }
+      
+      await _logger.logInfo('--- Task Completion Toggle Complete: TaskID=$taskId ---');
     } catch (e, stackTrace) {
-      await _logger.logError('Error toggling task completion from widget', e, stackTrace);
+      await _logger.logError('--- Error toggling task completion from widget: TaskID=$taskId ---', e, stackTrace);
+      rethrow;
     }
   }
 }
