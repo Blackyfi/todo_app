@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:todo_app/core/widgets/models/widget_config.dart';
@@ -259,11 +258,11 @@ class WidgetService {
         'isCompleted': task.isCompleted,
         'priority': task.priority.index,
         'priorityLabel': task.priority.label,
-        'priorityColor': task.priority.color.value,
+        'priorityColor': task.priority.color.toARGB32(),
         'dueDate': task.dueDate?.millisecondsSinceEpoch,
         'category': category != null ? {
           'name': category.name,
-          'color': category.color.value,
+          'color': category.color.toARGB32(),
         } : null,
       };
     }).toList();
