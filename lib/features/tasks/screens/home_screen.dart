@@ -189,14 +189,22 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
     ).then((_) => _loadData());
   }
   
-  void _navigateToAddTask() {
-    mat.Navigator.of(context).pushNamed(
+  Future<void> _navigateToAddTask() async {
+    await _logger.logInfo('Navigating to add task screen');
+    
+    if (!mounted) return;
+    await mat.Navigator.of(context).pushNamed(
       app_constants.AppConstants.addTaskRoute,
-    ).then((_) {
-      _loadData();
-      // Update widgets after potentially adding a new task
-      _widgetService.updateAllWidgets();
-    });
+    );
+    
+    if (!mounted) return;
+    await _logger.logInfo('Returned from add task screen, refreshing data');
+    
+    // Always refresh data and widgets when returning from add task screen
+    await _loadData();
+    await _widgetService.updateAllWidgets();
+    
+    await _logger.logInfo('Data and widgets refreshed after task creation');
   }
   
   void _navigateToSettings() {
