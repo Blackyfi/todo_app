@@ -15,6 +15,9 @@ import 'package:todo_app/features/widgets/screens/widget_creation_screen.dart';
 // Global navigator key to handle navigation from widget actions
 final mat.GlobalKey<mat.NavigatorState> navigatorKey = mat.GlobalKey<mat.NavigatorState>();
 
+// Global app state notifier to trigger refreshes
+final mat.ValueNotifier<bool> globalDataChangeNotifier = mat.ValueNotifier<bool>(false);
+
 void main() async {
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.presentError(details);
@@ -103,7 +106,13 @@ void _setupWidgetActionHandling(WidgetService widgetService, LoggerService logge
       switch (action) {
         case 'add_task':
           // Navigate to add task screen
-          navigatorKey.currentState?.pushNamed(app_constants.AppConstants.addTaskRoute);
+          await navigatorKey.currentState?.pushNamed(app_constants.AppConstants.addTaskRoute);
+          
+          // CRITICAL: Trigger data refresh when returning from add task
+          // This ensures the home screen refreshes immediately
+          Future.delayed(const Duration(milliseconds: 500), () {
+            globalDataChangeNotifier.value = !globalDataChangeNotifier.value;
+          });
           break;
           
         case 'widget_settings':
@@ -145,11 +154,15 @@ void _setupWidgetActionHandling(WidgetService widgetService, LoggerService logge
         case 'background_sync':
           // Handle background sync without showing UI
           await widgetService.handleWidgetAction('background_sync', data);
+          // Trigger refresh notification for any listening components
+          globalDataChangeNotifier.value = !globalDataChangeNotifier.value;
           break;
           
         case 'background_toggle_task':
           // Handle background task toggle without showing UI
           await widgetService.handleWidgetAction('background_toggle_task', data);
+          // Trigger refresh notification for any listening components
+          globalDataChangeNotifier.value = !globalDataChangeNotifier.value;
           break;
       }
     }

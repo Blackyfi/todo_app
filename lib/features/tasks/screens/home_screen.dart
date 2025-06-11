@@ -65,6 +65,7 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
     // Refresh data when app becomes active/resumed
     if (state == mat.AppLifecycleState.resumed) {
       _logger.logInfo('App resumed - refreshing data and updating widgets');
+      // IMMEDIATE data refresh when app resumes
       _loadData();
       // Also update widgets when app resumes to ensure they show latest data
       _widgetService.updateAllWidgets();
@@ -332,29 +333,32 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
               controller: _tabController,
               children: [
                 // Tasks Tab
-                filteredTasks.isEmpty
-                    ? empty_state.EmptyState(
-                        message: 'No tasks found',
-                        icon: mat.Icons.task_alt,
-                        actionLabel: 'Add Task',
-                        onActionPressed: _navigateToAddTask,
-                      )
-                    : mat.ListView.builder(
-                        itemCount: filteredTasks.length,
-                        padding: const mat.EdgeInsets.symmetric(vertical: 8),
-                        itemBuilder: (context, index) {
-                          final task = filteredTasks[index];
-                          final category = _getCategoryForTask(task);
-                          
-                          return task_card.TaskCard(
-                            task: task,
-                            category: category, // Can be null now
-                            onTap: () => _navigateToTaskDetails(task),
-                            onCompletedChanged: (_) => _toggleTaskCompletion(task),
-                            onDelete: () => _deleteTask(task.id!),
-                          );
-                        },
-                      ),
+                mat.RefreshIndicator(
+                  onRefresh: _loadData,
+                  child: filteredTasks.isEmpty
+                      ? empty_state.EmptyState(
+                          message: 'No tasks found',
+                          icon: mat.Icons.task_alt,
+                          actionLabel: 'Add Task',
+                          onActionPressed: _navigateToAddTask,
+                        )
+                      : mat.ListView.builder(
+                          itemCount: filteredTasks.length,
+                          padding: const mat.EdgeInsets.symmetric(vertical: 8),
+                          itemBuilder: (context, index) {
+                            final task = filteredTasks[index];
+                            final category = _getCategoryForTask(task);
+                            
+                            return task_card.TaskCard(
+                              task: task,
+                              category: category, // Can be null now
+                              onTap: () => _navigateToTaskDetails(task),
+                              onCompletedChanged: (_) => _toggleTaskCompletion(task),
+                              onDelete: () => _deleteTask(task.id!),
+                            );
+                          },
+                        ),
+                ),
                 
                 // Categories Tab - directly embed the screen
                 const CategoriesScreen(),
