@@ -7,6 +7,7 @@ import 'package:todo_app/core/database/repository/category_repository.dart' as c
 import 'package:todo_app/features/tasks/models/task.dart' as task_model;
 import 'package:todo_app/features/categories/models/category.dart' as category_model;
 import 'package:todo_app/core/logger/logger_service.dart';
+import 'package:intl/intl.dart' as intl;
 import 'dart:convert';
 
 class WidgetService {
@@ -75,7 +76,7 @@ class WidgetService {
           await _logger.logInfo('Widget action processed successfully: $action');
           break;
         default:
-          await _logger.logWarning('Unimplemented widget method called: ${call.method}');
+        await _logger.logWarning('Unimplemented widget method called: ${call.method}');
           throw PlatformException(
             code: 'UNIMPLEMENTED',
             details: 'Method ${call.method} not implemented',
@@ -300,23 +301,27 @@ class WidgetService {
 
       await _logger.logInfo('Sorting tasks by completion, priority, and due date');
       tasks.sort((a, b) {
+        // Completed tasks go to bottom
         if (a.isCompleted != b.isCompleted) {
           return a.isCompleted ? 1 : -1;
         }
         
+        // Sort by priority (high = 0, medium = 1, low = 2)
         if (a.priority != b.priority) {
           return a.priority.index.compareTo(b.priority.index);
         }
         
+        // Sort by due date (earliest first)
         if (a.dueDate != null && b.dueDate != null) {
           return a.dueDate!.compareTo(b.dueDate!);
         } else if (a.dueDate != null) {
-          return -1;
+          return -1; // Tasks with due dates come first
         } else if (b.dueDate != null) {
           return 1;
         }
         
-        return 0;
+        // Finally sort by ID if everything else is equal
+        return (a.id ?? 0).compareTo(b.id ?? 0);
       });
       await _logger.logInfo('Tasks sorted successfully');
 
@@ -364,6 +369,19 @@ class WidgetService {
           await _logger.logInfo('Task has no category assigned');
         }
 
+        // Format due date for display
+        String? formattedDueDate;
+        if (task.dueDate != null) {
+          try {
+            final dateFormat = intl.DateFormat('MMM d, yyyy');
+            final timeFormat = intl.DateFormat('h:mm a');
+            formattedDueDate = '${dateFormat.format(task.dueDate!)} · ${timeFormat.format(task.dueDate!)}';
+          } catch (e) {
+            await _logger.logWarning('Error formatting due date for task ${task.id}: $e');
+            formattedDueDate = 'Invalid Date';
+          }
+        }
+
         final taskData = {
           'id': task.id,
           'title': task.title,
@@ -371,12 +389,15 @@ class WidgetService {
           'isCompleted': task.isCompleted,
           'priority': task.priority.index,
           'priorityLabel': task.priority.label,
-          'priorityColor': task.priority.color.toARGB32(),
+          'priorityColor': task.priority.color.value,
           'dueDate': task.dueDate?.millisecondsSinceEpoch,
+          'formattedDueDate': formattedDueDate,
           'category': category != null ? {
             'name': category.name,
-            'color': category.color.toARGB32(),
+            'color': category.color.value,
           } : null,
+          // Add completion timestamp for sorting
+          'completedAt': task.completedAt?.millisecondsSinceEpoch,
         };
         
         tasksData.add(taskData);
@@ -386,9 +407,19 @@ class WidgetService {
         'config': config.toMap(),
         'tasks': tasksData,
         'updatedAt': DateTime.now().millisecondsSinceEpoch,
+        'taskCount': tasksData.length,
+        // Add summary statistics
+        'completedCount': tasksData.where((task) => task['isCompleted'] == true).length,
+        'overdueCount': tasksData.where((task) {
+          final dueDate = task['dueDate'];
+          return dueDate != null && 
+                 dueDate < DateTime.now().millisecondsSinceEpoch && 
+                 task['isCompleted'] != true;
+        }).length,
       };
 
       await _logger.logInfo('Widget data structure complete: ${tasksData.length} tasks processed');
+      await _logger.logInfo('Summary: ${widgetData['completedCount']} completed, ${widgetData['overdueCount']} overdue');
       await _logger.logInfo('--- Widget Data Structure Built Successfully ---');
       
       return widgetData;

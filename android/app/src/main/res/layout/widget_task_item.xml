@@ -2,35 +2,150 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:padding="4dp"
+    android:orientation="vertical"
+    android:padding="8dp"
     android:background="@drawable/widget_task_background"
-    android:layout_marginBottom="2dp">
+    android:layout_marginBottom="4dp">
 
-    <!-- Clickable checkbox area - ONLY this should be clickable for toggling -->
-    <TextView
-        android:id="@+id/task_checkbox"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:text="○"
-        android:textSize="14sp"
-        android:gravity="center"
-        android:layout_marginEnd="8dp"
-        android:background="@drawable/widget_checkbox_background"
-        android:clickable="true"
-        android:focusable="true"
-        android:padding="2dp" />
-
-    <!-- Task title - NOT clickable to avoid conflicts -->
-    <TextView
-        android:id="@+id/task_title"
+    <!-- Main task row -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Task Title"
-        android:textSize="12sp"
-        android:textColor="#FF000000"
-        android:ellipsize="end"
-        android:maxLines="1"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <!-- Clickable checkbox area -->
+        <TextView
+            android:id="@+id/task_checkbox"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:text="○"
+            android:textSize="14sp"
+            android:gravity="center"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/widget_checkbox_background"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="2dp" />
+
+        <!-- Task content container -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <!-- Task title and priority row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/task_title"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Task Title"
+                    android:textSize="13sp"
+                    android:textColor="#FF000000"
+                    android:textStyle="bold"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:clickable="false"
+                    android:focusable="false" />
+
+                <!-- Priority indicator -->
+                <TextView
+                    android:id="@+id/priority_badge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="HIGH"
+                    android:textSize="9sp"
+                    android:textColor="#FFFFFFFF"
+                    android:background="#FFFF0000"
+                    android:paddingStart="6dp"
+                    android:paddingEnd="6dp"
+                    android:paddingTop="2dp"
+                    android:paddingBottom="2dp"
+                    android:layout_marginStart="4dp"
+                    android:visibility="gone"
+                    android:clickable="false"
+                    android:focusable="false" />
+
+            </LinearLayout>
+
+            <!-- Task description -->
+            <TextView
+                android:id="@+id/task_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Task description"
+                android:textSize="11sp"
+                android:textColor="#FF666666"
+                android:ellipsize="end"
+                android:maxLines="2"
+                android:layout_marginTop="2dp"
+                android:visibility="gone"
+                android:clickable="false"
+                android:focusable="false" />
+
+            <!-- Category and due date row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="4dp">
+
+                <!-- Category badge -->
+                <TextView
+                    android:id="@+id/category_badge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Work"
+                    android:textSize="10sp"
+                    android:textColor="#FF2196F3"
+                    android:background="#332196F3"
+                    android:paddingStart="6dp"
+                    android:paddingEnd="6dp"
+                    android:paddingTop="2dp"
+                    android:paddingBottom="2dp"
+                    android:visibility="gone"
+                    android:clickable="false"
+                    android:focusable="false" />
+
+                <!-- Due date -->
+                <TextView
+                    android:id="@+id/due_date"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Due: Jan 15, 2:30 PM"
+                    android:textSize="10sp"
+                    android:textColor="#FF666666"
+                    android:layout_marginStart="8dp"
+                    android:visibility="gone"
+                    android:clickable="false"
+                    android:focusable="false" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Background status indicator -->
+    <TextView
+        android:id="@+id/status_indicator"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="OVERDUE"
+        android:textSize="8sp"
+        android:textColor="#FFFF0000"
+        android:textStyle="bold"
+        android:layout_gravity="end"
+        android:visibility="gone"
         android:clickable="false"
         android:focusable="false" />
 
