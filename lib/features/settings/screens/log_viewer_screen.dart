@@ -143,9 +143,11 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
         (file) => path.basename(file.path) == _selectedLogFileName,
       );
       
-      await Share.shareXFiles(
-        [XFile(logFile.path)],
-        subject: 'Todo App Log - $_selectedLogFileName',
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(logFile.path)],
+          subject: 'Todo App Log - $_selectedLogFileName',
+        ),
       );
     } catch (e) {
       if (mounted) {
@@ -217,10 +219,12 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
         _isLoading = false;
       });
       
-      // Share the JSON file
-      await Share.shareXFiles(
-        [XFile(jsonFile.path)],
-        subject: 'Todo App Logs - JSON Export',
+      // Share the JSON file using the new SharePlus API
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(jsonFile.path)],
+          subject: 'Todo App Logs - JSON Export',
+        ),
       );
     } catch (e) {
       setState(() {
