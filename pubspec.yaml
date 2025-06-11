@@ -18,7 +18,7 @@ dependencies:
   flutter_local_notifications: ^19.2.1
   desktop_notifications: ^0.6.3  # For desktop notifications
   timezone: ^0.10.0
-  fl_chart: ^0.70.2
+  fl_chart: ^1.0.0
   shared_preferences: ^2.2.2
   path_provider: ^2.1.2
   share_plus: ^11.0.0
