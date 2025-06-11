@@ -389,12 +389,12 @@ class WidgetService {
           'isCompleted': task.isCompleted,
           'priority': task.priority.index,
           'priorityLabel': task.priority.label,
-          'priorityColor': task.priority.color.value,
+          'priorityColor': task.priority.color.toARGB32(),
           'dueDate': task.dueDate?.millisecondsSinceEpoch,
           'formattedDueDate': formattedDueDate,
           'category': category != null ? {
             'name': category.name,
-            'color': category.color.value,
+            'color': category.color.toARGB32(),
           } : null,
           // Add completion timestamp for sorting
           'completedAt': task.completedAt?.millisecondsSinceEpoch,
