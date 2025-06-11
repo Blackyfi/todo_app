@@ -83,11 +83,6 @@ void main() async {
       _setupWidgetActionHandling(widgetService, logger);
       await logger.logInfo('Widget action handling setup complete');
       
-      // Debug widget state
-      await logger.logInfo('Performing widget debug state check...');
-      await widgetService.debugWidgetState();
-      await logger.logInfo('Widget debug state check complete');
-      
       await logger.logInfo('===== APPLICATION STARTUP COMPLETE =====');
       await logger.logInfo('Launching TodoApp...');
       
@@ -97,9 +92,7 @@ void main() async {
     } catch (e, stackTrace) {
       await logger.logError('CRITICAL ERROR during app startup', e, stackTrace);
       await logger.logError('Startup error details: ${e.toString()}');
-      if (stackTrace != null) {
-        await logger.logError('Startup error stack trace: ${stackTrace.toString()}');
-      }
+      await logger.logError('Startup error stack trace: ${stackTrace.toString()}');
       rethrow;
     }
   }, (error, stackTrace) {
