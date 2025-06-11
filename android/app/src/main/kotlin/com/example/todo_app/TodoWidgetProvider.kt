@@ -54,13 +54,18 @@ class TodoWidgetProvider : AppWidgetProvider() {
                 // Update task list with full feature set
                 updateTaskList(views, tasks, config, context, appWidgetId)
             } else {
-                // Default state
+                // Show loading state with better error handling
                 views.setTextViewText(R.id.widget_title, "Todo App")
-                views.setTextViewText(R.id.task_count, "Loading...")
+                views.setTextViewText(R.id.task_count, if (configData == null && tasksData == null) "Loading..." else "No data available")
+                
+                // Clear task list when no data
+                views.removeAllViews(R.id.task_list)
             }
         } catch (e: Exception) {
+            // Better error handling
             views.setTextViewText(R.id.widget_title, "Todo App")
-            views.setTextViewText(R.id.task_count, "Error loading tasks")
+            views.setTextViewText(R.id.task_count, "Error: ${e.message}")
+            views.removeAllViews(R.id.task_list)
         }
         
         // Set up button click handlers
@@ -84,12 +89,13 @@ class TodoWidgetProvider : AppWidgetProvider() {
         )
         views.setOnClickPendingIntent(R.id.add_task_button, addTaskPendingIntent)
         
-        // Refresh button - uses broadcast to refresh widget without opening app
-        val refreshIntent = Intent(context, TodoWidgetProvider::class.java).apply {
-            action = ACTION_REFRESH_WIDGET
+        // Refresh button - force sync
+        val refreshIntent = Intent(context, MainActivity::class.java).apply {
+            action = "BACKGROUND_SYNC"
             putExtra(EXTRA_WIDGET_ID, 1)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_USER_ACTION
         }
-        val refreshPendingIntent = PendingIntent.getBroadcast(
+        val refreshPendingIntent = PendingIntent.getActivity(
             context, 
             appWidgetId * 100 + 2,
             refreshIntent, 
