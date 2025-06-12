@@ -27,6 +27,9 @@ dependencies:
   app_settings: ^6.1.1 # For opening app settings
   home_widget: ^0.8.0
 
+  # Tests
+  mockito: ^5.4.6
+
 dev_dependencies:
   flutter_lints: ^6.0.0
 
