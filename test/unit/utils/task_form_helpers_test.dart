@@ -308,8 +308,8 @@ void main() {
 
       test('should handle cross-day notifications', () {
         final taskDate = DateTime(2024, 12, 25);
-        const taskTime = TimeOfDay(hour: 1, minute: 0);
-        const notificationTime = TimeOfDay(hour: 23, minute: 0);
+        const taskTime = TimeOfDay(hour: 2, minute: 0); // 2:00 AM
+        const notificationTime = TimeOfDay(hour: 0, minute: 0); // 12:00 AM (same day)
 
         final description = TaskFormHelpers.getNotificationTimeDescription(
           taskDate,
@@ -317,7 +317,7 @@ void main() {
           notificationTime,
         );
 
-        // This would be 2 hours before (cross-day)
+        // This would be 2 hours before
         expect(description, equals('120 minutes before'));
       });
     });

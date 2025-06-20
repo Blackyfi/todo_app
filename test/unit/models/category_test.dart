@@ -54,27 +54,27 @@ void main() {
       final map = {
         'id': 2,
         'name': 'Health',
-        'color': Colors.red.toARGB32(),
+        'color': Colors.red.value, // Use .value instead of .toARGB32()
       };
 
       final categoryFromMap = Category.fromMap(map);
 
       expect(categoryFromMap.id, equals(2));
       expect(categoryFromMap.name, equals('Health'));
-      expect(categoryFromMap.color, equals(Colors.red));
+      expect(categoryFromMap.color.value, equals(Colors.red.value));
     });
 
     test('should handle null id in fromMap', () {
       final map = {
         'name': 'Shopping',
-        'color': Colors.orange.toARGB32(),
+        'color': Colors.orange.value, // Use .value instead of .toARGB32()
       };
 
       final categoryFromMap = Category.fromMap(map);
 
       expect(categoryFromMap.id, isNull);
       expect(categoryFromMap.name, equals('Shopping'));
-      expect(categoryFromMap.color, equals(Colors.orange));
+      expect(categoryFromMap.color.value, equals(Colors.orange.value));
     });
 
     test('should have default categories', () {
@@ -96,7 +96,7 @@ void main() {
       final map = category.toMap();
       final reconstructed = Category.fromMap(map);
 
-      expect(reconstructed.color.toARGB32(), equals(customColor.toARGB32()));
+      expect(reconstructed.color.value, equals(customColor.value));
     });
   });
 }

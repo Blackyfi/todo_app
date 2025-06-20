@@ -197,6 +197,8 @@ flutter clean && flutter pub get
 # Analyze code quality
 flutter analyze
 
+# Before running tests
+flutter packages pub run build_runner build
 # Run tests
 flutter test
 
