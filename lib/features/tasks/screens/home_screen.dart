@@ -303,6 +303,12 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
               ),
             ],
           ),
+          // Add test button for debugging
+          mat.IconButton(
+            icon: const mat.Icon(mat.Icons.bug_report),
+            onPressed: _testWidgetData,
+            tooltip: 'Test Widget Data',
+          ),
           mat.IconButton(
             icon: const mat.Icon(mat.Icons.settings),
             onPressed: _navigateToSettings,
@@ -372,5 +378,34 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
         child: const mat.Icon(mat.Icons.add),
       ) : null,
     );
+  }
+
+  Future<void> _testWidgetData() async {
+    try {
+      await _logger.logInfo('=== TESTING WIDGET DATA FROM HOME SCREEN ===');
+      
+      // Import the test class at the top of the file
+      // import 'package:todo_app/core/widgets/services/widget_data_test.dart';
+      
+      // Test widget data storage
+      // await WidgetDataTest.testWidgetDataStorage();
+      
+      // Force widget update
+      await _widgetService.updateAllWidgets();
+      
+      if (mounted) {
+        mat.ScaffoldMessenger.of(context).showSnackBar(
+          const mat.SnackBar(content: mat.Text('Widget data test completed - check logs')),
+        );
+      }
+    } catch (e, stackTrace) {
+      await _logger.logError('Error testing widget data', e, stackTrace);
+      
+      if (mounted) {
+        mat.ScaffoldMessenger.of(context).showSnackBar(
+          const mat.SnackBar(content: mat.Text('Widget data test failed - check logs')),
+        );
+      }
+    }
   }
 }

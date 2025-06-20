@@ -25,6 +25,10 @@ class TodoWidgetProvider : AppWidgetProvider() {
         
         private const val EXTRA_TASK_ID = "task_id"
         private const val EXTRA_WIDGET_ID = "widget_id"
+        
+        // CRITICAL: Use consistent data keys
+        private const val WIDGET_DATA_KEY = "widget_data"
+        private const val WIDGET_CONFIG_KEY = "widget_config"
     }
 
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
@@ -54,34 +58,55 @@ class TodoWidgetProvider : AppWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.todo_widget)
             Log.d(TAG, "RemoteViews created for widget $appWidgetId")
             
-            // CRITICAL FIX: Use the exact same keys as Flutter
+            // CRITICAL FIX: Try multiple SharedPreferences sources
             val preferences = context.getSharedPreferences("HomeWidgetPreferences", Context.MODE_PRIVATE)
+            val flutterPrefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+            
             Log.d(TAG, "SharedPreferences retrieved")
             
-            // Log all available keys for debugging
-            val allKeys = preferences.all.keys
-            Log.d(TAG, "Available SharedPreferences keys: $allKeys")
-            for (key in allKeys) {
-                val value = preferences.getString(key, null)
-                Log.d(TAG, "Key: $key, Value: ${value?.take(100)}...")
+            // Log all available keys for debugging from both sources
+            logAllPreferencesKeys(preferences, "HomeWidgetPreferences")
+            logAllPreferencesKeys(flutterPrefs, "FlutterSharedPreferences")
+            
+            // Try to get data from multiple possible key patterns
+            var configData = preferences.getString(WIDGET_CONFIG_KEY, null)
+            var tasksData = preferences.getString(WIDGET_DATA_KEY, null)
+            
+            // If not found, try alternative keys
+            if (configData == null) {
+                configData = preferences.getString("flutter.$WIDGET_CONFIG_KEY", null)
+                if (configData == null) {
+                    configData = flutterPrefs.getString("flutter.$WIDGET_CONFIG_KEY", null)
+                }
             }
             
-            val configData = preferences.getString("widget_config", null)
-            val tasksData = preferences.getString("widget_data", null)
+            if (tasksData == null) {
+                tasksData = preferences.getString("flutter.$WIDGET_DATA_KEY", null)
+                if (tasksData == null) {
+                    tasksData = flutterPrefs.getString("flutter.$WIDGET_DATA_KEY", null)
+                }
+            }
             
-            Log.d(TAG, "Config data available: ${configData != null}")
-            Log.d(TAG, "Tasks data available: ${tasksData != null}")
+            Log.d(TAG, "Config data found: ${configData != null}, length: ${configData?.length ?: 0}")
+            Log.d(TAG, "Tasks data found: ${tasksData != null}, length: ${tasksData?.length ?: 0}")
+            
+            if (configData != null) {
+                Log.d(TAG, "Config data preview: ${configData.take(200)}...")
+            }
+            if (tasksData != null) {
+                Log.d(TAG, "Tasks data preview: ${tasksData.take(200)}...")
+            }
             
             if (configData == null || tasksData == null) {
-                Log.w(TAG, "Missing data - showing loading state")
-                showLoadingState(context, appWidgetManager, appWidgetId)
+                Log.w(TAG, "Missing data - showing default state with retry")
+                showDefaultState(context, appWidgetManager, appWidgetId)
                 return
             }
             
             // Parse JSON data safely
             val config = JSONObject(configData)
             val data = JSONObject(tasksData)
-            val tasks = data.getJSONArray("tasks")
+            val tasks = data.optJSONArray("tasks") ?: JSONArray()
             
             Log.d(TAG, "Successfully parsed data - tasks count: ${tasks.length()}")
             
@@ -108,24 +133,56 @@ class TodoWidgetProvider : AppWidgetProvider() {
             
         } catch (e: Exception) {
             Log.e(TAG, "CRITICAL ERROR in updateAppWidget for ID: $appWidgetId", e)
-            showErrorState(context, appWidgetManager, appWidgetId, "Failed to load widget data")
+            showErrorState(context, appWidgetManager, appWidgetId, "Failed to load widget data: ${e.message}")
         }
     }
     
-    private fun showLoadingState(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
+    private fun logAllPreferencesKeys(preferences: android.content.SharedPreferences, source: String) {
+        try {
+            val allKeys = preferences.all.keys
+            Log.d(TAG, "=== $source Keys (${allKeys.size}) ===")
+            for (key in allKeys) {
+                val value = preferences.getString(key, null)
+                Log.d(TAG, "$source - Key: $key, Value length: ${value?.length ?: 0}")
+                if (value != null && value.length < 200) {
+                    Log.d(TAG, "$source - Key: $key, Value: $value")
+                } else if (value != null) {
+                    Log.d(TAG, "$source - Key: $key, Value preview: ${value.take(100)}...")
+                }
+            }
+            Log.d(TAG, "=== End $source Keys ===")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error logging preferences for $source", e)
+        }
+    }
+    
+    private fun showDefaultState(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
         try {
             val views = RemoteViews(context.packageName, R.layout.todo_widget)
             views.setTextViewText(R.id.widget_title, "Todo App")
-            views.setTextViewText(R.id.task_count, "Loading...")
+            views.setTextViewText(R.id.task_count, "Loading tasks...")
             views.removeAllViews(R.id.task_list)
             
-            // Set up basic button handlers even in loading state
+            // Add a simple message
+            val messageView = RemoteViews(context.packageName, R.layout.widget_task_item)
+            messageView.setTextViewText(R.id.task_title, "Tap + to add your first task")
+            messageView.setTextViewText(R.id.task_checkbox, "○")
+            messageView.setViewVisibility(R.id.task_description, android.view.View.GONE)
+            messageView.setViewVisibility(R.id.priority_badge, android.view.View.GONE)
+            messageView.setViewVisibility(R.id.category_badge, android.view.View.GONE)
+            messageView.setViewVisibility(R.id.due_date, android.view.View.GONE)
+            messageView.setViewVisibility(R.id.status_indicator, android.view.View.GONE)
+            
+            views.addView(R.id.task_list, messageView)
+            
+            // Set up basic button handlers
             setupButtonClickHandlers(context, views, appWidgetId)
             
             appWidgetManager.updateAppWidget(appWidgetId, views)
-            Log.d(TAG, "Loading state displayed for widget $appWidgetId")
+            Log.d(TAG, "Default state displayed for widget $appWidgetId")
         } catch (e: Exception) {
-            Log.e(TAG, "Error showing loading state", e)
+            Log.e(TAG, "Error showing default state", e)
+            showErrorState(context, appWidgetManager, appWidgetId, "Setup error")
         }
     }
     
@@ -133,10 +190,23 @@ class TodoWidgetProvider : AppWidgetProvider() {
         try {
             val views = RemoteViews(context.packageName, R.layout.todo_widget)
             views.setTextViewText(R.id.widget_title, "Todo App")
-            views.setTextViewText(R.id.task_count, "Error: $errorMessage")
+            views.setTextViewText(R.id.task_count, "Can't load widget")
             views.removeAllViews(R.id.task_list)
             
-            // Set up basic button handlers even in error state
+            // Add error message
+            val errorView = RemoteViews(context.packageName, R.layout.widget_task_item)
+            errorView.setTextViewText(R.id.task_title, "Tap refresh or open app")
+            errorView.setTextViewText(R.id.task_checkbox, "!")
+            errorView.setTextViewText(R.id.task_description, errorMessage)
+            errorView.setViewVisibility(R.id.task_description, android.view.View.VISIBLE)
+            errorView.setViewVisibility(R.id.priority_badge, android.view.View.GONE)
+            errorView.setViewVisibility(R.id.category_badge, android.view.View.GONE)
+            errorView.setViewVisibility(R.id.due_date, android.view.View.GONE)
+            errorView.setViewVisibility(R.id.status_indicator, android.view.View.GONE)
+            
+            views.addView(R.id.task_list, errorView)
+            
+            // Set up basic button handlers
             setupButtonClickHandlers(context, views, appWidgetId)
             
             appWidgetManager.updateAppWidget(appWidgetId, views)
@@ -208,6 +278,23 @@ class TodoWidgetProvider : AppWidgetProvider() {
             
             Log.d(TAG, "Display settings - maxTasks: $maxTasks, showCompleted: $showCompleted")
             
+            if (tasks.length() == 0) {
+                // Show empty state
+                val emptyView = RemoteViews(context.packageName, R.layout.widget_task_item)
+                emptyView.setTextViewText(R.id.task_title, "No tasks yet")
+                emptyView.setTextViewText(R.id.task_checkbox, "○")
+                emptyView.setTextViewText(R.id.task_description, "Tap + to add your first task")
+                emptyView.setViewVisibility(R.id.task_description, android.view.View.VISIBLE)
+                emptyView.setViewVisibility(R.id.priority_badge, android.view.View.GONE)
+                emptyView.setViewVisibility(R.id.category_badge, android.view.View.GONE)
+                emptyView.setViewVisibility(R.id.due_date, android.view.View.GONE)
+                emptyView.setViewVisibility(R.id.status_indicator, android.view.View.GONE)
+                
+                views.addView(R.id.task_list, emptyView)
+                Log.d(TAG, "Added empty state message")
+                return
+            }
+            
             var actualTasksAdded = 0
             
             for (i in 0 until maxTasks) {
@@ -245,6 +332,12 @@ class TodoWidgetProvider : AppWidgetProvider() {
                     } else {
                         taskView.setViewVisibility(R.id.task_description, android.view.View.GONE)
                     }
+                    
+                    // Hide other elements for now to keep it simple
+                    taskView.setViewVisibility(R.id.priority_badge, android.view.View.GONE)
+                    taskView.setViewVisibility(R.id.category_badge, android.view.View.GONE)
+                    taskView.setViewVisibility(R.id.due_date, android.view.View.GONE)
+                    taskView.setViewVisibility(R.id.status_indicator, android.view.View.GONE)
                     
                     // Set click listener for checkbox
                     val taskId = task.optInt("id", -1)

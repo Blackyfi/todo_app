@@ -74,7 +74,7 @@ void main() async {
       await widgetService.init();
       await logger.logInfo('Widget service initialized successfully');
       
-      // Create default widget configuration if none exists
+      // CRITICAL: Always ensure a default widget exists and update it
       await logger.logInfo('Ensuring default widget configuration exists...');
       await _ensureDefaultWidget(widgetService, logger);
       await logger.logInfo('Default widget configuration ensured');
@@ -130,15 +130,13 @@ Future<void> _ensureDefaultWidget(WidgetService widgetService, LoggerService log
       await widgetService.createWidget(defaultConfig);
       await logger.logInfo('Default widget configuration created successfully');
     } else {
-      await logger.logInfo('Found ${existingConfigs.length} existing widget configurations:');
+      await logger.logInfo('Found ${existingConfigs.length} existing widget configurations');
       for (int i = 0; i < existingConfigs.length; i++) {
         final config = existingConfigs[i];
         await logger.logInfo('  Config ${i + 1}: ID=${config.id}, Name="${config.name}", Size=${config.size.label}');
-        await logger.logInfo('    Created: ${config.createdAt}');
-        await logger.logInfo('    Settings: MaxTasks=${config.maxTasks}, ShowCompleted=${config.showCompleted}');
-        await logger.logInfo('    Filters: Category=${config.categoryFilter}');
       }
       
+      // CRITICAL: Always update all widgets with current data on startup
       await logger.logInfo('Force updating existing widgets with current data...');
       await widgetService.updateAllWidgets();
       await logger.logInfo('All existing widgets updated successfully');
@@ -213,7 +211,6 @@ void _setupWidgetActionHandling(WidgetService widgetService, LoggerService logge
             await logger.logInfo('Navigation to add task screen initiated');
             
             // CRITICAL: Trigger data refresh when returning from add task
-            // This ensures the home screen refreshes immediately
             await logger.logInfo('Scheduling data refresh notification...');
             Future.delayed(const Duration(milliseconds: 500), () {
               logger.logInfo('Triggering global data change notification');
@@ -229,11 +226,11 @@ void _setupWidgetActionHandling(WidgetService widgetService, LoggerService logge
             
             try {
               final widgetConfigRepository = WidgetConfigRepository();
-              // Always use widget ID 1 since that's our default widget
-              await logger.logInfo('Fetching widget config for ID: 1');
-              final widgetConfig = await widgetConfigRepository.getWidgetConfig(1);
+              // Get all configs and use the first one (or create one if none exist)
+              final configs = await widgetConfigRepository.getAllWidgetConfigs();
               
-              if (widgetConfig != null) {
+              if (configs.isNotEmpty) {
+                final widgetConfig = configs.first;
                 await logger.logInfo('Found widget config: ${widgetConfig.name}');
                 await logger.logInfo('Config details: ${widgetConfig.toMap()}');
                 
@@ -246,7 +243,7 @@ void _setupWidgetActionHandling(WidgetService widgetService, LoggerService logge
                 );
                 await logger.logInfo('Navigation to widget settings initiated');
               } else {
-                await logger.logError('Widget config not found for ID: 1');
+                await logger.logError('No widget configs found');
                 await logger.logInfo('Creating new widget creation screen as fallback...');
                 
                 // Create and navigate to a new widget creation screen
@@ -335,42 +332,42 @@ void _setupWidgetActionHandling(WidgetService widgetService, LoggerService logge
     }
   });
   
-  logger.logInfo('Widget action method channel handler setup complete');
+logger.logInfo('Widget action method channel handler setup complete');
 }
 
 void _reportError(dynamic error, StackTrace? stackTrace, LoggerService logger) async {
-  try {
-    await logger.logError('=== UNCAUGHT EXCEPTION REPORTED ===', error, stackTrace);
-    await logger.logError('Error type: ${error.runtimeType}');
-    await logger.logError('Error details: ${error.toString()}');
-    
-    if (stackTrace != null) {
-      await logger.logError('Full stack trace: ${stackTrace.toString()}');
-    }
-    
-    // Log additional context if available
-    try {
-      await logger.logInfo('Current platform: ${Platform.operatingSystem}');
-      await logger.logInfo('Platform version: ${Platform.operatingSystemVersion}');
-    } catch (platformError) {
-      await logger.logWarning('Could not get platform information: $platformError');
-    }
-    
-    debugPrint('CRITICAL ERROR: $error');
-    if (stackTrace != null) {
-      debugPrint('STACK TRACE: $stackTrace');
-    }
-  } catch (logError) {
-    debugPrint('LOGGER FAILED: $logError');
-    debugPrint('ORIGINAL ERROR: $error');
-    if (stackTrace != null) {
-      debugPrint('ORIGINAL STACK TRACE: $stackTrace');
-    }
-    
-    // Last resort - try to save to file directly
-    try {
-      final timestamp = DateTime.now().toIso8601String();
-      final errorReport = '''
+ try {
+   await logger.logError('=== UNCAUGHT EXCEPTION REPORTED ===', error, stackTrace);
+   await logger.logError('Error type: ${error.runtimeType}');
+   await logger.logError('Error details: ${error.toString()}');
+   
+   if (stackTrace != null) {
+     await logger.logError('Full stack trace: ${stackTrace.toString()}');
+   }
+   
+   // Log additional context if available
+   try {
+     await logger.logInfo('Current platform: ${Platform.operatingSystem}');
+     await logger.logInfo('Platform version: ${Platform.operatingSystemVersion}');
+   } catch (platformError) {
+     await logger.logWarning('Could not get platform information: $platformError');
+   }
+   
+   debugPrint('CRITICAL ERROR: $error');
+   if (stackTrace != null) {
+     debugPrint('STACK TRACE: $stackTrace');
+   }
+ } catch (logError) {
+   debugPrint('LOGGER FAILED: $logError');
+   debugPrint('ORIGINAL ERROR: $error');
+   if (stackTrace != null) {
+     debugPrint('ORIGINAL STACK TRACE: $stackTrace');
+   }
+   
+   // Last resort - try to save to file directly
+   try {
+     final timestamp = DateTime.now().toIso8601String();
+     final errorReport = '''
 === CRITICAL ERROR REPORT ===
 Timestamp: $timestamp
 Platform: ${Platform.operatingSystem}
@@ -379,13 +376,13 @@ Original Error: $error
 Original Stack Trace: $stackTrace
 ==============================
 ''';
-      
-      final tempDir = Directory.systemTemp;
-      final errorFile = File('${tempDir.path}/todo_app_critical_error_$timestamp.txt');
-      await errorFile.writeAsString(errorReport);
-      debugPrint('Error report saved to: ${errorFile.path}');
-    } catch (fileError) {
-      debugPrint('COULD NOT SAVE ERROR REPORT: $fileError');
-    }
-  }
+     
+     final tempDir = Directory.systemTemp;
+     final errorFile = File('${tempDir.path}/todo_app_critical_error_$timestamp.txt');
+     await errorFile.writeAsString(errorReport);
+     debugPrint('Error report saved to: ${errorFile.path}');
+   } catch (fileError) {
+     debugPrint('COULD NOT SAVE ERROR REPORT: $fileError');
+   }
+ }
 }
