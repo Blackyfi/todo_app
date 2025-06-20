@@ -6,6 +6,7 @@ test/
 │   ├── models/
 │   │   ├── category_test.dart
 │   │   ├── task_test.dart
+│   │   ├── notification_settings_test.dart
 │   │   ├── auto_delete_settings_test.dart
 │   │   └── widget_config_test.dart
 │   ├── repositories/
