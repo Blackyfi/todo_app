@@ -55,6 +55,8 @@ class WidgetService {
 
   Future<void> _initializeDefaultWidgetData() async {
     try {
+      await _logger.logInfo('Initializing default widget data');
+      
       // Create minimal default data to prevent null errors
       final defaultConfig = {
         'name': 'Todo App',
@@ -68,12 +70,22 @@ class WidgetService {
         'tasks': [],
         'updatedAt': DateTime.now().millisecondsSinceEpoch,
         'taskCount': 0,
+        'completedCount': 0,
+        'overdueCount': 0,
       };
       
       await HomeWidget.saveWidgetData<String>('widget_config', jsonEncode(defaultConfig));
       await HomeWidget.saveWidgetData<String>('widget_data', jsonEncode(defaultData));
       
-      await _logger.logInfo('Default widget data initialized');
+      // CRITICAL: Force widget update after setting data
+      await HomeWidget.updateWidget(
+        name: 'TodoWidgetProvider',
+        androidName: 'TodoWidgetProvider',
+        iOSName: 'TodoWidget',
+        qualifiedAndroidName: 'com.example.todo_app.TodoWidgetProvider',
+      );
+      
+      await _logger.logInfo('Default widget data initialized and widget updated');
     } catch (e, stackTrace) {
       await _logger.logError('Error initializing default widget data', e, stackTrace);
     }

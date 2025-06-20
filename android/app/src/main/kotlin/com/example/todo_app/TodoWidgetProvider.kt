@@ -54,17 +54,20 @@ class TodoWidgetProvider : AppWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.todo_widget)
             Log.d(TAG, "RemoteViews created for widget $appWidgetId")
             
-            // Get widget data with null checks
-            val widgetData = HomeWidgetPlugin.getData(context)
+            // CRITICAL FIX: Use the exact same keys as Flutter
+            val preferences = context.getSharedPreferences("HomeWidgetPreferences", Context.MODE_PRIVATE)
+            Log.d(TAG, "SharedPreferences retrieved")
             
-            if (widgetData == null) {
-                Log.e(TAG, "Widget data is null - showing loading state")
-                showLoadingState(context, appWidgetManager, appWidgetId)
-                return
+            // Log all available keys for debugging
+            val allKeys = preferences.all.keys
+            Log.d(TAG, "Available SharedPreferences keys: $allKeys")
+            for (key in allKeys) {
+                val value = preferences.getString(key, null)
+                Log.d(TAG, "Key: $key, Value: ${value?.take(100)}...")
             }
             
-            val configData = widgetData.getString("widget_config", null)
-            val tasksData = widgetData.getString("widget_data", null)
+            val configData = preferences.getString("widget_config", null)
+            val tasksData = preferences.getString("widget_data", null)
             
             Log.d(TAG, "Config data available: ${configData != null}")
             Log.d(TAG, "Tasks data available: ${tasksData != null}")
@@ -83,12 +86,15 @@ class TodoWidgetProvider : AppWidgetProvider() {
             Log.d(TAG, "Successfully parsed data - tasks count: ${tasks.length()}")
             
             // Set widget title
-            views.setTextViewText(R.id.widget_title, config.optString("name", "Todo App"))
+            val widgetName = config.optString("name", "Todo App")
+            views.setTextViewText(R.id.widget_title, widgetName)
+            Log.d(TAG, "Widget title set: $widgetName")
             
             // Set task count
             val taskCount = tasks.length()
             val taskCountText = "$taskCount ${if (taskCount == 1) "task" else "tasks"}"
             views.setTextViewText(R.id.task_count, taskCountText)
+            Log.d(TAG, "Task count set: $taskCountText")
             
             // Update task list
             updateTaskList(views, tasks, config, context, appWidgetId)
@@ -192,20 +198,26 @@ class TodoWidgetProvider : AppWidgetProvider() {
     
     private fun updateTaskList(views: RemoteViews, tasks: JSONArray, config: JSONObject, context: Context, appWidgetId: Int) {
         try {
+            Log.d(TAG, "--- updateTaskList called ---")
+            Log.d(TAG, "Tasks count: ${tasks.length()}")
+            
             views.removeAllViews(R.id.task_list)
             
             val maxTasks = minOf(tasks.length(), config.optInt("maxTasks", 5))
             val showCompleted = config.optBoolean("showCompleted", false)
+            
+            Log.d(TAG, "Display settings - maxTasks: $maxTasks, showCompleted: $showCompleted")
             
             var actualTasksAdded = 0
             
             for (i in 0 until maxTasks) {
                 try {
                     val task = tasks.getJSONObject(i)
-                    val isCompleted = task.getBoolean("isCompleted")
+                    val isCompleted = task.optBoolean("isCompleted", false)
                     
                     // Skip completed tasks if not configured to show them
                     if (isCompleted && !showCompleted) {
+                        Log.d(TAG, "Skipping completed task: ${task.optString("title")}")
                         continue
                     }
                     
@@ -214,16 +226,15 @@ class TodoWidgetProvider : AppWidgetProvider() {
                     // Set task title
                     val taskTitle = task.optString("title", "No title")
                     taskView.setTextViewText(R.id.task_title, taskTitle)
+                    Log.d(TAG, "Set task title: $taskTitle")
                     
                     // Set completion status and styling
                     if (isCompleted) {
                         taskView.setTextViewText(R.id.task_checkbox, "✓")
                         taskView.setTextColor(R.id.task_title, 0xFF999999.toInt())
-                        taskView.setTextColor(R.id.task_description, 0xFF999999.toInt())
                     } else {
                         taskView.setTextViewText(R.id.task_checkbox, "○")
                         taskView.setTextColor(R.id.task_title, 0xFF000000.toInt())
-                        taskView.setTextColor(R.id.task_description, 0xFF666666.toInt())
                     }
                     
                     // Set task description
@@ -255,6 +266,7 @@ class TodoWidgetProvider : AppWidgetProvider() {
                     
                     views.addView(R.id.task_list, taskView)
                     actualTasksAdded++
+                    Log.d(TAG, "Added task view to list (total: $actualTasksAdded)")
                     
                 } catch (taskError: Exception) {
                     Log.e(TAG, "ERROR processing task $i", taskError)
