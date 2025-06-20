@@ -24,8 +24,8 @@ class WidgetService {
   static const platform = MethodChannel('com.example.todo_app/widget');
 
   // CRITICAL: Use consistent data keys
-  static const String WIDGET_DATA_KEY = 'widget_data';
-  static const String WIDGET_CONFIG_KEY = 'widget_config';
+  static const String widgetDataKey = 'widget_data';
+  static const String widgetConfigKey = 'widget_config';
 
   Future<void> init() async {
     if (_isInitialized) {
@@ -79,8 +79,8 @@ class WidgetService {
       };
       
       // CRITICAL: Save with consistent keys and multiple attempts
-      await _saveWidgetDataSafely(WIDGET_CONFIG_KEY, jsonEncode(defaultConfig));
-      await _saveWidgetDataSafely(WIDGET_DATA_KEY, jsonEncode(defaultData));
+      await _saveWidgetDataSafely(widgetConfigKey, jsonEncode(defaultConfig));
+      await _saveWidgetDataSafely(widgetDataKey, jsonEncode(defaultData));
       
       // CRITICAL: Force widget update after setting data
       await _updateWidgetDisplay();
@@ -229,12 +229,12 @@ final categories = await _categoryRepository.getAllCategories();
      await _logger.logInfo('Saving widget data to home widget plugin');
      final dataJson = jsonEncode(widgetData);
      await _logger.logInfo('Widget data JSON size: ${dataJson.length} characters');
-     await _saveWidgetDataSafely(WIDGET_DATA_KEY, dataJson);
+     await _saveWidgetDataSafely(widgetDataKey, dataJson);
      await _logger.logInfo('Widget data saved successfully');
      
      final configJson = jsonEncode(config.toMap());
      await _logger.logInfo('Widget config JSON size: ${configJson.length} characters');
-     await _saveWidgetDataSafely(WIDGET_CONFIG_KEY, configJson);
+     await _saveWidgetDataSafely(widgetConfigKey, configJson);
      await _logger.logInfo('Widget config saved successfully');
      
      await _updateWidgetDisplay();
@@ -323,8 +323,8 @@ final categories = await _categoryRepository.getAllCategories();
      await _logger.logInfo('Widget config deleted from database');
      
      await _logger.logInfo('Clearing widget data from home widget plugin');
-     await HomeWidget.saveWidgetData<String>(WIDGET_DATA_KEY, null);
-     await HomeWidget.saveWidgetData<String>(WIDGET_CONFIG_KEY, null);
+     await HomeWidget.saveWidgetData<String>(widgetDataKey, null);
+     await HomeWidget.saveWidgetData<String>(widgetConfigKey, null);
      await _logger.logInfo('Widget data cleared from plugin');
      
      await _logger.logInfo('=== Widget Deletion Complete for ID: $widgetId ===');
