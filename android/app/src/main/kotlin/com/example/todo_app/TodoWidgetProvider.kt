@@ -64,9 +64,9 @@ class TodoWidgetProvider : AppWidgetProvider() {
             
             Log.d(TAG, "SharedPreferences retrieved")
             
-            // Log all available keys for debugging from both sources
-            logAllPreferencesKeys(preferences, "HomeWidgetPreferences")
-            logAllPreferencesKeys(flutterPrefs, "FlutterSharedPreferences")
+            // Log all available keys for debugging from both sources - FIXED VERSION
+            logAllPreferencesKeysSafely(preferences, "HomeWidgetPreferences")
+            logAllPreferencesKeysSafely(flutterPrefs, "FlutterSharedPreferences")
             
             // Try to get data from multiple possible key patterns
             var configData = preferences.getString(WIDGET_CONFIG_KEY, null)
@@ -137,17 +137,40 @@ class TodoWidgetProvider : AppWidgetProvider() {
         }
     }
     
-    private fun logAllPreferencesKeys(preferences: android.content.SharedPreferences, source: String) {
+    // FIXED: Safe preferences logging that handles different data types
+    private fun logAllPreferencesKeysSafely(preferences: android.content.SharedPreferences, source: String) {
         try {
-            val allKeys = preferences.all.keys
-            Log.d(TAG, "=== $source Keys (${allKeys.size}) ===")
-            for (key in allKeys) {
-                val value = preferences.getString(key, null)
-                Log.d(TAG, "$source - Key: $key, Value length: ${value?.length ?: 0}")
-                if (value != null && value.length < 200) {
-                    Log.d(TAG, "$source - Key: $key, Value: $value")
-                } else if (value != null) {
-                    Log.d(TAG, "$source - Key: $key, Value preview: ${value.take(100)}...")
+            val allEntries = preferences.all
+            Log.d(TAG, "=== $source Keys (${allEntries.size}) ===")
+            
+            for ((key, value) in allEntries) {
+                when (value) {
+                    is String -> {
+                        Log.d(TAG, "$source - Key: $key, Type: String, Length: ${value.length}")
+                        if (value.length < 200) {
+                            Log.d(TAG, "$source - Key: $key, Value: $value")
+                        } else {
+                            Log.d(TAG, "$source - Key: $key, Value preview: ${value.take(100)}...")
+                        }
+                    }
+                    is Boolean -> {
+                        Log.d(TAG, "$source - Key: $key, Type: Boolean, Value: $value")
+                    }
+                    is Int -> {
+                        Log.d(TAG, "$source - Key: $key, Type: Int, Value: $value")
+                    }
+                    is Long -> {
+                        Log.d(TAG, "$source - Key: $key, Type: Long, Value: $value")
+                    }
+                    is Float -> {
+                        Log.d(TAG, "$source - Key: $key, Type: Float, Value: $value")
+                    }
+                    is Set<*> -> {
+                        Log.d(TAG, "$source - Key: $key, Type: Set, Size: ${value.size}")
+                    }
+                    else -> {
+                        Log.d(TAG, "$source - Key: $key, Type: ${value?.javaClass?.simpleName ?: "null"}, Value: $value")
+                    }
                 }
             }
             Log.d(TAG, "=== End $source Keys ===")
