@@ -85,65 +85,6 @@ class TestHelpers {
     );
   }
 
-  /// Simulates device back button press
-  static Future<void> simulateBackButton(WidgetTester tester) async {
-    await tester.binding.defaultBinaryMessenger.handlePlatformMessage(
-      'flutter/navigation',
-      null,
-      (data) {},
-    );
-  }
-
-  /// Waits for all animations and async operations to complete
-  static Future<void> pumpAndSettleAll(WidgetTester tester) async {
-    await tester.pumpAndSettle(const Duration(seconds: 10));
-  }
-
-  /// Finds text containing a substring (case insensitive)
-  static Finder findTextContaining(String substring) {
-    return find.byWidgetPredicate((widget) {
-      if (widget is Text) {
-        return widget.data?.toLowerCase().contains(substring.toLowerCase()) == true;
-      }
-      return false;
-    });
-  }
-
-  /// Finds widget by key string
-  static Finder findByKeyString(String keyString) {
-    return find.byKey(Key(keyString));
-  }
-
-  /// Scrolls until a widget is visible
-  static Future<void> scrollUntilVisible(
-    WidgetTester tester,
-    Finder finder,
-    Finder scrollable, {
-    double delta = 100.0,
-  }) async {
-    while (finder.evaluate().isEmpty) {
-      await tester.drag(scrollable, Offset(0, -delta));
-      await tester.pump();
-    }
-  }
-
-  /// Enters text in a TextField
-  static Future<void> enterText(
-    WidgetTester tester,
-    Finder finder,
-    String text,
-  ) async {
-    await tester.tap(finder);
-    await tester.enterText(finder, text);
-    await tester.pump();
-  }
-
-  /// Taps and waits for settling
-  static Future<void> tapAndSettle(WidgetTester tester, Finder finder) async {
-    await tester.tap(finder);
-    await tester.pumpAndSettle();
-  }
-
   /// Creates a test DateTime that's always the same for consistent tests
   static DateTime createTestDateTime({
     int year = 2024,
@@ -153,11 +94,6 @@ class TestHelpers {
     int minute = 30,
   }) {
     return DateTime(year, month, day, hour, minute);
-  }
-
-  /// Verifies that no exceptions occurred during the test
-  static void verifyNoExceptions(WidgetTester tester) {
-    expect(tester.takeException(), isNull);
   }
 
   /// Creates a mock callback that tracks calls

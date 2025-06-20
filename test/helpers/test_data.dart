@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:todo_app/features/tasks/models/task.dart';
 import 'package:todo_app/features/categories/models/category.dart';
-import 'package:todo_app/core/notifications/models/notification_settings.dart';
 import 'package:todo_app/core/settings/models/auto_delete_settings.dart';
 import 'package:todo_app/core/widgets/models/widget_config.dart';
 
@@ -144,32 +143,6 @@ class TestData {
   static List<Task> get highPriorityTasks => testTasks.where((task) => task.priority == Priority.high).toList();
   static List<Task> get tasksWithCategories => testTasks.where((task) => task.categoryId != null).toList();
 
-  // Test Notification Settings
-  static final NotificationSetting exactTimeNotification = NotificationSetting(
-    id: 1,
-    taskId: completedWorkTask.id!,
-    timeOption: NotificationTimeOption.exactTime,
-  );
-
-  static final NotificationSetting fifteenMinutesBeforeNotification = NotificationSetting(
-    id: 2,
-    taskId: incompletePersonalTask.id!,
-    timeOption: NotificationTimeOption.fifteenMinutesBefore,
-  );
-
-  static final NotificationSetting customTimeNotification = NotificationSetting(
-    id: 3,
-    taskId: todayShoppingTask.id!,
-    timeOption: NotificationTimeOption.custom,
-    customTime: baseDate.subtract(const Duration(minutes: 45)),
-  );
-
-  static List<NotificationSetting> get testNotificationSettings => [
-    exactTimeNotification,
-    fifteenMinutesBeforeNotification,
-    customTimeNotification,
-  ];
-
   // Test Auto Delete Settings
   static final AutoDeleteSettings defaultAutoDeleteSettings = AutoDeleteSettings(
     id: 1,
@@ -186,24 +159,12 @@ class TestData {
   // Test Widget Config
   static final WidgetConfig defaultWidgetConfig = WidgetConfig(
     id: 1,
-    widgetId: 'widget_1',
-    categoryId: workCategory.id,
-    showCompletedTasks: false,
-    maxTasksCount: 5,
-    fontSize: 14.0,
-    showDueDates: true,
-    showCategories: true,
+    name: 'Default Widget',
   );
 
   static final WidgetConfig customWidgetConfig = WidgetConfig(
     id: 2,
-    widgetId: 'widget_2',
-    categoryId: null, // All categories
-    showCompletedTasks: true,
-    maxTasksCount: 10,
-    fontSize: 16.0,
-    showDueDates: false,
-    showCategories: false,
+    name: 'Custom Widget',
   );
 
   static List<WidgetConfig> get testWidgetConfigs => [
