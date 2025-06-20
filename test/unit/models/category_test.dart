@@ -96,7 +96,7 @@ void main() {
       final map = category.toMap();
       final reconstructed = Category.fromMap(map);
 
-      expect(reconstructed.color.value, equals(customColor.value));
+      expect(reconstructed.color.toARGB32(), equals(customColor.toARGB32()));
     });
   });
 }

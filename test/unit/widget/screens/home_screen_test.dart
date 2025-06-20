@@ -307,7 +307,8 @@ void main() {
 
     group('Data Update Tests', () {
       testWidgets('should toggle task completion', (WidgetTester tester) async {
-        when(mockTaskRepository.toggleTaskCompletion(any, any))
+        bool? nullableBool;
+        when(mockTaskRepository.toggleTaskCompletion(any ?? 0, nullableBool ?? false))
             .thenAnswer((_) async => 1);
 
         await tester.pumpWidget(createHomeScreen());
@@ -320,7 +321,7 @@ void main() {
           await tester.pumpAndSettle();
 
           // Verify the repository method was called
-          verify(mockTaskRepository.toggleTaskCompletion(any, any)).called(1);
+          verify(mockTaskRepository.toggleTaskCompletion(any ?? 0, nullableBool ?? false)).called(1);
         }
       });
     });
