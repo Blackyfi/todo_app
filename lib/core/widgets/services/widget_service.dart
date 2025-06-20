@@ -64,7 +64,7 @@ class WidgetService {
       // Create minimal default data to prevent null errors
       final defaultConfig = {
         'name': 'Todo App',
-        'maxTasks': 3, // Reduced for widget stability
+        'maxTasks': 3,
         'showCompleted': false,
         'showCategories': true,
         'showPriority': true,
@@ -78,7 +78,7 @@ class WidgetService {
         'overdueCount': 0,
       };
       
-      // CRITICAL: Save with consistent keys and multiple attempts
+      // CRITICAL: Save with consistent keys
       await _saveWidgetDataSafely(widgetConfigKey, jsonEncode(defaultConfig));
       await _saveWidgetDataSafely(widgetDataKey, jsonEncode(defaultData));
       

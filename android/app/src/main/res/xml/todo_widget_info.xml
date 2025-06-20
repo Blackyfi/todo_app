@@ -10,4 +10,5 @@
     android:initialLayout="@layout/todo_widget"
     android:previewImage="@mipmap/ic_launcher"
     android:previewLayout="@layout/todo_widget"
-    android:configure="com.example.todo_app.MainActivity" />
+    android:configure="com.example.todo_app.MainActivity"
+    android:widgetFeatures="reconfigurable|configuration_optional" />
