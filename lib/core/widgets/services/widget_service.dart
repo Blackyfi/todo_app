@@ -33,33 +33,49 @@ class WidgetService {
       await _logger.logInfo('=== Starting WidgetService Initialization ===');
       
       // Set up method channel handler for widget actions
-      await _logger.logInfo('Setting up method channel handler for widget actions');
       platform.setMethodCallHandler(_handleMethodCall);
       
-      // Initialize home widget without app group for Android
+      // Initialize home widget - try with and without app group
       try {
-        await _logger.logInfo('Attempting to set app group ID for widgets');
         await HomeWidget.setAppGroupId('group.com.example.todo_app');
-        await _logger.logInfo('App group ID set successfully');
       } catch (e) {
-        // Ignore app group errors on Android
-        await _logger.logWarning('App group not supported on this platform (likely Android): $e');
+        await _logger.logWarning('App group not supported on this platform: $e');
       }
       
-      // Test widget plugin availability
-      try {
-        await _logger.logInfo('Testing widget plugin availability');
-        await HomeWidget.saveWidgetData<String>('test_key', 'test_value');
-        await _logger.logInfo('Widget plugin test successful - can save data');
-      } catch (e) {
-        await _logger.logError('Widget plugin test failed - may not work properly', e);
-      }
+      // CRITICAL: Initialize with default data immediately
+      await _initializeDefaultWidgetData();
       
       _isInitialized = true;
       await _logger.logInfo('=== WidgetService Initialization Complete ===');
     } catch (e, stackTrace) {
       await _logger.logError('=== WidgetService Initialization Failed ===', e, stackTrace);
       rethrow;
+    }
+  }
+
+  Future<void> _initializeDefaultWidgetData() async {
+    try {
+      // Create minimal default data to prevent null errors
+      final defaultConfig = {
+        'name': 'Todo App',
+        'maxTasks': 5,
+        'showCompleted': false,
+        'showCategories': true,
+        'showPriority': true,
+      };
+      
+      final defaultData = {
+        'tasks': [],
+        'updatedAt': DateTime.now().millisecondsSinceEpoch,
+        'taskCount': 0,
+      };
+      
+      await HomeWidget.saveWidgetData<String>('widget_config', jsonEncode(defaultConfig));
+      await HomeWidget.saveWidgetData<String>('widget_data', jsonEncode(defaultData));
+      
+      await _logger.logInfo('Default widget data initialized');
+    } catch (e, stackTrace) {
+      await _logger.logError('Error initializing default widget data', e, stackTrace);
     }
   }
 
