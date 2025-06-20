@@ -96,22 +96,14 @@
             android:clickable="false"
             android:focusable="false" />
 
-        <!-- Scrollable Task List -->
-        <ScrollView
+        <!-- Direct Task List (No ScrollView) -->
+        <LinearLayout
+            android:id="@+id/task_list"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:fillViewport="true"
-            android:scrollbars="vertical">
-
-            <LinearLayout
-                android:id="@+id/task_list"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:clickable="false"
-                android:focusable="false" />
-
-        </ScrollView>
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:clickable="false"
+            android:focusable="false" />
 
     </LinearLayout>
 

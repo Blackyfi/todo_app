@@ -273,32 +273,24 @@ class TodoWidgetProvider : AppWidgetProvider() {
             
             views.removeAllViews(R.id.task_list)
             
-            val maxTasks = minOf(tasks.length(), config.optInt("maxTasks", 5))
+            val maxTasks = minOf(tasks.length(), config.optInt("maxTasks", 3)) // Reduced to 3 for stability
             val showCompleted = config.optBoolean("showCompleted", false)
             
             Log.d(TAG, "Display settings - maxTasks: $maxTasks, showCompleted: $showCompleted")
             
             if (tasks.length() == 0) {
-                // Show empty state
-                val emptyView = RemoteViews(context.packageName, R.layout.widget_task_item)
-                emptyView.setTextViewText(R.id.task_title, "No tasks yet")
-                emptyView.setTextViewText(R.id.task_checkbox, "○")
-                emptyView.setTextViewText(R.id.task_description, "Tap + to add your first task")
-                emptyView.setViewVisibility(R.id.task_description, android.view.View.VISIBLE)
-                emptyView.setViewVisibility(R.id.priority_badge, android.view.View.GONE)
-                emptyView.setViewVisibility(R.id.category_badge, android.view.View.GONE)
-                emptyView.setViewVisibility(R.id.due_date, android.view.View.GONE)
-                emptyView.setViewVisibility(R.id.status_indicator, android.view.View.GONE)
-                
-                views.addView(R.id.task_list, emptyView)
+                // Show empty state with simple text
+                addSimpleTaskItem(views, context, "No tasks yet", "○", "Tap + to add your first task")
                 Log.d(TAG, "Added empty state message")
                 return
             }
             
             var actualTasksAdded = 0
             
-            for (i in 0 until maxTasks) {
+            for (i in 0 until minOf(tasks.length(), maxTasks)) {
                 try {
+                    if (actualTasksAdded >= maxTasks) break
+                    
                     val task = tasks.getJSONObject(i)
                     val isCompleted = task.optBoolean("isCompleted", false)
                     
@@ -308,58 +300,15 @@ class TodoWidgetProvider : AppWidgetProvider() {
                         continue
                     }
                     
-                    val taskView = RemoteViews(context.packageName, R.layout.widget_task_item)
-                    
-                    // Set task title
                     val taskTitle = task.optString("title", "No title")
-                    taskView.setTextViewText(R.id.task_title, taskTitle)
-                    Log.d(TAG, "Set task title: $taskTitle")
-                    
-                    // Set completion status and styling
-                    if (isCompleted) {
-                        taskView.setTextViewText(R.id.task_checkbox, "✓")
-                        taskView.setTextColor(R.id.task_title, 0xFF999999.toInt())
-                    } else {
-                        taskView.setTextViewText(R.id.task_checkbox, "○")
-                        taskView.setTextColor(R.id.task_title, 0xFF000000.toInt())
-                    }
-                    
-                    // Set task description
                     val taskDescription = task.optString("description", "")
-                    if (taskDescription.isNotEmpty()) {
-                        taskView.setViewVisibility(R.id.task_description, android.view.View.VISIBLE)
-                        taskView.setTextViewText(R.id.task_description, taskDescription)
-                    } else {
-                        taskView.setViewVisibility(R.id.task_description, android.view.View.GONE)
-                    }
+                    val checkbox = if (isCompleted) "✓" else "○"
                     
-                    // Hide other elements for now to keep it simple
-                    taskView.setViewVisibility(R.id.priority_badge, android.view.View.GONE)
-                    taskView.setViewVisibility(R.id.category_badge, android.view.View.GONE)
-                    taskView.setViewVisibility(R.id.due_date, android.view.View.GONE)
-                    taskView.setViewVisibility(R.id.status_indicator, android.view.View.GONE)
+                    // Create simplified task item
+                    addSimpleTaskItem(views, context, taskTitle, checkbox, taskDescription)
                     
-                    // Set click listener for checkbox
-                    val taskId = task.optInt("id", -1)
-                    if (taskId != -1) {
-                        val toggleIntent = Intent(context, MainActivity::class.java).apply {
-                            action = "BACKGROUND_TOGGLE_TASK"
-                            putExtra(EXTRA_TASK_ID, taskId)
-                            putExtra(EXTRA_WIDGET_ID, 1)
-                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_USER_ACTION
-                        }
-                        val togglePendingIntent = PendingIntent.getActivity(
-                            context,
-                            taskId * 1000 + appWidgetId,
-                            toggleIntent,
-                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                        )
-                        taskView.setOnClickPendingIntent(R.id.task_checkbox, togglePendingIntent)
-                    }
-                    
-                    views.addView(R.id.task_list, taskView)
                     actualTasksAdded++
-                    Log.d(TAG, "Added task view to list (total: $actualTasksAdded)")
+                    Log.d(TAG, "Added task: $taskTitle (total: $actualTasksAdded)")
                     
                 } catch (taskError: Exception) {
                     Log.e(TAG, "ERROR processing task $i", taskError)
@@ -370,6 +319,35 @@ class TodoWidgetProvider : AppWidgetProvider() {
             
         } catch (e: Exception) {
             Log.e(TAG, "CRITICAL ERROR in updateTaskList", e)
+        }
+    }
+
+    private fun addSimpleTaskItem(views: RemoteViews, context: Context, title: String, checkbox: String, description: String) {
+        try {
+            val taskView = RemoteViews(context.packageName, R.layout.widget_task_item)
+            
+            // Set basic task information
+            taskView.setTextViewText(R.id.task_title, title)
+            taskView.setTextViewText(R.id.task_checkbox, checkbox)
+            
+            // Set description if not empty
+            if (description.isNotEmpty()) {
+                taskView.setViewVisibility(R.id.task_description, android.view.View.VISIBLE)
+                taskView.setTextViewText(R.id.task_description, description)
+            } else {
+                taskView.setViewVisibility(R.id.task_description, android.view.View.GONE)
+            }
+            
+            // Hide complex elements to avoid issues
+            taskView.setViewVisibility(R.id.priority_badge, android.view.View.GONE)
+            taskView.setViewVisibility(R.id.category_badge, android.view.View.GONE)
+            taskView.setViewVisibility(R.id.due_date, android.view.View.GONE)
+            taskView.setViewVisibility(R.id.status_indicator, android.view.View.GONE)
+            
+            views.addView(R.id.task_list, taskView)
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "ERROR adding simple task item: $title", e)
         }
     }
     

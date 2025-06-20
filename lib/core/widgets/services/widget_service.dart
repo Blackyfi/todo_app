@@ -64,7 +64,7 @@ class WidgetService {
       // Create minimal default data to prevent null errors
       final defaultConfig = {
         'name': 'Todo App',
-        'maxTasks': 5,
+        'maxTasks': 3, // Reduced for widget stability
         'showCompleted': false,
         'showCategories': true,
         'showPriority': true,
@@ -272,17 +272,17 @@ final categories = await _categoryRepository.getAllCategories();
      await _logger.logInfo('Found ${configs.length} widget configurations to update');
      
      if (configs.isEmpty) {
-       await _logger.logInfo('No widgets to update, creating default widget...');
-       // Create a default widget if none exists
-       final defaultConfig = WidgetConfig(
-         name: 'Todo Tasks',
-         size: WidgetSize.medium,
-         showCompleted: false,
-         showCategories: true,
-         showPriority: true,
-         maxTasks: 5,
-         createdAt: DateTime.now(),
-       );
+        await _logger.logInfo('No widgets to update, creating default widget...');
+        // Create a default widget if none exists
+        final defaultConfig = WidgetConfig(
+          name: 'Todo Tasks',
+          size: WidgetSize.medium,
+          showCompleted: false,
+          showCategories: true,
+          showPriority: true,
+          maxTasks: 3, // Reduced for widget stability
+          createdAt: DateTime.now(),
+        );
        await createWidget(defaultConfig);
        return;
      }

@@ -19,7 +19,7 @@ class WidgetConfig {
     this.showCategories = true,
     this.showPriority = true,
     this.categoryFilter,
-    this.maxTasks = 5,
+    this.maxTasks = 3, // Reduced default for widget stability
     this.createdAt,
   });
 
