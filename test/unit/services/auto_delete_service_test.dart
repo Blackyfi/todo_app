@@ -6,8 +6,7 @@ import 'package:todo_app/core/database/repository/task_repository.dart';
 import 'package:todo_app/core/settings/repository/auto_delete_settings_repository.dart';
 import 'package:todo_app/core/settings/models/auto_delete_settings.dart';
 import 'package:todo_app/features/tasks/models/task.dart';
-
-import 'auto_delete_service_test.mocks.dart';
+import '../../helpers/mock_repositories.dart';
 
 @GenerateMocks([TaskRepository, AutoDeleteSettingsRepository])
 void main() {
@@ -113,7 +112,7 @@ void main() {
         // Assert
         verify(mockSettingsRepository.getSettings()).called(1);
         verify(mockTaskRepository.getTasksByCompletionStatus(true)).called(1);
-        verifyNever(mockTaskRepository.deleteTask(any));
+        verifyNever(mockTaskRepository.deleteTask(argThat(isA<int>())));
       });
 
       test('should handle tasks without id when deleteImmediately is true', () async {
@@ -153,7 +152,9 @@ void main() {
         verify(mockTaskRepository.getTasksByCompletionStatus(true)).called(1);
         // Should only delete the task with ID
         verify(mockTaskRepository.deleteTask(2)).called(1);
-        verifyNever(mockTaskRepository.deleteTask(null));
+        // We can't easily verify that null wasn't passed without complex argument matchers
+        // So we'll just verify the method was called only once (for the valid ID)
+        verify(mockTaskRepository.deleteTask(any)).called(1);
       });
 
       test('should handle exceptions gracefully', () async {

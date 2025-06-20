@@ -10,7 +10,6 @@ import 'package:todo_app/core/database/repository/category_repository.dart';
 import '../../helpers/test_helpers.dart';
 import '../../helpers/mock_repositories.dart';
 
-@GenerateMocks([TaskRepository, CategoryRepository])
 void main() {
   group('HomeScreen Widget Tests', () {
     late MockTaskRepository mockTaskRepository;
