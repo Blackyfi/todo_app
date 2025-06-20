@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
-import 'package:mockito/annotations.dart';
 import 'package:todo_app/features/tasks/screens/home_screen.dart';
 import 'package:todo_app/features/tasks/models/task.dart';
 import 'package:todo_app/features/categories/models/category.dart';
-import 'package:todo_app/core/database/repository/task_repository.dart';
-import 'package:todo_app/core/database/repository/category_repository.dart';
-import '../../helpers/test_helpers.dart';
-import '../../helpers/mock_repositories.dart';
+import '../../../helpers/test_helpers.dart';
+import '../../../helpers/mock_repositories.dart';
 
 void main() {
   group('HomeScreen Widget Tests', () {

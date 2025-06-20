@@ -18,9 +18,26 @@ test/
 │   │   └── logger_service_test.dart
 │   ├── providers/
 │   │   └── time_format_provider_test.dart
-│   └── utils/
-│       ├── statistics_helpers_test.dart
-│       └── task_form_helpers_test.dart
+│   ├── utils/
+│   │   ├── statistics_helpers_test.dart
+│   │   └── task_form_helpers_test.dart
+│   └── widget/
+│       ├── screens/
+│       │   ├── home_screen_test.dart
+│       │   ├── add_edit_task_screen_test.dart
+│       │   ├── task_details_screen_test.dart
+│       │   ├── categories_screen_test.dart
+│       │   ├── statistics_screen_test.dart
+│       │   └── settings_screen_test.dart
+│       ├── widgets/
+│       │   ├── task_card_test.dart
+│       │   ├── category_chip_test.dart
+│       │   ├── priority_badge_test.dart
+│       │   └── task_form_fields_test.dart
+│       └── common/
+│           ├── empty_state_test.dart
+│           ├── current_time_display_test.dart
+│           └── app_bar_with_time_test.dart
 ├── widget/
 │   ├── screens/
 │   │   ├── home_screen_test.dart

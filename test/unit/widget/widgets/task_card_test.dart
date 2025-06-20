@@ -5,7 +5,7 @@ import 'package:todo_app/features/tasks/widgets/task_card.dart';
 import 'package:todo_app/features/tasks/models/task.dart';
 import 'package:todo_app/features/categories/models/category.dart';
 import 'package:todo_app/core/providers/time_format_provider.dart';
-import '../../helpers/test_helpers.dart';
+import '../../../helpers/test_helpers.dart';
 
 void main() {
   group('TaskCard Widget Tests', () {
