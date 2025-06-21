@@ -17,11 +17,13 @@ class TodoWidgetProvider : AppWidgetProvider() {
     
     companion object {
         private const val TAG = "TodoWidgetProvider"
-        private const val ACTION_SYNC_WIDGET = "ACTION_SYNC_WIDGET"
-        private const val ACTION_TOGGLE_TASK = "ACTION_TOGGLE_TASK"
+        
+        // CRITICAL: Different action types
         private const val ACTION_ADD_TASK = "ACTION_ADD_TASK"
         private const val ACTION_WIDGET_SETTINGS = "ACTION_WIDGET_SETTINGS"
         private const val ACTION_REFRESH_WIDGET = "ACTION_REFRESH_WIDGET"
+        private const val ACTION_BACKGROUND_SYNC = "ACTION_BACKGROUND_SYNC"
+        private const val ACTION_TOGGLE_TASK = "ACTION_TOGGLE_TASK"
         
         private const val EXTRA_TASK_ID = "task_id"
         private const val EXTRA_WIDGET_ID = "widget_id"
@@ -124,7 +126,7 @@ class TodoWidgetProvider : AppWidgetProvider() {
             // Update task list
             updateTaskList(views, tasks, config, context, appWidgetId)
             
-            // Set up button click handlers
+            // CRITICAL FIX: Set up different button click handlers based on action type
             setupButtonClickHandlers(context, views, appWidgetId)
             
             // Update the widget
@@ -239,9 +241,10 @@ class TodoWidgetProvider : AppWidgetProvider() {
         }
     }
     
+    // CRITICAL FIX: Different PendingIntent types for different actions
     private fun setupButtonClickHandlers(context: Context, views: RemoteViews, appWidgetId: Int) {
         try {
-            // Add Task button
+            // Add Task button - opens app
             val addTaskIntent = Intent(context, MainActivity::class.java).apply {
                 action = "ADD_TASK"
                 putExtra(EXTRA_WIDGET_ID, 1)
@@ -255,13 +258,12 @@ class TodoWidgetProvider : AppWidgetProvider() {
             )
             views.setOnClickPendingIntent(R.id.add_task_button, addTaskPendingIntent)
             
-            // Refresh button
-            val refreshIntent = Intent(context, MainActivity::class.java).apply {
-                action = "BACKGROUND_SYNC"
-                putExtra(EXTRA_WIDGET_ID, 1)
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_USER_ACTION
+            // CRITICAL FIX: Refresh button - background action, doesn't open app
+            val refreshIntent = Intent(context, TodoWidgetProvider::class.java).apply {
+                action = ACTION_BACKGROUND_SYNC
+                putExtra(EXTRA_WIDGET_ID, appWidgetId)
             }
-            val refreshPendingIntent = PendingIntent.getActivity(
+            val refreshPendingIntent = PendingIntent.getBroadcast(
                 context, 
                 appWidgetId * 100 + 2,
                 refreshIntent, 
@@ -269,7 +271,7 @@ class TodoWidgetProvider : AppWidgetProvider() {
             )
             views.setOnClickPendingIntent(R.id.refresh_button, refreshPendingIntent)
             
-            // Settings button
+            // Settings button - opens app
             val settingsIntent = Intent(context, MainActivity::class.java).apply {
                 action = "WIDGET_SETTINGS"
                 putExtra(EXTRA_WIDGET_ID, 1)
@@ -296,14 +298,14 @@ class TodoWidgetProvider : AppWidgetProvider() {
             
             views.removeAllViews(R.id.task_list)
             
-            val maxTasks = minOf(tasks.length(), config.optInt("maxTasks", 3)) // Reduced to 3 for stability
+            val maxTasks = minOf(tasks.length(), config.optInt("maxTasks", 3))
             val showCompleted = config.optBoolean("showCompleted", false)
             
             Log.d(TAG, "Display settings - maxTasks: $maxTasks, showCompleted: $showCompleted")
             
             if (tasks.length() == 0) {
                 // Show empty state with simple text
-                addSimpleTaskItem(views, context, "No tasks yet", "○", "Tap + to add your first task")
+                addSimpleTaskItem(views, context, "No tasks yet", "○", "Tap + to add your first task", null, appWidgetId)
                 Log.d(TAG, "Added empty state message")
                 return
             }
@@ -326,9 +328,10 @@ class TodoWidgetProvider : AppWidgetProvider() {
                     val taskTitle = task.optString("title", "No title")
                     val taskDescription = task.optString("description", "")
                     val checkbox = if (isCompleted) "✓" else "○"
+                    val taskId = task.optInt("id", -1)
                     
-                    // Create simplified task item
-                    addSimpleTaskItem(views, context, taskTitle, checkbox, taskDescription)
+                    // Create simplified task item with toggle functionality
+                    addSimpleTaskItem(views, context, taskTitle, checkbox, taskDescription, taskId, appWidgetId)
                     
                     actualTasksAdded++
                     Log.d(TAG, "Added task: $taskTitle (total: $actualTasksAdded)")
@@ -345,7 +348,8 @@ class TodoWidgetProvider : AppWidgetProvider() {
         }
     }
 
-    private fun addSimpleTaskItem(views: RemoteViews, context: Context, title: String, checkbox: String, description: String) {
+    // CRITICAL FIX: Add task toggle functionality
+    private fun addSimpleTaskItem(views: RemoteViews, context: Context, title: String, checkbox: String, description: String, taskId: Int?, appWidgetId: Int) {
         try {
             val taskView = RemoteViews(context.packageName, R.layout.widget_task_item)
             
@@ -367,6 +371,22 @@ class TodoWidgetProvider : AppWidgetProvider() {
             taskView.setViewVisibility(R.id.due_date, android.view.View.GONE)
             taskView.setViewVisibility(R.id.status_indicator, android.view.View.GONE)
             
+            // CRITICAL FIX: Add toggle functionality for tasks with valid IDs
+            if (taskId != null && taskId > 0) {
+                val toggleIntent = Intent(context, TodoWidgetProvider::class.java).apply {
+                    action = ACTION_TOGGLE_TASK
+                    putExtra(EXTRA_TASK_ID, taskId)
+                    putExtra(EXTRA_WIDGET_ID, appWidgetId)
+                }
+                val togglePendingIntent = PendingIntent.getBroadcast(
+                    context,
+                    taskId + appWidgetId * 1000, // Unique ID
+                    toggleIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+                taskView.setOnClickPendingIntent(R.id.task_checkbox, togglePendingIntent)
+            }
+            
             views.addView(R.id.task_list, taskView)
             
         } catch (e: Exception) {
@@ -374,15 +394,25 @@ class TodoWidgetProvider : AppWidgetProvider() {
         }
     }
     
+    // CRITICAL FIX: Handle different widget actions
     override fun onReceive(context: Context, intent: Intent) {
         Log.d(TAG, "=== onReceive called ===")
         Log.d(TAG, "Intent action: ${intent.action}")
         
         try {
-            super.onReceive(context, intent)
-            
             when (intent.action) {
+                ACTION_BACKGROUND_SYNC -> {
+                    Log.d(TAG, "Handling background sync action")
+                    handleBackgroundSync(context, intent)
+                }
+                
+                ACTION_TOGGLE_TASK -> {
+                    Log.d(TAG, "Handling task toggle action")
+                    handleTaskToggle(context, intent)
+                }
+                
                 ACTION_REFRESH_WIDGET -> {
+                    Log.d(TAG, "Handling widget refresh action")
                     val appWidgetManager = AppWidgetManager.getInstance(context)
                     val appWidgetIds = appWidgetManager.getAppWidgetIds(
                         android.content.ComponentName(context, TodoWidgetProvider::class.java)
@@ -391,20 +421,73 @@ class TodoWidgetProvider : AppWidgetProvider() {
                 }
                 
                 AppWidgetManager.ACTION_APPWIDGET_UPDATE -> {
-                    val appWidgetManager = AppWidgetManager.getInstance(context)
-                    val appWidgetIds = intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS) 
-                        ?: appWidgetManager.getAppWidgetIds(
-                            android.content.ComponentName(context, TodoWidgetProvider::class.java)
-                        )
-                    onUpdate(context, appWidgetManager, appWidgetIds)
+                    super.onReceive(context, intent)
+                }
+                
+                else -> {
+                    super.onReceive(context, intent)
                 }
             }
-            
         } catch (e: Exception) {
             Log.e(TAG, "CRITICAL ERROR in onReceive", e)
         }
         
         Log.d(TAG, "=== onReceive completed ===")
+    }
+
+    // CRITICAL FIX: Background sync without opening app
+    private fun handleBackgroundSync(context: Context, intent: Intent) {
+        try {
+            Log.d(TAG, "Performing background sync")
+            
+            // Send background sync message to Flutter app
+            val syncIntent = Intent(context, MainActivity::class.java).apply {
+                action = "BACKGROUND_SYNC"
+                putExtra(EXTRA_WIDGET_ID, intent.getIntExtra(EXTRA_WIDGET_ID, 1))
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_USER_ACTION
+            }
+            
+            // Start activity in background without bringing to foreground
+            context.startActivity(syncIntent)
+            
+            // Also trigger widget update
+            val appWidgetManager = AppWidgetManager.getInstance(context)
+            val appWidgetIds = appWidgetManager.getAppWidgetIds(
+                android.content.ComponentName(context, TodoWidgetProvider::class.java)
+            )
+            onUpdate(context, appWidgetManager, appWidgetIds)
+            
+            Log.d(TAG, "Background sync completed")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error in background sync", e)
+        }
+    }
+
+    // CRITICAL FIX: Task toggle without opening app
+    private fun handleTaskToggle(context: Context, intent: Intent) {
+        try {
+            val taskId = intent.getIntExtra(EXTRA_TASK_ID, -1)
+            val widgetId = intent.getIntExtra(EXTRA_WIDGET_ID, 1)
+            
+            Log.d(TAG, "Toggling task: TaskID=$taskId, WidgetID=$widgetId")
+            
+            if (taskId > 0) {
+                // Send background toggle message to Flutter app
+                val toggleIntent = Intent(context, MainActivity::class.java).apply {
+                    action = "BACKGROUND_TOGGLE_TASK"
+                    putExtra(EXTRA_TASK_ID, taskId)
+                    putExtra(EXTRA_WIDGET_ID, widgetId)
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_USER_ACTION
+                }
+                
+                // Start activity in background without bringing to foreground
+                context.startActivity(toggleIntent)
+                
+                Log.d(TAG, "Task toggle message sent")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error in task toggle", e)
+        }
     }
 
     override fun onEnabled(context: Context) {
