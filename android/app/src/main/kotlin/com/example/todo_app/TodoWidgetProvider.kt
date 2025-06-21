@@ -12,9 +12,6 @@ import org.json.JSONObject
 import org.json.JSONArray
 import java.text.SimpleDateFormat
 import java.util.*
-import io.flutter.plugin.common.MethodChannel
-import io.flutter.embedding.engine.FlutterEngine
-import io.flutter.embedding.engine.dart.DartExecutor
 
 class TodoWidgetProvider : AppWidgetProvider() {
     
@@ -69,10 +66,6 @@ class TodoWidgetProvider : AppWidgetProvider() {
             
             Log.d(TAG, "SharedPreferences retrieved")
             
-            // Log all available keys for debugging from both sources - FIXED VERSION
-            logAllPreferencesKeysSafely(preferences, "HomeWidgetPreferences")
-            logAllPreferencesKeysSafely(flutterPrefs, "FlutterSharedPreferences")
-            
             // Try to get data from multiple possible key patterns
             var configData = preferences.getString(WIDGET_CONFIG_KEY, null)
             var tasksData = preferences.getString(WIDGET_DATA_KEY, null)
@@ -94,13 +87,6 @@ class TodoWidgetProvider : AppWidgetProvider() {
             
             Log.d(TAG, "Config data found: ${configData != null}, length: ${configData?.length ?: 0}")
             Log.d(TAG, "Tasks data found: ${tasksData != null}, length: ${tasksData?.length ?: 0}")
-            
-            if (configData != null) {
-                Log.d(TAG, "Config data preview: ${configData.take(200)}...")
-            }
-            if (tasksData != null) {
-                Log.d(TAG, "Tasks data preview: ${tasksData.take(200)}...")
-            }
             
             if (configData == null || tasksData == null) {
                 Log.w(TAG, "Missing data - showing default state with retry")
@@ -129,7 +115,7 @@ class TodoWidgetProvider : AppWidgetProvider() {
             // Update task list
             updateTaskList(views, tasks, config, context, appWidgetId)
             
-            // CRITICAL FIX: Set up different button click handlers based on action type
+            // Set up button click handlers
             setupButtonClickHandlers(context, views, appWidgetId)
             
             // Update the widget
@@ -139,48 +125,6 @@ class TodoWidgetProvider : AppWidgetProvider() {
         } catch (e: Exception) {
             Log.e(TAG, "CRITICAL ERROR in updateAppWidget for ID: $appWidgetId", e)
             showErrorState(context, appWidgetManager, appWidgetId, "Failed to load widget data: ${e.message}")
-        }
-    }
-    
-    // FIXED: Safe preferences logging that handles different data types
-    private fun logAllPreferencesKeysSafely(preferences: android.content.SharedPreferences, source: String) {
-        try {
-            val allEntries = preferences.all
-            Log.d(TAG, "=== $source Keys (${allEntries.size}) ===")
-            
-            for ((key, value) in allEntries) {
-                when (value) {
-                    is String -> {
-                        Log.d(TAG, "$source - Key: $key, Type: String, Length: ${value.length}")
-                        if (value.length < 200) {
-                            Log.d(TAG, "$source - Key: $key, Value: $value")
-                        } else {
-                            Log.d(TAG, "$source - Key: $key, Value preview: ${value.take(100)}...")
-                        }
-                    }
-                    is Boolean -> {
-                        Log.d(TAG, "$source - Key: $key, Type: Boolean, Value: $value")
-                    }
-                    is Int -> {
-                        Log.d(TAG, "$source - Key: $key, Type: Int, Value: $value")
-                    }
-                    is Long -> {
-                        Log.d(TAG, "$source - Key: $key, Type: Long, Value: $value")
-                    }
-                    is Float -> {
-                        Log.d(TAG, "$source - Key: $key, Type: Float, Value: $value")
-                    }
-                    is Set<*> -> {
-                        Log.d(TAG, "$source - Key: $key, Type: Set, Size: ${value.size}")
-                    }
-                    else -> {
-                        Log.d(TAG, "$source - Key: $key, Type: ${value?.javaClass?.simpleName ?: "null"}, Value: $value")
-                    }
-                }
-            }
-            Log.d(TAG, "=== End $source Keys ===")
-        } catch (e: Exception) {
-            Log.e(TAG, "Error logging preferences for $source", e)
         }
     }
     
@@ -244,7 +188,7 @@ class TodoWidgetProvider : AppWidgetProvider() {
         }
     }
     
-    // CRITICAL FIX: Background actions communicate with Flutter app
+    // CRITICAL FIX: Use broadcasts for background actions, activities only for UI actions
     private fun setupButtonClickHandlers(context: Context, views: RemoteViews, appWidgetId: Int) {
         try {
             // Add Task button - opens the app normally
@@ -261,10 +205,10 @@ class TodoWidgetProvider : AppWidgetProvider() {
             )
             views.setOnClickPendingIntent(R.id.add_task_button, addTaskPendingIntent)
             
-            // CRITICAL FIX: Refresh button - triggers background sync via hidden activity
-            val refreshIntent = Intent(context, TodoWidgetProvider::class.java).apply {
-                action = ACTION_BACKGROUND_SYNC
+            // CRITICAL FIX: Refresh button - uses broadcast, no activity
+            val refreshIntent = Intent(WidgetBroadcastReceiver.ACTION_WIDGET_BACKGROUND_SYNC).apply {
                 putExtra(EXTRA_WIDGET_ID, appWidgetId)
+                setClass(context, WidgetBroadcastReceiver::class.java)
             }
             val refreshPendingIntent = PendingIntent.getBroadcast(
                 context, 
@@ -351,7 +295,7 @@ class TodoWidgetProvider : AppWidgetProvider() {
         }
     }
 
-    // CRITICAL FIX: Task toggle also communicates with Flutter
+    // CRITICAL FIX: Task toggle also uses broadcast
     private fun addSimpleTaskItem(views: RemoteViews, context: Context, title: String, checkbox: String, description: String, taskId: Int?, appWidgetId: Int) {
         try {
             val taskView = RemoteViews(context.packageName, R.layout.widget_task_item)
@@ -374,12 +318,12 @@ class TodoWidgetProvider : AppWidgetProvider() {
             taskView.setViewVisibility(R.id.due_date, android.view.View.GONE)
             taskView.setViewVisibility(R.id.status_indicator, android.view.View.GONE)
             
-            // CRITICAL FIX: Task toggle triggers background communication with Flutter
+            // CRITICAL FIX: Task toggle uses broadcast
             if (taskId != null && taskId > 0) {
-                val toggleIntent = Intent(context, TodoWidgetProvider::class.java).apply {
-                    action = ACTION_TOGGLE_TASK
+                val toggleIntent = Intent(WidgetBroadcastReceiver.ACTION_WIDGET_TOGGLE_TASK).apply {
                     putExtra(EXTRA_TASK_ID, taskId)
                     putExtra(EXTRA_WIDGET_ID, appWidgetId)
+                    setClass(context, WidgetBroadcastReceiver::class.java)
                 }
                 val togglePendingIntent = PendingIntent.getBroadcast(
                     context,
@@ -394,107 +338,6 @@ class TodoWidgetProvider : AppWidgetProvider() {
             
         } catch (e: Exception) {
             Log.e(TAG, "ERROR adding simple task item: $title", e)
-        }
-    }
-    
-    // CRITICAL FIX: Implement actual functionality via background communication
-    override fun onReceive(context: Context, intent: Intent) {
-        Log.d(TAG, "=== onReceive called ===")
-        Log.d(TAG, "Intent action: ${intent.action}")
-        
-        try {
-            when (intent.action) {
-                ACTION_BACKGROUND_SYNC -> {
-                    Log.d(TAG, "Handling background sync action")
-                    handleBackgroundSync(context, intent)
-                }
-                
-                ACTION_TOGGLE_TASK -> {
-                    Log.d(TAG, "Handling task toggle action")
-                    handleTaskToggle(context, intent)
-                }
-                
-                ACTION_REFRESH_WIDGET -> {
-                    Log.d(TAG, "Handling widget refresh action")
-                    val appWidgetManager = AppWidgetManager.getInstance(context)
-                    val appWidgetIds = appWidgetManager.getAppWidgetIds(
-                        android.content.ComponentName(context, TodoWidgetProvider::class.java)
-                    )
-                    onUpdate(context, appWidgetManager, appWidgetIds)
-                }
-                
-                AppWidgetManager.ACTION_APPWIDGET_UPDATE -> {
-                    super.onReceive(context, intent)
-                }
-                
-                else -> {
-                    super.onReceive(context, intent)
-                }
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "CRITICAL ERROR in onReceive", e)
-        }
-        
-        Log.d(TAG, "=== onReceive completed ===")
-    }
-
-    // CRITICAL FIX: Background sync that actually communicates with Flutter via hidden activity
-    private fun handleBackgroundSync(context: Context, intent: Intent) {
-        try {
-            Log.d(TAG, "Performing background sync with Flutter communication")
-            
-            // Start MainActivity in background to trigger sync
-            val syncIntent = Intent(context, MainActivity::class.java).apply {
-                action = "BACKGROUND_SYNC"
-                putExtra(EXTRA_WIDGET_ID, intent.getIntExtra(EXTRA_WIDGET_ID, 1))
-                // CRITICAL: Use these flags to start without showing UI
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or 
-                        Intent.FLAG_ACTIVITY_NO_USER_ACTION or
-                        Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS or
-                        Intent.FLAG_ACTIVITY_NO_ANIMATION
-            }
-            
-            context.startActivity(syncIntent)
-            
-            Log.d(TAG, "Background sync with Flutter initiated")
-        } catch (e: Exception) {
-            Log.e(TAG, "Error in background sync", e)
-            // Fallback: just refresh widget with current data
-            val appWidgetManager = AppWidgetManager.getInstance(context)
-            val appWidgetIds = appWidgetManager.getAppWidgetIds(
-                android.content.ComponentName(context, TodoWidgetProvider::class.java)
-            )
-            onUpdate(context, appWidgetManager, appWidgetIds)
-        }
-    }
-
-    // CRITICAL FIX: Task toggle that actually communicates with Flutter via hidden activity
-    private fun handleTaskToggle(context: Context, intent: Intent) {
-        try {
-            val taskId = intent.getIntExtra(EXTRA_TASK_ID, -1)
-            val widgetId = intent.getIntExtra(EXTRA_WIDGET_ID, 1)
-            
-            Log.d(TAG, "Toggling task with Flutter communication: TaskID=$taskId, WidgetID=$widgetId")
-            
-            if (taskId > 0) {
-                // Start MainActivity in background to toggle task
-                val toggleIntent = Intent(context, MainActivity::class.java).apply {
-                    action = "BACKGROUND_TOGGLE_TASK"
-                    putExtra(EXTRA_TASK_ID, taskId)
-                    putExtra(EXTRA_WIDGET_ID, widgetId)
-                    // CRITICAL: Use these flags to start without showing UI
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or 
-                            Intent.FLAG_ACTIVITY_NO_USER_ACTION or
-                            Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS or
-                            Intent.FLAG_ACTIVITY_NO_ANIMATION
-                }
-                
-                context.startActivity(toggleIntent)
-                
-                Log.d(TAG, "Task toggle with Flutter initiated")
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error in task toggle", e)
         }
     }
 

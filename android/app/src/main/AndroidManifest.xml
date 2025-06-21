@@ -40,6 +40,15 @@
                 <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
             </intent-filter>
         </receiver>
+        <receiver
+            android:name=".WidgetBroadcastReceiver"
+            android:exported="false"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="com.example.todo_app.WIDGET_BACKGROUND_SYNC" />
+                <action android:name="com.example.todo_app.WIDGET_TOGGLE_TASK" />
+            </intent-filter>
+        </receiver>
         
         <!-- CRITICAL: Widget Provider Registration -->
         <receiver
