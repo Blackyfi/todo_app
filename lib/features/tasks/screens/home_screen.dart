@@ -35,6 +35,7 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
   late mat.TabController _tabController;
   
   @override
+  @override
   void initState() {
     super.initState();
     _tabController = mat.TabController(length: 3, vsync: this);
@@ -44,10 +45,21 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
     
     _loadData();
     
+    // CRITICAL: Sync pending widget toggles when app starts
+    _syncPendingWidgetToggles();
+    
     // Check for notification permissions after a short delay to ensure the UI is built
     Future.delayed(const Duration(milliseconds: 500), () {
       _checkNotificationPermissions();
     });
+  }
+
+  Future<void> _syncPendingWidgetToggles() async {
+    try {
+      await _widgetService.syncPendingToggles();
+    } catch (e, stackTrace) {
+      await _logger.logError('Error syncing pending widget toggles', e, stackTrace);
+    }
   }
   
   @override

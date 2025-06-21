@@ -36,24 +36,39 @@ class MainActivity : FlutterActivity() {
                     val widgetId = intent.getIntExtra("widget_id", 1)
                     sendToFlutter("background_sync", mapOf("widgetId" to widgetId))
                     
-                    // CRITICAL: For background sync, finish quickly after sending command
+                    // For background sync, finish quickly after sending command
                     android.os.Handler(mainLooper).postDelayed({
                         if (!isFinishing && !isDestroyed) {
                             finish()
                         }
-                    }, 500) // Reduced to 500ms for faster finish
+                    }, 500)
                 }
                 "BACKGROUND_TOGGLE_TASK" -> {
                     val taskId = intent.getIntExtra("task_id", -1)
                     val widgetId = intent.getIntExtra("widget_id", 1)
                     sendToFlutter("background_toggle_task", mapOf("taskId" to taskId, "widgetId" to widgetId))
                     
-                    // CRITICAL: For background toggle, finish quickly after sending command
+                    // For background toggle, finish quickly after sending command
                     android.os.Handler(mainLooper).postDelayed({
                         if (!isFinishing && !isDestroyed) {
                             finish()
                         }
-                    }, 500) // Reduced to 500ms for faster finish
+                    }, 500)
+                }
+                "SILENT_BACKGROUND_TOGGLE_TASK" -> {
+                    // CRITICAL: New silent background toggle
+                    val taskId = intent.getIntExtra("task_id", -1)
+                    val widgetId = intent.getIntExtra("widget_id", 1)
+                    
+                    // Send to Flutter immediately
+                    sendToFlutter("silent_background_toggle_task", mapOf("taskId" to taskId, "widgetId" to widgetId))
+                    
+                    // CRITICAL: Finish immediately - no UI should be shown
+                    android.os.Handler(mainLooper).postDelayed({
+                        if (!isFinishing && !isDestroyed) {
+                            finish()
+                        }
+                    }, 200) // Even faster finish - 200ms
                 }
             }
         }

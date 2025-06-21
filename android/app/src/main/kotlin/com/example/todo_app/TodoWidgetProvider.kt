@@ -248,11 +248,15 @@ class TodoWidgetProvider : AppWidgetProvider() {
             val maxTasks = minOf(tasks.length(), config.optInt("maxTasks", 3))
             val showCompleted = config.optBoolean("showCompleted", false)
             
+            // CRITICAL: Get pending toggles to apply them to display
+            val pendingToggles = getPendingToggles(context)
+            Log.d(TAG, "Pending toggles: $pendingToggles")
+            
             Log.d(TAG, "Display settings - maxTasks: $maxTasks, showCompleted: $showCompleted")
             
             if (tasks.length() == 0) {
                 // Show empty state with simple text
-                addSimpleTaskItem(views, context, "No tasks yet", "○", "Tap + to add your first task", null, appWidgetId)
+                addSimpleTaskItem(views, context, "No tasks yet", "○", "Tap + to add your first task", null, appWidgetId, false)
                 Log.d(TAG, "Added empty state message")
                 return
             }
@@ -264,24 +268,28 @@ class TodoWidgetProvider : AppWidgetProvider() {
                     if (actualTasksAdded >= maxTasks) break
                     
                     val task = tasks.getJSONObject(i)
-                    val isCompleted = task.optBoolean("isCompleted", false)
+                    val taskId = task.optInt("id", -1)
+                    val originalCompleted = task.optBoolean("isCompleted", false)
                     
-                    // Skip completed tasks if not configured to show them
-                    if (isCompleted && !showCompleted) {
-                        Log.d(TAG, "Skipping completed task: ${task.optString("title")}")
+                    // CRITICAL: Apply pending toggle to determine display state
+                    val isPendingToggle = pendingToggles.contains(taskId.toString())
+                    val displayCompleted = if (isPendingToggle) !originalCompleted else originalCompleted
+                    
+                    // Skip completed tasks if not configured to show them (after applying pending toggles)
+                    if (displayCompleted && !showCompleted) {
+                        Log.d(TAG, "Skipping completed task: ${task.optString("title")} (after pending toggle)")
                         continue
                     }
                     
                     val taskTitle = task.optString("title", "No title")
                     val taskDescription = task.optString("description", "")
-                    val checkbox = if (isCompleted) "✓" else "○"
-                    val taskId = task.optInt("id", -1)
+                    val checkbox = if (displayCompleted) "✓" else "○"
                     
-                    // Create simplified task item with toggle functionality
-                    addSimpleTaskItem(views, context, taskTitle, checkbox, taskDescription, taskId, appWidgetId)
+                    // Create task item with the display state
+                    addSimpleTaskItem(views, context, taskTitle, checkbox, taskDescription, taskId, appWidgetId, displayCompleted)
                     
                     actualTasksAdded++
-                    Log.d(TAG, "Added task: $taskTitle (total: $actualTasksAdded)")
+                    Log.d(TAG, "Added task: $taskTitle (completed: $displayCompleted, pending: $isPendingToggle, total: $actualTasksAdded)")
                     
                 } catch (taskError: Exception) {
                     Log.e(TAG, "ERROR processing task $i", taskError)
@@ -295,14 +303,30 @@ class TodoWidgetProvider : AppWidgetProvider() {
         }
     }
 
-    // CRITICAL FIX: Task toggle also uses broadcast
-    private fun addSimpleTaskItem(views: RemoteViews, context: Context, title: String, checkbox: String, description: String, taskId: Int?, appWidgetId: Int) {
+    private fun getPendingToggles(context: Context): Set<String> {
+        return try {
+            val togglePrefs = context.getSharedPreferences("widget_toggles", Context.MODE_PRIVATE)
+            togglePrefs.getStringSet("widget_pending_toggles", emptySet()) ?: emptySet()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting pending toggles", e)
+            emptySet()
+        }
+    }
+
+    // Update the addSimpleTaskItem method signature to include completion state
+    private fun addSimpleTaskItem(views: RemoteViews, context: Context, title: String, checkbox: String, description: String, taskId: Int?, appWidgetId: Int, isCompleted: Boolean) {
         try {
             val taskView = RemoteViews(context.packageName, R.layout.widget_task_item)
             
             // Set basic task information
             taskView.setTextViewText(R.id.task_title, title)
             taskView.setTextViewText(R.id.task_checkbox, checkbox)
+            
+            // CRITICAL: Apply completion styling
+            if (isCompleted) {
+                // You can add styling for completed tasks here if needed
+                // For example, strike-through text or different colors
+            }
             
             // Set description if not empty
             if (description.isNotEmpty()) {
@@ -339,20 +363,5 @@ class TodoWidgetProvider : AppWidgetProvider() {
         } catch (e: Exception) {
             Log.e(TAG, "ERROR adding simple task item: $title", e)
         }
-    }
-
-    override fun onEnabled(context: Context) {
-        super.onEnabled(context)
-        Log.d(TAG, "Widget enabled")
-    }
-
-    override fun onDisabled(context: Context) {
-        super.onDisabled(context)
-        Log.d(TAG, "Widget disabled")
-    }
-
-    override fun onDeleted(context: Context, appWidgetIds: IntArray) {
-        super.onDeleted(context, appWidgetIds)
-        Log.d(TAG, "Widget deleted: ${appWidgetIds.contentToString()}")
     }
 }
