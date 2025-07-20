@@ -307,7 +307,7 @@ class TodoWidgetProvider : AppWidgetProvider() {
             taskView.setViewVisibility(R.id.due_date, android.view.View.GONE)
             taskView.setViewVisibility(R.id.status_indicator, android.view.View.GONE)
             
-            // CRITICAL: Task toggle uses broadcast for background operation
+            // CRITICAL FIX: Task toggle uses broadcast for background operation
             if (taskId != null && taskId > 0) {
                 val toggleIntent = Intent(context, TodoWidgetProvider::class.java).apply {
                     action = ACTION_TOGGLE_TASK
@@ -316,11 +316,13 @@ class TodoWidgetProvider : AppWidgetProvider() {
                 }
                 val togglePendingIntent = PendingIntent.getBroadcast(
                     context,
-                    taskId + appWidgetId * 1000, // Unique ID
+                    taskId + appWidgetId * 1000, // Unique ID to prevent conflicts
                     toggleIntent,
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
-                taskView.setOnClickPendingIntent(R.id.task_checkbox, togglePendingIntent)
+                // CRITICAL: Set click listener on the entire task item container, not just checkbox
+                taskView.setOnClickPendingIntent(R.id.widget_task_item_container, togglePendingIntent)
+                Log.d(TAG, "Toggle handler set for task ID: $taskId")
             }
             
             views.addView(R.id.task_list, taskView)
@@ -358,9 +360,8 @@ class TodoWidgetProvider : AppWidgetProvider() {
         try {
             Log.d(TAG, "=== HANDLING TOGGLE TASK: TaskID=$taskId, WidgetID=$widgetId ===")
             
-            // For task toggle, we need to tell the Flutter app about the change
-            // Store the toggle request in SharedPreferences for the app to pick up
-            val prefs = context.getSharedPreferences("widget_commands", Context.MODE_PRIVATE)
+            // CRITICAL FIX: Store the toggle request in SharedPreferences with correct key format
+            val prefs = context.getSharedPreferences("HomeWidgetPreferences", Context.MODE_PRIVATE)
             prefs.edit()
                 .putString("command", "toggle_task")
                 .putInt("task_id", taskId)
@@ -368,9 +369,17 @@ class TodoWidgetProvider : AppWidgetProvider() {
                 .putLong("timestamp", System.currentTimeMillis())
                 .apply()
             
-            Log.d(TAG, "Toggle command stored in SharedPreferences")
+            Log.d(TAG, "Toggle command stored in SharedPreferences with keys: command, task_id, widget_id, timestamp")
             
-            // Also trigger immediate widget refresh
+            // Also store in flutter-prefixed keys for maximum compatibility
+            prefs.edit()
+                .putString("flutter.command", "toggle_task")
+                .putInt("flutter.task_id", taskId)
+                .putInt("flutter.widget_id", widgetId)
+                .putLong("flutter.timestamp", System.currentTimeMillis())
+                .apply()
+            
+            // Also trigger immediate widget refresh to show optimistic update
             handleRefreshWidget(context)
             
             Log.d(TAG, "=== TOGGLE TASK COMPLETE ===")

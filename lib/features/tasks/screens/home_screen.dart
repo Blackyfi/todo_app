@@ -87,14 +87,14 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
       
       // Get pending toggles from SharedPreferences
       final prefs = await SharedPreferences.getInstance();
-      final command = prefs.getString('command');
+      final command = prefs.getString('command') ?? prefs.getString('flutter.command');
       
       if (command == 'toggle_task') {
-        final taskId = prefs.getInt('task_id') ?? -1;
-        final timestamp = prefs.getInt('timestamp') ?? 0;
+        final taskId = prefs.getInt('task_id') ?? prefs.getInt('flutter.task_id') ?? -1;
+        final timestamp = prefs.getInt('timestamp') ?? prefs.getInt('flutter.timestamp') ?? 0;
         
-        // Only process recent commands (within last 30 seconds)
-        if (DateTime.now().millisecondsSinceEpoch - timestamp < 30000) {
+        // Only process recent commands (within last 60 seconds)
+        if (DateTime.now().millisecondsSinceEpoch - timestamp < 60000) {
           await _logger.logInfo('Found pending toggle for task: $taskId');
           
           if (taskId > 0) {
@@ -106,11 +106,15 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
           }
         }
         
-        // Clear the command after processing
+        // Clear the command after processing (both key formats)
         await prefs.remove('command');
         await prefs.remove('task_id');
         await prefs.remove('widget_id');
         await prefs.remove('timestamp');
+        await prefs.remove('flutter.command');
+        await prefs.remove('flutter.task_id');
+        await prefs.remove('flutter.widget_id');
+        await prefs.remove('flutter.timestamp');
         
         await _logger.logInfo('Cleared pending toggle command');
       } else {
@@ -153,7 +157,18 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
       
     } catch (e, stackTrace) {
       await _logger.logError('Error loading data in HomeScreen', e, stackTrace);
-      // ... existing error handling
+      
+      setState(() {
+        _isLoading = false;
+      });
+      
+      if (mounted) {
+        mat.ScaffoldMessenger.of(context).showSnackBar(
+          const mat.SnackBar(
+            content: mat.Text(app_constants.AppConstants.databaseErrorMessage),
+          ),
+        );
+      }
     }
   }
   
@@ -189,7 +204,14 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
       }
     } catch (e, stackTrace) {
       await _logger.logError('Error toggling task completion', e, stackTrace);
-      // ... existing error handling
+      
+      if (mounted) {
+        mat.ScaffoldMessenger.of(context).showSnackBar(
+          const mat.SnackBar(
+            content: mat.Text(app_constants.AppConstants.databaseErrorMessage),
+          ),
+        );
+      }
     }
   }
   
@@ -207,7 +229,14 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
       }
     } catch (e, stackTrace) {
       await _logger.logError('Error deleting task', e, stackTrace);
-      // ... existing error handling
+      
+      if (mounted) {
+        mat.ScaffoldMessenger.of(context).showSnackBar(
+          const mat.SnackBar(
+            content: mat.Text(app_constants.AppConstants.databaseErrorMessage),
+          ),
+        );
+      }
     }
   }
   

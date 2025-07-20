@@ -137,23 +137,26 @@ class WidgetService {
   // CRITICAL: Command polling to handle widget actions
   void _startCommandPolling() {
     _commandPoller?.cancel();
-    _commandPoller = Timer.periodic(const Duration(seconds: 2), (_) => _checkForWidgetCommands());
-    _logger.logInfo('Started widget command polling');
+    _commandPoller = Timer.periodic(const Duration(seconds: 1), (_) => _checkForWidgetCommands());
+    _logger.logInfo('Started widget command polling (1 second interval)');
   }
 
   Future<void> _checkForWidgetCommands() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final command = prefs.getString('command');
+      
+      // Check both normal and flutter-prefixed keys
+      final command = prefs.getString('command') ?? prefs.getString('flutter.command');
       
       if (command != null) {
-        final taskId = prefs.getInt('task_id') ?? -1;
-        final widgetId = prefs.getInt('widget_id') ?? 1;
-        final timestamp = prefs.getInt('timestamp') ?? 0;
+        final taskId = prefs.getInt('task_id') ?? prefs.getInt('flutter.task_id') ?? -1;
+        final widgetId = prefs.getInt('widget_id') ?? prefs.getInt('flutter.widget_id') ?? 1;
+        final timestamp = prefs.getInt('timestamp') ?? prefs.getInt('flutter.timestamp') ?? 0;
         
-        // Only process recent commands (within last 10 seconds)
-        if (DateTime.now().millisecondsSinceEpoch - timestamp < 10000) {
-          await _logger.logInfo('Processing widget command: $command, TaskID: $taskId');
+        // Only process recent commands (within last 30 seconds)
+        if (DateTime.now().millisecondsSinceEpoch - timestamp < 30000) {
+          await _logger.logInfo('=== PROCESSING WIDGET COMMAND: $command ===');
+          await _logger.logInfo('TaskID: $taskId, WidgetID: $widgetId, Timestamp: $timestamp');
           
           switch (command) {
             case 'toggle_task':
@@ -161,11 +164,19 @@ class WidgetService {
               break;
           }
           
-          // Clear the command after processing
+          // Clear both sets of command keys after processing
           await prefs.remove('command');
           await prefs.remove('task_id');
           await prefs.remove('widget_id');
           await prefs.remove('timestamp');
+          await prefs.remove('flutter.command');
+          await prefs.remove('flutter.task_id');
+          await prefs.remove('flutter.widget_id');
+          await prefs.remove('flutter.timestamp');
+          
+          await _logger.logInfo('=== WIDGET COMMAND PROCESSED AND CLEARED ===');
+        } else {
+          await _logger.logInfo('Command timestamp too old, ignoring: $command');
         }
       }
     } catch (e, stackTrace) {
