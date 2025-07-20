@@ -55,21 +55,6 @@ class MainActivity : FlutterActivity() {
                         }
                     }, 500)
                 }
-                "SILENT_BACKGROUND_TOGGLE_TASK" -> {
-                    // CRITICAL: New silent background toggle
-                    val taskId = intent.getIntExtra("task_id", -1)
-                    val widgetId = intent.getIntExtra("widget_id", 1)
-                    
-                    // Send to Flutter immediately
-                    sendToFlutter("silent_background_toggle_task", mapOf("taskId" to taskId, "widgetId" to widgetId))
-                    
-                    // CRITICAL: Finish immediately - no UI should be shown
-                    android.os.Handler(mainLooper).postDelayed({
-                        if (!isFinishing && !isDestroyed) {
-                            finish()
-                        }
-                    }, 200) // Even faster finish - 200ms
-                }
             }
         }
     }

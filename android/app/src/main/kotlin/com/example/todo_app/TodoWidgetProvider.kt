@@ -18,17 +18,16 @@ class TodoWidgetProvider : AppWidgetProvider() {
     companion object {
         private const val TAG = "TodoWidgetProvider"
         
-        // CRITICAL: Different action types
+        // CRITICAL: Use broadcast actions for background operations
+        private const val ACTION_REFRESH_WIDGET = "ACTION_REFRESH_WIDGET"
         private const val ACTION_ADD_TASK = "ACTION_ADD_TASK"
         private const val ACTION_WIDGET_SETTINGS = "ACTION_WIDGET_SETTINGS"
-        private const val ACTION_REFRESH_WIDGET = "ACTION_REFRESH_WIDGET"
-        private const val ACTION_BACKGROUND_SYNC = "ACTION_BACKGROUND_SYNC"
         private const val ACTION_TOGGLE_TASK = "ACTION_TOGGLE_TASK"
         
         private const val EXTRA_TASK_ID = "task_id"
         private const val EXTRA_WIDGET_ID = "widget_id"
         
-        // CRITICAL: Use consistent data keys
+        // Data keys
         private const val WIDGET_DATA_KEY = "widget_data"
         private const val WIDGET_CONFIG_KEY = "widget_config"
     }
@@ -36,7 +35,6 @@ class TodoWidgetProvider : AppWidgetProvider() {
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         Log.d(TAG, "=== onUpdate called ===")
         Log.d(TAG, "Widget IDs: ${appWidgetIds.contentToString()}")
-        Log.d(TAG, "Number of widgets: ${appWidgetIds.size}")
         
         for (appWidgetId in appWidgetIds) {
             Log.d(TAG, "--- Updating widget ID: $appWidgetId ---")
@@ -45,77 +43,78 @@ class TodoWidgetProvider : AppWidgetProvider() {
                 Log.d(TAG, "Widget $appWidgetId updated successfully")
             } catch (e: Exception) {
                 Log.e(TAG, "ERROR updating widget $appWidgetId", e)
-                // Show error state instead of crashing
-                showErrorState(context, appWidgetManager, appWidgetId, e.message ?: "Unknown error")
+                showErrorState(context, appWidgetManager, appWidgetId, "Failed to load: ${e.message}")
             }
         }
         Log.d(TAG, "=== onUpdate completed ===")
+    }
+
+    override fun onReceive(context: Context, intent: Intent) {
+        super.onReceive(context, intent)
+        
+        Log.d(TAG, "onReceive: ${intent.action}")
+        
+        when (intent.action) {
+            ACTION_REFRESH_WIDGET -> {
+                Log.d(TAG, "Handling refresh widget action")
+                handleRefreshWidget(context)
+            }
+            ACTION_TOGGLE_TASK -> {
+                val taskId = intent.getIntExtra(EXTRA_TASK_ID, -1)
+                val widgetId = intent.getIntExtra(EXTRA_WIDGET_ID, 1)
+                Log.d(TAG, "Handling toggle task: TaskID=$taskId, WidgetID=$widgetId")
+                handleToggleTask(context, taskId, widgetId)
+            }
+        }
     }
 
     private fun updateAppWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
         Log.d(TAG, "--- updateAppWidget for ID: $appWidgetId ---")
         
         try {
-            // Create RemoteViews with error handling
             val views = RemoteViews(context.packageName, R.layout.todo_widget)
             Log.d(TAG, "RemoteViews created for widget $appWidgetId")
             
-            // CRITICAL FIX: Try multiple SharedPreferences sources
+            // Get data from SharedPreferences with multiple fallback attempts
             val preferences = context.getSharedPreferences("HomeWidgetPreferences", Context.MODE_PRIVATE)
             val flutterPrefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
             
-            Log.d(TAG, "SharedPreferences retrieved")
-            
-            // Try to get data from multiple possible key patterns
+            // Try multiple key combinations
             var configData = preferences.getString(WIDGET_CONFIG_KEY, null)
+                ?: preferences.getString("flutter.$WIDGET_CONFIG_KEY", null)
+                ?: flutterPrefs.getString("flutter.$WIDGET_CONFIG_KEY", null)
+            
             var tasksData = preferences.getString(WIDGET_DATA_KEY, null)
+                ?: preferences.getString("flutter.$WIDGET_DATA_KEY", null)
+                ?: flutterPrefs.getString("flutter.$WIDGET_DATA_KEY", null)
             
-            // If not found, try alternative keys
-            if (configData == null) {
-                configData = preferences.getString("flutter.$WIDGET_CONFIG_KEY", null)
-                if (configData == null) {
-                    configData = flutterPrefs.getString("flutter.$WIDGET_CONFIG_KEY", null)
-                }
-            }
-            
-            if (tasksData == null) {
-                tasksData = preferences.getString("flutter.$WIDGET_DATA_KEY", null)
-                if (tasksData == null) {
-                    tasksData = flutterPrefs.getString("flutter.$WIDGET_DATA_KEY", null)
-                }
-            }
-            
-            Log.d(TAG, "Config data found: ${configData != null}, length: ${configData?.length ?: 0}")
-            Log.d(TAG, "Tasks data found: ${tasksData != null}, length: ${tasksData?.length ?: 0}")
+            Log.d(TAG, "Config found: ${configData != null}, Tasks found: ${tasksData != null}")
             
             if (configData == null || tasksData == null) {
-                Log.w(TAG, "Missing data - showing default state with retry")
-                showDefaultState(context, appWidgetManager, appWidgetId)
+                Log.w(TAG, "Missing data - showing loading state")
+                showLoadingState(context, appWidgetManager, appWidgetId)
                 return
             }
             
-            // Parse JSON data safely
+            // Parse JSON data
             val config = JSONObject(configData)
             val data = JSONObject(tasksData)
             val tasks = data.optJSONArray("tasks") ?: JSONArray()
             
-            Log.d(TAG, "Successfully parsed data - tasks count: ${tasks.length()}")
+            Log.d(TAG, "Parsed data - tasks count: ${tasks.length()}")
+            
+            // Apply widget configuration
+            val widgetName = config.optString("name", "Todo Tasks")
+            val maxTasks = config.optInt("maxTasks", 3)
+            val showCompleted = config.optBoolean("showCompleted", false)
             
             // Set widget title
-            val widgetName = config.optString("name", "Todo App")
             views.setTextViewText(R.id.widget_title, widgetName)
-            Log.d(TAG, "Widget title set: $widgetName")
             
-            // Set task count
-            val taskCount = tasks.length()
-            val taskCountText = "$taskCount ${if (taskCount == 1) "task" else "tasks"}"
-            views.setTextViewText(R.id.task_count, taskCountText)
-            Log.d(TAG, "Task count set: $taskCountText")
+            // Filter and display tasks
+            updateTaskList(views, tasks, maxTasks, showCompleted, context, appWidgetId)
             
-            // Update task list
-            updateTaskList(views, tasks, config, context, appWidgetId)
-            
-            // Set up button click handlers
+            // Set up button click handlers - CRITICAL FIX
             setupButtonClickHandlers(context, views, appWidgetId)
             
             // Update the widget
@@ -124,45 +123,40 @@ class TodoWidgetProvider : AppWidgetProvider() {
             
         } catch (e: Exception) {
             Log.e(TAG, "CRITICAL ERROR in updateAppWidget for ID: $appWidgetId", e)
-            showErrorState(context, appWidgetManager, appWidgetId, "Failed to load widget data: ${e.message}")
+            showErrorState(context, appWidgetManager, appWidgetId, "Error: ${e.message}")
         }
     }
     
-    private fun showDefaultState(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
+    private fun showLoadingState(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
         try {
             val views = RemoteViews(context.packageName, R.layout.todo_widget)
-            views.setTextViewText(R.id.widget_title, "Todo App")
+            views.setTextViewText(R.id.widget_title, "Todo Tasks")
             views.setTextViewText(R.id.task_count, "Loading tasks...")
             views.removeAllViews(R.id.task_list)
             
-            // Add a simple message
-            val messageView = RemoteViews(context.packageName, R.layout.widget_task_item)
-            messageView.setTextViewText(R.id.task_title, "Tap + to add your first task")
-            messageView.setTextViewText(R.id.task_checkbox, "○")
-            messageView.setViewVisibility(R.id.task_description, android.view.View.GONE)
-            messageView.setViewVisibility(R.id.priority_badge, android.view.View.GONE)
-            messageView.setViewVisibility(R.id.category_badge, android.view.View.GONE)
-            messageView.setViewVisibility(R.id.due_date, android.view.View.GONE)
-            messageView.setViewVisibility(R.id.status_indicator, android.view.View.GONE)
+            // Add loading message
+            val loadingView = RemoteViews(context.packageName, R.layout.widget_task_item)
+            loadingView.setTextViewText(R.id.task_title, "Loading...")
+            loadingView.setTextViewText(R.id.task_checkbox, "○")
+            loadingView.setViewVisibility(R.id.task_description, android.view.View.GONE)
+            loadingView.setViewVisibility(R.id.priority_badge, android.view.View.GONE)
+            loadingView.setViewVisibility(R.id.category_badge, android.view.View.GONE)
+            loadingView.setViewVisibility(R.id.due_date, android.view.View.GONE)
+            loadingView.setViewVisibility(R.id.status_indicator, android.view.View.GONE)
             
-            views.addView(R.id.task_list, messageView)
-            
-            // Set up basic button handlers
+            views.addView(R.id.task_list, loadingView)
             setupButtonClickHandlers(context, views, appWidgetId)
-            
             appWidgetManager.updateAppWidget(appWidgetId, views)
-            Log.d(TAG, "Default state displayed for widget $appWidgetId")
         } catch (e: Exception) {
-            Log.e(TAG, "Error showing default state", e)
-            showErrorState(context, appWidgetManager, appWidgetId, "Setup error")
+            Log.e(TAG, "Error showing loading state", e)
         }
     }
     
     private fun showErrorState(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int, errorMessage: String) {
         try {
             val views = RemoteViews(context.packageName, R.layout.todo_widget)
-            views.setTextViewText(R.id.widget_title, "Todo App")
-            views.setTextViewText(R.id.task_count, "Can't load widget")
+            views.setTextViewText(R.id.widget_title, "Todo Tasks")
+            views.setTextViewText(R.id.task_count, "Error loading")
             views.removeAllViews(R.id.task_list)
             
             // Add error message
@@ -177,24 +171,20 @@ class TodoWidgetProvider : AppWidgetProvider() {
             errorView.setViewVisibility(R.id.status_indicator, android.view.View.GONE)
             
             views.addView(R.id.task_list, errorView)
-            
-            // Set up basic button handlers
             setupButtonClickHandlers(context, views, appWidgetId)
-            
             appWidgetManager.updateAppWidget(appWidgetId, views)
-            Log.d(TAG, "Error state displayed for widget $appWidgetId: $errorMessage")
         } catch (e: Exception) {
             Log.e(TAG, "Error showing error state", e)
         }
     }
     
-    // CRITICAL FIX: Use broadcasts for background actions, activities only for UI actions
+    // CRITICAL FIX: Proper action handling
     private fun setupButtonClickHandlers(context: Context, views: RemoteViews, appWidgetId: Int) {
         try {
-            // Add Task button - opens the app normally
+            // Add Task button - opens app (UI action)
             val addTaskIntent = Intent(context, MainActivity::class.java).apply {
                 action = "ADD_TASK"
-                putExtra(EXTRA_WIDGET_ID, 1)
+                putExtra(EXTRA_WIDGET_ID, appWidgetId)
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             }
             val addTaskPendingIntent = PendingIntent.getActivity(
@@ -205,10 +195,10 @@ class TodoWidgetProvider : AppWidgetProvider() {
             )
             views.setOnClickPendingIntent(R.id.add_task_button, addTaskPendingIntent)
             
-            // CRITICAL FIX: Refresh button - uses broadcast, no activity
-            val refreshIntent = Intent(WidgetBroadcastReceiver.ACTION_WIDGET_BACKGROUND_SYNC).apply {
+            // CRITICAL: Refresh button uses broadcast (background action)
+            val refreshIntent = Intent(context, TodoWidgetProvider::class.java).apply {
+                action = ACTION_REFRESH_WIDGET
                 putExtra(EXTRA_WIDGET_ID, appWidgetId)
-                setClass(context, WidgetBroadcastReceiver::class.java)
             }
             val refreshPendingIntent = PendingIntent.getBroadcast(
                 context, 
@@ -218,10 +208,10 @@ class TodoWidgetProvider : AppWidgetProvider() {
             )
             views.setOnClickPendingIntent(R.id.refresh_button, refreshPendingIntent)
             
-            // Settings button - opens the app normally
+            // Widget Settings button - opens app (UI action)
             val settingsIntent = Intent(context, MainActivity::class.java).apply {
                 action = "WIDGET_SETTINGS"
-                putExtra(EXTRA_WIDGET_ID, 1)
+                putExtra(EXTRA_WIDGET_ID, appWidgetId)
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             }
             val settingsPendingIntent = PendingIntent.getActivity(
@@ -232,101 +222,76 @@ class TodoWidgetProvider : AppWidgetProvider() {
             )
             views.setOnClickPendingIntent(R.id.settings_button, settingsPendingIntent)
             
-            Log.d(TAG, "Button click handlers set up successfully for widget $appWidgetId")
+            Log.d(TAG, "Button click handlers set up for widget $appWidgetId")
         } catch (e: Exception) {
-            Log.e(TAG, "ERROR setting up button click handlers for widget $appWidgetId", e)
+            Log.e(TAG, "ERROR setting up button handlers", e)
         }
     }
     
-    private fun updateTaskList(views: RemoteViews, tasks: JSONArray, config: JSONObject, context: Context, appWidgetId: Int) {
+    private fun updateTaskList(views: RemoteViews, tasks: JSONArray, maxTasks: Int, showCompleted: Boolean, context: Context, appWidgetId: Int) {
         try {
-            Log.d(TAG, "--- updateTaskList called ---")
-            Log.d(TAG, "Tasks count: ${tasks.length()}")
+            Log.d(TAG, "--- updateTaskList: ${tasks.length()} tasks, maxTasks=$maxTasks, showCompleted=$showCompleted ---")
             
             views.removeAllViews(R.id.task_list)
             
-            val maxTasks = minOf(tasks.length(), config.optInt("maxTasks", 3))
-            val showCompleted = config.optBoolean("showCompleted", false)
-            
-            // CRITICAL: Get pending toggles to apply them to display
-            val pendingToggles = getPendingToggles(context)
-            Log.d(TAG, "Pending toggles: $pendingToggles")
-            
-            Log.d(TAG, "Display settings - maxTasks: $maxTasks, showCompleted: $showCompleted")
-            
             if (tasks.length() == 0) {
-                // Show empty state with simple text
-                addSimpleTaskItem(views, context, "No tasks yet", "○", "Tap + to add your first task", null, appWidgetId, false)
-                Log.d(TAG, "Added empty state message")
+                addSimpleTaskItem(views, context, "No tasks yet", "○", "Tap + to add your first task", null, appWidgetId)
+                views.setTextViewText(R.id.task_count, "0 tasks")
                 return
             }
             
+            var visibleTaskCount = 0
             var actualTasksAdded = 0
             
-            for (i in 0 until minOf(tasks.length(), maxTasks)) {
+            // Process tasks according to widget settings
+            for (i in 0 until tasks.length()) {
+                if (actualTasksAdded >= maxTasks) break
+                
                 try {
-                    if (actualTasksAdded >= maxTasks) break
-                    
                     val task = tasks.getJSONObject(i)
                     val taskId = task.optInt("id", -1)
-                    val originalCompleted = task.optBoolean("isCompleted", false)
+                    val isCompleted = task.optBoolean("isCompleted", false)
                     
-                    // CRITICAL: Apply pending toggle to determine display state
-                    val isPendingToggle = pendingToggles.contains(taskId.toString())
-                    val displayCompleted = if (isPendingToggle) !originalCompleted else originalCompleted
-                    
-                    // Skip completed tasks if not configured to show them (after applying pending toggles)
-                    if (displayCompleted && !showCompleted) {
-                        Log.d(TAG, "Skipping completed task: ${task.optString("title")} (after pending toggle)")
+                    // Apply showCompleted filter
+                    if (isCompleted && !showCompleted) {
+                        Log.d(TAG, "Skipping completed task (showCompleted=false): ${task.optString("title")}")
                         continue
                     }
                     
+                    visibleTaskCount++
+                    
                     val taskTitle = task.optString("title", "No title")
                     val taskDescription = task.optString("description", "")
-                    val checkbox = if (displayCompleted) "✓" else "○"
+                    val checkbox = if (isCompleted) "✓" else "○"
                     
-                    // Create task item with the display state
-                    addSimpleTaskItem(views, context, taskTitle, checkbox, taskDescription, taskId, appWidgetId, displayCompleted)
-                    
+                    addSimpleTaskItem(views, context, taskTitle, checkbox, taskDescription, taskId, appWidgetId)
                     actualTasksAdded++
-                    Log.d(TAG, "Added task: $taskTitle (completed: $displayCompleted, pending: $isPendingToggle, total: $actualTasksAdded)")
+                    
+                    Log.d(TAG, "Added task: $taskTitle (completed: $isCompleted)")
                     
                 } catch (taskError: Exception) {
                     Log.e(TAG, "ERROR processing task $i", taskError)
                 }
             }
             
-            Log.d(TAG, "Task list update completed - added $actualTasksAdded tasks")
+            // Update task count display
+            val taskCountText = "$visibleTaskCount ${if (visibleTaskCount == 1) "task" else "tasks"}"
+            views.setTextViewText(R.id.task_count, taskCountText)
+            
+            Log.d(TAG, "Task list update completed - visible: $visibleTaskCount, added: $actualTasksAdded")
             
         } catch (e: Exception) {
             Log.e(TAG, "CRITICAL ERROR in updateTaskList", e)
         }
     }
 
-    private fun getPendingToggles(context: Context): Set<String> {
-        return try {
-            val togglePrefs = context.getSharedPreferences("widget_toggles", Context.MODE_PRIVATE)
-            togglePrefs.getStringSet("widget_pending_toggles", emptySet()) ?: emptySet()
-        } catch (e: Exception) {
-            Log.e(TAG, "Error getting pending toggles", e)
-            emptySet()
-        }
-    }
-
-    // Update the addSimpleTaskItem method signature to include completion state
-    private fun addSimpleTaskItem(views: RemoteViews, context: Context, title: String, checkbox: String, description: String, taskId: Int?, appWidgetId: Int, isCompleted: Boolean) {
+    private fun addSimpleTaskItem(views: RemoteViews, context: Context, title: String, checkbox: String, description: String, taskId: Int?, appWidgetId: Int) {
         try {
             val taskView = RemoteViews(context.packageName, R.layout.widget_task_item)
             
             // Set basic task information
             taskView.setTextViewText(R.id.task_title, title)
             taskView.setTextViewText(R.id.task_checkbox, checkbox)
-            
-            // CRITICAL: Apply completion styling
-            if (isCompleted) {
-                // You can add styling for completed tasks here if needed
-                // For example, strike-through text or different colors
-            }
             
             // Set description if not empty
             if (description.isNotEmpty()) {
@@ -336,18 +301,18 @@ class TodoWidgetProvider : AppWidgetProvider() {
                 taskView.setViewVisibility(R.id.task_description, android.view.View.GONE)
             }
             
-            // Hide complex elements to avoid issues
+            // Hide complex elements
             taskView.setViewVisibility(R.id.priority_badge, android.view.View.GONE)
             taskView.setViewVisibility(R.id.category_badge, android.view.View.GONE)
             taskView.setViewVisibility(R.id.due_date, android.view.View.GONE)
             taskView.setViewVisibility(R.id.status_indicator, android.view.View.GONE)
             
-            // CRITICAL FIX: Task toggle uses broadcast
+            // CRITICAL: Task toggle uses broadcast for background operation
             if (taskId != null && taskId > 0) {
-                val toggleIntent = Intent(WidgetBroadcastReceiver.ACTION_WIDGET_TOGGLE_TASK).apply {
+                val toggleIntent = Intent(context, TodoWidgetProvider::class.java).apply {
+                    action = ACTION_TOGGLE_TASK
                     putExtra(EXTRA_TASK_ID, taskId)
                     putExtra(EXTRA_WIDGET_ID, appWidgetId)
-                    setClass(context, WidgetBroadcastReceiver::class.java)
                 }
                 val togglePendingIntent = PendingIntent.getBroadcast(
                     context,
@@ -361,7 +326,56 @@ class TodoWidgetProvider : AppWidgetProvider() {
             views.addView(R.id.task_list, taskView)
             
         } catch (e: Exception) {
-            Log.e(TAG, "ERROR adding simple task item: $title", e)
+            Log.e(TAG, "ERROR adding task item: $title", e)
+        }
+    }
+    
+    private fun handleRefreshWidget(context: Context) {
+        try {
+            Log.d(TAG, "=== HANDLING REFRESH WIDGET ===")
+            
+            // Trigger widget update by sending update intent
+            val appWidgetManager = AppWidgetManager.getInstance(context)
+            val componentName = android.content.ComponentName(context, TodoWidgetProvider::class.java)
+            val appWidgetIds = appWidgetManager.getAppWidgetIds(componentName)
+            
+            Log.d(TAG, "Found ${appWidgetIds.size} widgets to refresh")
+            
+            // Force update all widgets
+            val updateIntent = Intent(context, TodoWidgetProvider::class.java).apply {
+                action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+                putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetIds)
+            }
+            context.sendBroadcast(updateIntent)
+            
+            Log.d(TAG, "=== REFRESH WIDGET COMPLETE ===")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error handling refresh widget", e)
+        }
+    }
+    
+    private fun handleToggleTask(context: Context, taskId: Int, widgetId: Int) {
+        try {
+            Log.d(TAG, "=== HANDLING TOGGLE TASK: TaskID=$taskId, WidgetID=$widgetId ===")
+            
+            // For task toggle, we need to tell the Flutter app about the change
+            // Store the toggle request in SharedPreferences for the app to pick up
+            val prefs = context.getSharedPreferences("widget_commands", Context.MODE_PRIVATE)
+            prefs.edit()
+                .putString("command", "toggle_task")
+                .putInt("task_id", taskId)
+                .putInt("widget_id", widgetId)
+                .putLong("timestamp", System.currentTimeMillis())
+                .apply()
+            
+            Log.d(TAG, "Toggle command stored in SharedPreferences")
+            
+            // Also trigger immediate widget refresh
+            handleRefreshWidget(context)
+            
+            Log.d(TAG, "=== TOGGLE TASK COMPLETE ===")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error handling toggle task", e)
         }
     }
 }

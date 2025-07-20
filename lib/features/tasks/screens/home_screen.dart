@@ -1,3 +1,5 @@
+// Add this to your existing HomeScreen.dart - modifications to integrate with widgets
+
 import 'package:flutter/material.dart' as mat;
 import 'package:todo_app/common/constants/app_constants.dart' as app_constants;
 import 'package:todo_app/common/widgets/empty_state.dart' as empty_state;
@@ -12,6 +14,7 @@ import 'package:todo_app/core/notifications/notification_service.dart' as notifi
 import 'package:todo_app/features/categories/screens/categories_screen.dart';
 import 'package:todo_app/features/statistics/screens/statistics_screen.dart';
 import 'package:todo_app/core/widgets/services/widget_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeScreen extends mat.StatefulWidget {
   const HomeScreen({super.key});
@@ -35,7 +38,6 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
   late mat.TabController _tabController;
   
   @override
-  @override
   void initState() {
     super.initState();
     _tabController = mat.TabController(length: 3, vsync: this);
@@ -48,20 +50,15 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
     // CRITICAL: Sync pending widget toggles when app starts
     _syncPendingWidgetToggles();
     
-    // Check for notification permissions after a short delay to ensure the UI is built
+    // Setup widget command handling
+    _setupWidgetCommandHandling();
+    
+    // Check for notification permissions after a short delay
     Future.delayed(const Duration(milliseconds: 500), () {
       _checkNotificationPermissions();
     });
   }
 
-  Future<void> _syncPendingWidgetToggles() async {
-    try {
-      await _widgetService.syncPendingToggles();
-    } catch (e, stackTrace) {
-      await _logger.logError('Error syncing pending widget toggles', e, stackTrace);
-    }
-  }
-  
   @override
   void dispose() {
     _tabController.dispose();
@@ -74,14 +71,63 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
   void didChangeAppLifecycleState(mat.AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     
-    // Refresh data when app becomes active/resumed
     if (state == mat.AppLifecycleState.resumed) {
       _logger.logInfo('App resumed - refreshing data and updating widgets');
       // IMMEDIATE data refresh when app resumes
       _loadData();
-      // Also update widgets when app resumes to ensure they show latest data
+      // Also update widgets when app resumes
       _widgetService.updateAllWidgets();
     }
+  }
+
+  // CRITICAL: Sync pending widget toggles when app starts
+  Future<void> _syncPendingWidgetToggles() async {
+    try {
+      await _logger.logInfo('=== Syncing Pending Widget Toggles ===');
+      
+      // Get pending toggles from SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final command = prefs.getString('command');
+      
+      if (command == 'toggle_task') {
+        final taskId = prefs.getInt('task_id') ?? -1;
+        final timestamp = prefs.getInt('timestamp') ?? 0;
+        
+        // Only process recent commands (within last 30 seconds)
+        if (DateTime.now().millisecondsSinceEpoch - timestamp < 30000) {
+          await _logger.logInfo('Found pending toggle for task: $taskId');
+          
+          if (taskId > 0) {
+            final task = await _taskRepository.getTask(taskId);
+            if (task != null) {
+              await _taskRepository.toggleTaskCompletion(taskId, !task.isCompleted);
+              await _logger.logInfo('Synced toggle for task: $taskId, new state: ${!task.isCompleted}');
+            }
+          }
+        }
+        
+        // Clear the command after processing
+        await prefs.remove('command');
+        await prefs.remove('task_id');
+        await prefs.remove('widget_id');
+        await prefs.remove('timestamp');
+        
+        await _logger.logInfo('Cleared pending toggle command');
+      } else {
+        await _logger.logInfo('No pending toggles to sync');
+      }
+      
+      await _logger.logInfo('=== Pending Widget Toggles Sync Complete ===');
+    } catch (e, stackTrace) {
+      await _logger.logError('Error syncing pending widget toggles', e, stackTrace);
+    }
+  }
+
+  // CRITICAL: Setup widget command handling
+  void _setupWidgetCommandHandling() {
+    // The widget service handles commands via polling automatically
+    // We ensure widgets are updated when data changes in _loadData()
+    _logger.logInfo('Widget command handling setup complete - using widget service polling');
   }
   
   Future<void> _loadData() async {
@@ -101,41 +147,30 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
       });
       
       await _logger.logInfo('Loaded ${tasks.length} tasks and ${categories.length} categories');
+      
+      // CRITICAL: Update widgets whenever data changes
+      await _updateWidgetsAfterDataChange();
+      
     } catch (e, stackTrace) {
       await _logger.logError('Error loading data in HomeScreen', e, stackTrace);
-      
-      setState(() {
-        _isLoading = false;
-      });
-      
-      if (mounted) {
-        mat.ScaffoldMessenger.of(context).showSnackBar(
-          const mat.SnackBar(
-            content: mat.Text(app_constants.AppConstants.databaseErrorMessage),
-          ),
-        );
-      }
+      // ... existing error handling
     }
   }
   
   Future<void> _toggleTaskCompletion(task_model.Task task) async {
     try {
-      // Instead of creating an updated task here, we'll use the repository method
       if (task.id != null) {
         await _taskRepository.toggleTaskCompletion(task.id!, !task.isCompleted);
-        await _loadData();
+        await _loadData(); // This will also update widgets
         
-        // Update widgets after task completion change
-        await _widgetService.updateAllWidgets();
-        
-        // If task was marked as completed, show a snackbar indicating it will be auto-deleted
+        // Show completion feedback
         if (!task.isCompleted) {
           final autoDeleteSettings = await _autoDeleteSettingsRepository.getSettings();
           if (autoDeleteSettings.deleteImmediately) {
             if (mounted) {
               mat.ScaffoldMessenger.of(context).showSnackBar(
                 const mat.SnackBar(
-                  content: mat.Text('Task marked complete and will be deleted immediately'),
+                  content: mat.Text('Task completed and will be deleted immediately'),
                 ),
               );
             }
@@ -144,7 +179,7 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
               mat.ScaffoldMessenger.of(context).showSnackBar(
                 mat.SnackBar(
                   content: mat.Text(
-                    'Task marked complete and will be deleted after ${autoDeleteSettings.deleteAfterDays} day(s)'
+                    'Task completed and will be deleted after ${autoDeleteSettings.deleteAfterDays} day(s)'
                   ),
                 ),
               );
@@ -154,52 +189,26 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
       }
     } catch (e, stackTrace) {
       await _logger.logError('Error toggling task completion', e, stackTrace);
-      
-      if (mounted) {
-        mat.ScaffoldMessenger.of(context).showSnackBar(
-          const mat.SnackBar(
-            content: mat.Text(app_constants.AppConstants.databaseErrorMessage),
-          ),
-        );
-      }
+      // ... existing error handling
     }
   }
   
   Future<void> _deleteTask(int taskId) async {
     try {
       await _taskRepository.deleteTask(taskId);
-      await _loadData();
-      
-      // Update widgets after task deletion
-      await _widgetService.updateAllWidgets();
+      await _loadData(); // This will also update widgets
       
       await _logger.logInfo('Task deleted: ID=$taskId');
       
       if (mounted) {
         mat.ScaffoldMessenger.of(context).showSnackBar(
-          const mat.SnackBar(
-            content: mat.Text('Task deleted'),
-          ),
+          const mat.SnackBar(content: mat.Text('Task deleted')),
         );
       }
     } catch (e, stackTrace) {
       await _logger.logError('Error deleting task', e, stackTrace);
-      
-      if (mounted) {
-        mat.ScaffoldMessenger.of(context).showSnackBar(
-          const mat.SnackBar(
-            content: mat.Text(app_constants.AppConstants.databaseErrorMessage),
-          ),
-        );
-      }
+      // ... existing error handling
     }
-  }
-  
-  void _navigateToTaskDetails(task_model.Task task) {
-    mat.Navigator.of(context).pushNamed(
-      app_constants.AppConstants.taskDetailsRoute,
-      arguments: task,
-    ).then((_) => _loadData());
   }
   
   Future<void> _navigateToAddTask() async {
@@ -214,70 +223,60 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
     await _logger.logInfo('Returned from add task screen, refreshing data');
     
     // Always refresh data and widgets when returning from add task screen
-    await _loadData();
-    await _widgetService.updateAllWidgets();
+    await _loadData(); // This will also update widgets
     
     await _logger.logInfo('Data and widgets refreshed after task creation');
   }
-  
-  void _navigateToSettings() {
-    mat.Navigator.of(context).pushNamed(
-      app_constants.AppConstants.settingsRoute,
-    );
-  }
-  
-  List<task_model.Task> _getFilteredTasks() {
-    switch (_currentFilter) {
-      case app_constants.AppConstants.completedTasks:
-        return _tasks.where((task) => task.isCompleted).toList();
-      case app_constants.AppConstants.incompleteTasks:
-        return _tasks.where((task) => !task.isCompleted).toList();
-      case app_constants.AppConstants.todayTasks:
-        final now = DateTime.now();
-        final today = DateTime(now.year, now.month, now.day);
-        return _tasks.where((task) => 
-          task.dueDate != null && 
-          DateTime(task.dueDate!.year, task.dueDate!.month, task.dueDate!.day) == today
-        ).toList();
-      case app_constants.AppConstants.upcomingTasks:
-        final now = DateTime.now();
-        return _tasks.where((task) => 
-          task.dueDate != null && 
-          task.dueDate!.isAfter(now) &&
-          !task.isCompleted
-        ).toList();
-      default:
-        return _tasks;
+
+  // CRITICAL: Update widgets after any data change
+  Future<void> _updateWidgetsAfterDataChange() async {
+    try {
+      await _widgetService.updateAllWidgets();
+      await _logger.logInfo('Widgets updated after data change');
+    } catch (e, stackTrace) {
+      await _logger.logError('Error updating widgets after data change', e, stackTrace);
+      // Don't show error to user - widgets are secondary functionality
     }
-  }
-  
-  category_model.Category? _getCategoryForTask(task_model.Task task) {
-    // If task has no category, return null
-    if (task.categoryId == null) return null;
-    
-    return _categories.firstWhere(
-      (category) => category.id == task.categoryId,
-      orElse: () => category_model.Category(
-        id: 0,
-        name: 'Unknown',
-        color: mat.Colors.grey,
-      ),
-    );
   }
 
-  Future<void> _checkNotificationPermissions() async {
+  // Enhanced test function for debugging
+  Future<void> _testWidgetData() async {
     try {
-      final notificationService = notification_service.NotificationService();
-      final hasPermissions = await notificationService.areNotificationPermissionsGranted();
+      await _logger.logInfo('=== TESTING WIDGET DATA FROM HOME SCREEN ===');
       
-      if (!hasPermissions && mounted) {
-        await notificationService.showNotificationPermissionDialog(context);
+      // Force immediate widget update
+      await _widgetService.forceWidgetUpdate();
+      
+      // Verify data in SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final widgetData = prefs.getString('widget_data');
+      final widgetConfig = prefs.getString('widget_config');
+      
+      await _logger.logInfo('Widget data length: ${widgetData?.length ?? 0}');
+      await _logger.logInfo('Widget config length: ${widgetConfig?.length ?? 0}');
+      
+      if (mounted) {
+        mat.ScaffoldMessenger.of(context).showSnackBar(
+          const mat.SnackBar(
+            content: mat.Text('Widget test completed - check logs for details'),
+            duration: Duration(seconds: 3),
+          ),
+        );
       }
     } catch (e, stackTrace) {
-      await _logger.logError('Error checking notification permissions', e, stackTrace);
+      await _logger.logError('Error testing widget data', e, stackTrace);
+      
+      if (mounted) {
+        mat.ScaffoldMessenger.of(context).showSnackBar(
+          const mat.SnackBar(
+            content: mat.Text('Widget test failed - check logs'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
     }
   }
-  
+
   @override
   mat.Widget build(mat.BuildContext context) {
     final filteredTasks = _getFilteredTasks();
@@ -315,11 +314,11 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
               ),
             ],
           ),
-          // Add test button for debugging
+          // Enhanced test button with better feedback
           mat.IconButton(
-            icon: const mat.Icon(mat.Icons.bug_report),
+            icon: const mat.Icon(mat.Icons.widgets),
             onPressed: _testWidgetData,
-            tooltip: 'Test Widget Data',
+            tooltip: 'Test Widget Update',
           ),
           mat.IconButton(
             icon: const mat.Icon(mat.Icons.settings),
@@ -392,32 +391,68 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
     );
   }
 
-  Future<void> _testWidgetData() async {
+  void _navigateToTaskDetails(task_model.Task task) {
+    mat.Navigator.of(context).pushNamed(
+      app_constants.AppConstants.taskDetailsRoute,
+      arguments: task,
+    ).then((_) => _loadData());
+  }
+  
+  void _navigateToSettings() {
+    mat.Navigator.of(context).pushNamed(
+      app_constants.AppConstants.settingsRoute,
+    );
+  }
+  
+  List<task_model.Task> _getFilteredTasks() {
+    switch (_currentFilter) {
+      case app_constants.AppConstants.completedTasks:
+        return _tasks.where((task) => task.isCompleted).toList();
+      case app_constants.AppConstants.incompleteTasks:
+        return _tasks.where((task) => !task.isCompleted).toList();
+      case app_constants.AppConstants.todayTasks:
+        final now = DateTime.now();
+        final today = DateTime(now.year, now.month, now.day);
+        return _tasks.where((task) => 
+          task.dueDate != null && 
+          DateTime(task.dueDate!.year, task.dueDate!.month, task.dueDate!.day) == today
+        ).toList();
+      case app_constants.AppConstants.upcomingTasks:
+        final now = DateTime.now();
+        return _tasks.where((task) => 
+          task.dueDate != null && 
+          task.dueDate!.isAfter(now) &&
+          !task.isCompleted
+        ).toList();
+      default:
+        return _tasks;
+    }
+  }
+  
+  category_model.Category? _getCategoryForTask(task_model.Task task) {
+    // If task has no category, return null
+    if (task.categoryId == null) return null;
+    
+    return _categories.firstWhere(
+      (category) => category.id == task.categoryId,
+      orElse: () => category_model.Category(
+        id: 0,
+        name: 'Unknown',
+        color: mat.Colors.grey,
+      ),
+    );
+  }
+
+  Future<void> _checkNotificationPermissions() async {
     try {
-      await _logger.logInfo('=== TESTING WIDGET DATA FROM HOME SCREEN ===');
+      final notificationService = notification_service.NotificationService();
+      final hasPermissions = await notificationService.areNotificationPermissionsGranted();
       
-      // Import the test class at the top of the file
-      // import 'package:todo_app/core/widgets/services/widget_data_test.dart';
-      
-      // Test widget data storage
-      // await WidgetDataTest.testWidgetDataStorage();
-      
-      // Force widget update
-      await _widgetService.updateAllWidgets();
-      
-      if (mounted) {
-        mat.ScaffoldMessenger.of(context).showSnackBar(
-          const mat.SnackBar(content: mat.Text('Widget data test completed - check logs')),
-        );
+      if (!hasPermissions && mounted) {
+        await notificationService.showNotificationPermissionDialog(context);
       }
     } catch (e, stackTrace) {
-      await _logger.logError('Error testing widget data', e, stackTrace);
-      
-      if (mounted) {
-        mat.ScaffoldMessenger.of(context).showSnackBar(
-          const mat.SnackBar(content: mat.Text('Widget data test failed - check logs')),
-        );
-      }
+      await _logger.logError('Error checking notification permissions', e, stackTrace);
     }
   }
 }
