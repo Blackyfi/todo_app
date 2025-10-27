@@ -143,26 +143,36 @@ class WidgetService {
   Future<void> _checkForWidgetCommands() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      
+
       // Check both normal and flutter-prefixed keys
       final command = prefs.getString('command') ?? prefs.getString('flutter.command');
-      
+
       if (command != null) {
         final taskId = prefs.getInt('task_id') ?? prefs.getInt('flutter.task_id') ?? -1;
         final widgetId = prefs.getInt('widget_id') ?? prefs.getInt('flutter.widget_id') ?? 1;
         final timestamp = prefs.getInt('timestamp') ?? prefs.getInt('flutter.timestamp') ?? 0;
-        
-        // Only process recent commands (within last 30 seconds)
-        if (DateTime.now().millisecondsSinceEpoch - timestamp < 30000) {
+        final now = DateTime.now().millisecondsSinceEpoch;
+        final age = now - timestamp;
+
+        await _logger.logInfo('>>> FOUND WIDGET COMMAND: $command');
+        await _logger.logInfo('>>> TaskID: $taskId, WidgetID: $widgetId');
+        await _logger.logInfo('>>> Timestamp: $timestamp, Current: $now, Age: ${age}ms');
+
+        // Only process recent commands (within last 60 seconds to handle slow startups)
+        if (age < 60000) {
           await _logger.logInfo('=== PROCESSING WIDGET COMMAND: $command ===');
           await _logger.logInfo('TaskID: $taskId, WidgetID: $widgetId, Timestamp: $timestamp');
-          
+
           switch (command) {
             case 'toggle_task':
+              await _logger.logInfo('>>> Calling _handleTaskToggle for taskId=$taskId');
               await _handleTaskToggle(taskId);
+              await _logger.logInfo('>>> _handleTaskToggle completed');
               break;
+            default:
+              await _logger.logWarning('>>> Unknown command: $command');
           }
-          
+
           // Clear both sets of command keys after processing
           await prefs.remove('command');
           await prefs.remove('task_id');
@@ -172,14 +182,14 @@ class WidgetService {
           await prefs.remove('flutter.task_id');
           await prefs.remove('flutter.widget_id');
           await prefs.remove('flutter.timestamp');
-          
+
           await _logger.logInfo('=== WIDGET COMMAND PROCESSED AND CLEARED ===');
         } else {
-          await _logger.logInfo('Command timestamp too old, ignoring: $command');
+          await _logger.logWarning('>>> Command timestamp too old, ignoring: $command (age: ${age}ms)');
         }
       }
     } catch (e, stackTrace) {
-      await _logger.logError('Error checking widget commands', e, stackTrace);
+      await _logger.logError('>>> Error checking widget commands', e, stackTrace);
     }
   }
 
@@ -437,7 +447,7 @@ class WidgetService {
     try {
       await _logger.logInfo('=== Updating All Widgets ===');
       final configs = await _widgetConfigRepository.getAllWidgetConfigs();
-      
+
       if (configs.isEmpty) {
         await _logger.logInfo('No widgets found, creating default widget');
         final defaultConfig = WidgetConfig(
@@ -446,23 +456,19 @@ class WidgetService {
           showCompleted: false,
           showCategories: true,
           showPriority: true,
-          maxTasks: 3,
+          maxTasks: 5,
           createdAt: DateTime.now(),
         );
         await createWidget(defaultConfig);
         return;
       }
-      
-      for (final config in configs) {
-        if (config.id != null) {
-          try {
-            await _prepareWidgetData(config.id!);
-          } catch (e) {
-            await _logger.logError('Failed to update widget: ${config.name}', e);
-          }
-        }
+
+      // IMPORTANT: Always use the first widget's config for now (single widget support)
+      // But save data without widget ID so all Android widgets can read it
+      if (configs.isNotEmpty && configs.first.id != null) {
+        await _prepareWidgetData(configs.first.id!);
       }
-      
+
       await _logger.logInfo('=== All Widgets Updated: ${configs.length} widgets ===');
     } catch (e, stackTrace) {
       await _logger.logError('=== Update All Widgets Failed ===', e, stackTrace);

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart' as mat;
 import 'package:flutter/services.dart' as services;
 import 'package:flutter/foundation.dart' show FlutterError, FlutterErrorDetails, debugPrint;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:todo_app/app.dart' as app;
 import 'package:todo_app/core/logger/logger_service.dart';
 import 'package:todo_app/core/database/database_config.dart';
@@ -139,7 +140,19 @@ void _setupWidgetActionHandling(WidgetService widgetService, LoggerService logge
         
         switch (action) {
           case 'add_task':
-            navigatorKey.currentState?.pushNamed(app_constants.AppConstants.addTaskRoute);
+            // First, navigate to home route to ensure we're on the home screen
+            // Use popUntil to remove all routes except home if needed
+            navigatorKey.currentState?.popUntil((route) => route.isFirst);
+
+            // Store a flag to indicate we should navigate to the home tab
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setBool('navigate_to_home_tab', true);
+
+            // Then navigate to add task route
+            navigatorKey.currentState?.pushNamed(app_constants.AppConstants.addTaskRoute).then((_) {
+              // Trigger global data refresh after returning from task creation
+              globalDataChangeNotifier.value = !globalDataChangeNotifier.value;
+            });
             break;
           case 'widget_settings':
             final widgetConfigRepository = WidgetConfigRepository();
@@ -162,6 +175,7 @@ void _setupWidgetActionHandling(WidgetService widgetService, LoggerService logge
             break;
           case 'background_sync':
           case 'background_toggle_task':
+          case 'silent_background_toggle_task':
             await widgetService.handleWidgetAction(action, data);
             globalDataChangeNotifier.value = !globalDataChangeNotifier.value;
             break;

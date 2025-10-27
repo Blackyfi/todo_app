@@ -15,6 +15,7 @@ import 'package:todo_app/features/categories/screens/categories_screen.dart';
 import 'package:todo_app/features/statistics/screens/statistics_screen.dart';
 import 'package:todo_app/core/widgets/services/widget_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:todo_app/main.dart' show globalDataChangeNotifier;
 
 class HomeScreen extends mat.StatefulWidget {
   const HomeScreen({super.key});
@@ -41,18 +42,24 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
   void initState() {
     super.initState();
     _tabController = mat.TabController(length: 3, vsync: this);
-    
+
     // Add observer to listen for app lifecycle changes
     mat.WidgetsBinding.instance.addObserver(this);
-    
+
+    // Listen to global data change notifications from widget actions
+    globalDataChangeNotifier.addListener(_onGlobalDataChange);
+
     _loadData();
-    
+
     // CRITICAL: Sync pending widget toggles when app starts
     _syncPendingWidgetToggles();
-    
+
     // Setup widget command handling
     _setupWidgetCommandHandling();
-    
+
+    // Check if we need to navigate to home tab (from widget action)
+    _checkNavigateToHomeTab();
+
     // Check for notification permissions after a short delay
     Future.delayed(const Duration(milliseconds: 500), () {
       _checkNotificationPermissions();
@@ -64,13 +71,15 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
     _tabController.dispose();
     // Remove observer when disposing
     mat.WidgetsBinding.instance.removeObserver(this);
+    // Remove global data change listener
+    globalDataChangeNotifier.removeListener(_onGlobalDataChange);
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(mat.AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    
+
     if (state == mat.AppLifecycleState.resumed) {
       _logger.logInfo('App resumed - refreshing data and updating widgets');
       // IMMEDIATE data refresh when app resumes
@@ -78,6 +87,12 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
       // Also update widgets when app resumes
       _widgetService.updateAllWidgets();
     }
+  }
+
+  // Callback for global data change notifications (e.g., from widget actions)
+  void _onGlobalDataChange() {
+    _logger.logInfo('Global data change notification received - refreshing HomeScreen data');
+    _loadData();
   }
 
   // CRITICAL: Sync pending widget toggles when app starts
@@ -132,6 +147,28 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
     // The widget service handles commands via polling automatically
     // We ensure widgets are updated when data changes in _loadData()
     _logger.logInfo('Widget command handling setup complete - using widget service polling');
+  }
+
+  // Check if we need to navigate to home tab (from widget action)
+  Future<void> _checkNavigateToHomeTab() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final shouldNavigateToHomeTab = prefs.getBool('navigate_to_home_tab') ?? false;
+
+      if (shouldNavigateToHomeTab) {
+        await _logger.logInfo('Navigate to home tab flag detected - switching to Tasks tab');
+
+        // Navigate to the Tasks tab (index 0)
+        _tabController.animateTo(0);
+
+        // Clear the flag
+        await prefs.setBool('navigate_to_home_tab', false);
+
+        await _logger.logInfo('Navigated to Tasks tab and cleared flag');
+      }
+    } catch (e, stackTrace) {
+      await _logger.logError('Error checking navigate to home tab flag', e, stackTrace);
+    }
   }
   
   Future<void> _loadData() async {
