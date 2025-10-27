@@ -236,48 +236,46 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildThemeSelector() {
-    return Column(
-      children: [
-        RadioListTile<ThemeMode>(
-          title: const Text('System Theme'),
-          value: ThemeMode.system,
-          groupValue: _themeMode,
-          onChanged: (value) => _setThemeMode(value!),
-        ),
-        RadioListTile<ThemeMode>(
-          title: const Text('Light Theme'),
-          value: ThemeMode.light,
-          groupValue: _themeMode,
-          onChanged: (value) => _setThemeMode(value!),
-        ),
-        RadioListTile<ThemeMode>(
-          title: const Text('Dark Theme'),
-          value: ThemeMode.dark,
-          groupValue: _themeMode,
-          onChanged: (value) => _setThemeMode(value!),
-        ),
-      ],
+    return RadioGroup<ThemeMode>(
+      groupValue: _themeMode,
+      onChanged: (value) => _setThemeMode(value!),
+      child: Column(
+        children: [
+          RadioListTile<ThemeMode>(
+            title: const Text('System Theme'),
+            value: ThemeMode.system,
+          ),
+          RadioListTile<ThemeMode>(
+            title: const Text('Light Theme'),
+            value: ThemeMode.light,
+          ),
+          RadioListTile<ThemeMode>(
+            title: const Text('Dark Theme'),
+            value: ThemeMode.dark,
+          ),
+        ],
+      ),
     );
   }
   
   Widget _buildTimeFormatSelector(TimeFormatProvider provider) {
-    return Column(
-      children: [
-        RadioListTile<TimeFormat>(
-          title: const Text('European Time (24-hour)'),
-          subtitle: const Text('Example: 14:30'),
-          value: TimeFormat.european,
-          groupValue: provider.timeFormat,
-          onChanged: (value) => provider.setTimeFormat(value!),
-        ),
-        RadioListTile<TimeFormat>(
-          title: const Text('American Time (12-hour)'),
-          subtitle: const Text('Example: 2:30 PM'),
-          value: TimeFormat.american,
-          groupValue: provider.timeFormat,
-          onChanged: (value) => provider.setTimeFormat(value!),
-        ),
-      ],
+    return RadioGroup<TimeFormat>(
+      groupValue: provider.timeFormat,
+      onChanged: (value) => provider.setTimeFormat(value!),
+      child: Column(
+        children: [
+          RadioListTile<TimeFormat>(
+            title: const Text('European Time (24-hour)'),
+            subtitle: const Text('Example: 14:30'),
+            value: TimeFormat.european,
+          ),
+          RadioListTile<TimeFormat>(
+            title: const Text('American Time (12-hour)'),
+            subtitle: const Text('Example: 2:30 PM'),
+            value: TimeFormat.american,
+          ),
+        ],
+      ),
     );
   }
 
