@@ -1,5 +1,4 @@
 import 'package:flutter/services.dart';
-import 'package:flutter/material.dart' show Color;
 import 'package:home_widget/home_widget.dart';
 import 'package:todo_app/core/widgets/models/widget_config.dart';
 import 'package:shared_preferences/shared_preferences.dart';

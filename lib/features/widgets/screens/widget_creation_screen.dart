@@ -346,7 +346,7 @@ class _WidgetCreationScreenState extends State<WidgetCreationScreen> {
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String?>(
-          value: _categoryFilter,
+          initialValue: _categoryFilter,
           decoration: const InputDecoration(
             hintText: 'All categories',
             prefixIcon: Icon(Icons.category),
