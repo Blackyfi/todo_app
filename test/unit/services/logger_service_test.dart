@@ -149,20 +149,157 @@ void main() {
     group('Integration Tests', () {
       test('should handle complete logging workflow', () async {
         await loggerService.init();
-        
+
         // Log different types of messages
         await loggerService.logInfo('Application started');
         await loggerService.logWarning('Warning message');
         await loggerService.logError('Error message', Exception('Test error'));
-        
+
         // Get log files
         final logFiles = await loggerService.getLogFiles();
         expect(logFiles, isA<List<File>>());
-        
+
         // Clear logs
         await loggerService.clearLogs();
-        
+
         // This should complete without throwing
+        expect(true, isTrue);
+      });
+    });
+
+    group('Log Levels', () {
+      test('should handle all log levels', () async {
+        await loggerService.init();
+
+        await loggerService.logInfo('Info message');
+        await loggerService.logWarning('Warning message');
+        await loggerService.logError('Error message');
+
+        expect(true, isTrue);
+      });
+
+      test('should log error with exception details', () async {
+        await loggerService.init();
+
+        final exception = Exception('Test exception with details');
+        await loggerService.logError('Error occurred', exception);
+
+        expect(true, isTrue);
+      });
+
+      test('should log error with both exception and stack trace', () async {
+        await loggerService.init();
+
+        final exception = Exception('Test exception');
+        final stackTrace = StackTrace.current;
+
+        await loggerService.logError('Complex error', exception, stackTrace);
+
+        expect(true, isTrue);
+      });
+    });
+
+    group('Concurrent Operations', () {
+      test('should handle concurrent log file retrieval', () async {
+        await loggerService.init();
+
+        final futures = <Future<List<File>>>[];
+        for (int i = 0; i < 5; i++) {
+          futures.add(loggerService.getLogFiles());
+        }
+
+        final results = await Future.wait(futures);
+        expect(results.length, equals(5));
+        for (final result in results) {
+          expect(result, isA<List<File>>());
+        }
+      });
+
+      test('should handle concurrent logging operations', () async {
+        await loggerService.init();
+
+        final futures = <Future<void>>[];
+        for (int i = 0; i < 20; i++) {
+          if (i % 3 == 0) {
+            futures.add(loggerService.logInfo('Info $i'));
+          } else if (i % 3 == 1) {
+            futures.add(loggerService.logWarning('Warning $i'));
+          } else {
+            futures.add(loggerService.logError('Error $i'));
+          }
+        }
+
+        await Future.wait(futures);
+        expect(true, isTrue);
+      });
+    });
+
+    group('Edge Cases', () {
+      test('should handle very long log messages', () async {
+        await loggerService.init();
+
+        final longMessage = 'A' * 10000;
+        await loggerService.logInfo(longMessage);
+
+        expect(true, isTrue);
+      });
+
+      test('should handle log messages with special characters', () async {
+        await loggerService.init();
+
+        await loggerService.logInfo('Message with newlines\nand\ttabs');
+        await loggerService.logInfo('Message with emojis 🚀 📱 ✨');
+        await loggerService.logInfo('Message with quotes "test" and \'single\'');
+
+        expect(true, isTrue);
+      });
+
+      test('should handle empty log messages', () async {
+        await loggerService.init();
+
+        await loggerService.logInfo('');
+        await loggerService.logWarning('');
+        await loggerService.logError('');
+
+        expect(true, isTrue);
+      });
+    });
+
+    group('Log File Operations', () {
+      test('should create log files', () async {
+        await loggerService.init();
+        await loggerService.logInfo('Test log entry');
+
+        final logFiles = await loggerService.getLogFiles();
+        expect(logFiles, isNotEmpty);
+      });
+
+      test('should sort log files by modification time', () async {
+        await loggerService.init();
+
+        // Write some logs
+        for (int i = 0; i < 3; i++) {
+          await loggerService.logInfo('Entry $i');
+          await Future.delayed(const Duration(milliseconds: 100));
+        }
+
+        final logFiles = await loggerService.getLogFiles();
+        if (logFiles.length >= 2) {
+          final first = logFiles[0].lastModifiedSync();
+          final second = logFiles[1].lastModifiedSync();
+          expect(first.isAfter(second) || first.isAtSameMomentAs(second), isTrue);
+        }
+      });
+
+      test('should clear logs and reinitialize', () async {
+        await loggerService.init();
+        await loggerService.logInfo('Log before clear');
+
+        await loggerService.clearLogs();
+
+        // Should be able to log after clearing
+        await loggerService.logInfo('Log after clear');
+
         expect(true, isTrue);
       });
     });

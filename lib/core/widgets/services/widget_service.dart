@@ -134,10 +134,11 @@ class WidgetService {
   }
 
   // CRITICAL: Command polling to handle widget actions
+  // Optimized to 2 seconds to reduce battery usage while maintaining responsiveness
   void _startCommandPolling() {
     _commandPoller?.cancel();
-    _commandPoller = Timer.periodic(const Duration(seconds: 1), (_) => _checkForWidgetCommands());
-    _logger.logInfo('Started widget command polling (1 second interval)');
+    _commandPoller = Timer.periodic(const Duration(seconds: 2), (_) => _checkForWidgetCommands());
+    _logger.logInfo('Started widget command polling (2 second interval for battery optimization)');
   }
 
   Future<void> _checkForWidgetCommands() async {

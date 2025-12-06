@@ -9,9 +9,6 @@
 .history
 .idea
 .vscode
-ios/
-linux/
-macos/
 
 
 
@@ -94,10 +91,9 @@ unlinked_spec.ds
 **/ios/Runner/GeneratedPluginRegistrant.*
 
 # macOS
-**/Flutter/ephemeral/
-**/Pods/
+**/macos/Flutter/ephemeral/
 **/macos/Flutter/GeneratedPluginRegistrant.swift
-**/macos/Flutter/ephemeral
+**/macos/Pods/
 **/xcuserdata/
 
 # Windows
@@ -123,3 +119,5 @@ app.*.symbols
 !**/ios/**/default.perspectivev3
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
 !/dev/ci/**/Gemfile.lock
+
+.claude
