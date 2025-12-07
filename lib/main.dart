@@ -12,6 +12,7 @@ import 'package:todo_app/core/widgets/repository/widget_config_repository.dart';
 import 'package:todo_app/core/widgets/models/widget_config.dart';
 import 'package:todo_app/common/constants/app_constants.dart' as app_constants;
 import 'package:todo_app/features/widgets/screens/widget_creation_screen.dart';
+import 'package:todo_app/core/security/services/security_service.dart';
 
 // Global navigator key to handle navigation from widget actions
 final mat.GlobalKey<mat.NavigatorState> navigatorKey = mat.GlobalKey<mat.NavigatorState>();
@@ -79,22 +80,33 @@ void main() async {
 
 Future<void> _initializeServices(LoggerService logger) async {
   try {
+    // Initialize security service
+    final securityService = SecurityService();
+    await securityService.initialize();
+    await logger.logInfo('Security service initialized');
+
     // Auto-delete service
     final autoDeleteService = AutoDeleteService();
     await autoDeleteService.processCompletedTasks();
     await logger.logInfo('Auto-delete service initialized');
-    
+
     // Widget service
     final widgetService = WidgetService();
     await widgetService.init();
     await logger.logInfo('Widget service initialized');
-    
-    // Ensure default widget
-    await _ensureDefaultWidget(widgetService, logger);
-    
+
+    // Check if security is enabled and disable widgets if necessary
+    if (await securityService.isSecurityEnabled()) {
+      await widgetService.disableAllWidgets();
+      await logger.logInfo('Widgets disabled due to active security');
+    } else {
+      // Ensure default widget only if security is not enabled
+      await _ensureDefaultWidget(widgetService, logger);
+    }
+
     // Setup widget action handling
     _setupWidgetActionHandling(widgetService, logger);
-    
+
   } catch (e, stackTrace) {
     await logger.logError('Error initializing services', e, stackTrace);
     // Continue without services

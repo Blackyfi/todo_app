@@ -65,6 +65,30 @@ class _WidgetManagementScreenState extends State<WidgetManagementScreen> {
      return;
    }
 
+   // Check if security is enabled
+   if (await _widgetService.isSecurityEnabled()) {
+     if (mounted) {
+       showDialog(
+         context: context,
+         builder: (context) => AlertDialog(
+           icon: const Icon(Icons.lock, size: 48, color: Colors.orange),
+           title: const Text('Widgets Disabled'),
+           content: const Text(
+             'Home screen widgets are automatically disabled when password protection is enabled to keep your data secure.\n\n'
+             'To use widgets, please disable password protection in Settings > Security & Privacy.',
+           ),
+           actions: [
+             TextButton(
+               onPressed: () => Navigator.of(context).pop(),
+               child: const Text('OK'),
+             ),
+           ],
+         ),
+       );
+     }
+     return;
+   }
+
    final result = await Navigator.of(context).push<bool>(
      MaterialPageRoute(
        builder: (_) => const WidgetCreationScreen(),

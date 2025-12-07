@@ -11,6 +11,7 @@ import 'package:todo_app/core/logger/logger_service.dart';
 import 'package:intl/intl.dart' as intl;
 import 'dart:convert';
 import 'dart:async';
+import 'package:todo_app/core/security/services/security_service.dart';
 
 class WidgetService {
   static final WidgetService _instance = WidgetService._internal();
@@ -21,6 +22,7 @@ class WidgetService {
   final task_repository.TaskRepository _taskRepository = task_repository.TaskRepository();
   final category_repository.CategoryRepository _categoryRepository = category_repository.CategoryRepository();
   final LoggerService _logger = LoggerService();
+  final SecurityService _securityService = SecurityService();
 
   bool _isInitialized = false;
   static const platform = MethodChannel('com.example.todo_app/widget');
@@ -235,18 +237,65 @@ class WidgetService {
     }
   }
 
+  Future<bool> isSecurityEnabled() async {
+    try {
+      return await _securityService.isSecurityEnabled();
+    } catch (e) {
+      await _logger.logError('Error checking security status', e);
+      return false;
+    }
+  }
+
+  Future<void> disableAllWidgets() async {
+    try {
+      await _logger.logInfo('=== Disabling All Widgets (Security Enabled) ===');
+
+      // Delete all widget configurations from database
+      final configs = await _widgetConfigRepository.getAllWidgetConfigs();
+      for (final config in configs) {
+        await _widgetConfigRepository.deleteWidgetConfig(config.id!);
+      }
+
+      // Clear widget data from SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(widgetDataKey);
+      await prefs.remove(widgetConfigKey);
+      await prefs.remove('flutter.$widgetDataKey');
+      await prefs.remove('flutter.$widgetConfigKey');
+
+      // Clear widget data from HomeWidget plugin
+      await HomeWidget.saveWidgetData<String>(widgetDataKey, null);
+      await HomeWidget.saveWidgetData<String>(widgetConfigKey, null);
+      await HomeWidget.saveWidgetData<String>('flutter.$widgetDataKey', null);
+      await HomeWidget.saveWidgetData<String>('flutter.$widgetConfigKey', null);
+
+      // Update widget display to show empty/disabled state
+      await _updateWidgetDisplay();
+
+      await _logger.logInfo('=== All Widgets Disabled ===');
+    } catch (e, stackTrace) {
+      await _logger.logError('Error disabling widgets', e, stackTrace);
+    }
+  }
+
   Future<void> createWidget(WidgetConfig config) async {
     if (!_isInitialized) {
       await init();
     }
 
+    // Check if security is enabled
+    if (await isSecurityEnabled()) {
+      await _logger.logWarning('Widget creation blocked: Security is enabled');
+      throw Exception('Widgets are disabled when password protection is enabled. Please disable password protection in Settings to use widgets.');
+    }
+
     try {
       await _logger.logInfo('=== Creating Widget ===');
       await _logger.logInfo('Config: ${config.name}, Size: ${config.size.label}, MaxTasks: ${config.maxTasks}');
-      
+
       final configWithTimestamp = config.copyWith(createdAt: DateTime.now());
       final widgetId = await _widgetConfigRepository.insertWidgetConfig(configWithTimestamp);
-      
+
       await _logger.logInfo('Widget config inserted with ID: $widgetId');
       await _prepareWidgetData(widgetId);
       await _logger.logInfo('=== Widget Creation Complete ===');

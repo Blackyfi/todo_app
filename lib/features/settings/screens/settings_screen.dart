@@ -9,6 +9,9 @@ import 'package:todo_app/core/settings/repository/auto_delete_settings_repositor
 import 'package:flutter/services.dart';
 import 'package:todo_app/core/notifications/notification_service.dart'; // Add this import
 import 'package:todo_app/features/widgets/screens/widget_management_screen.dart';
+import 'package:todo_app/core/security/providers/security_provider.dart';
+import 'package:todo_app/features/security/screens/setup_security_screen.dart';
+import 'package:todo_app/features/security/screens/security_info_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -137,6 +140,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ? const Center(child: CircularProgressIndicator())
           : ListView(
               children: [
+                _buildSection(
+                  title: 'Security & Privacy',
+                  children: [
+                    _buildSecuritySettings(),
+                  ],
+                ),
                 _buildSection(
                   title: 'Appearance',
                   children: [
@@ -276,6 +285,66 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildSecuritySettings() {
+    final securityProvider = context.watch<SecurityProvider>();
+
+    return Column(
+      children: [
+        ListTile(
+          leading: Icon(
+            securityProvider.isSecurityEnabled ? Icons.lock : Icons.lock_open,
+            color: securityProvider.isSecurityEnabled ? Colors.green : null,
+          ),
+          title: Text(securityProvider.isSecurityEnabled
+              ? 'Password Protection Enabled'
+              : 'No Password Protection'),
+          subtitle: Text(securityProvider.isSecurityEnabled
+              ? '${securityProvider.authType.displayName} - Tap to manage'
+              : 'Protect your data with PIN or Password'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const SetupSecurityScreen(),
+              ),
+            );
+            setState(() {});
+          },
+        ),
+        if (securityProvider.isSecurityEnabled) ...[
+          ListTile(
+            leading: const Icon(Icons.info_outline),
+            title: const Text('Security Details'),
+            subtitle: const Text('View encryption information'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const SecurityInfoScreen(),
+                ),
+              );
+            },
+          ),
+          if (securityProvider.canUseBiometric)
+            SwitchListTile(
+              secondary: const Icon(Icons.fingerprint),
+              title: const Text('Biometric Authentication'),
+              subtitle: Text(securityProvider.biometricEnabled
+                  ? 'Enabled - Use fingerprint or face to unlock'
+                  : 'Disabled - Use password only'),
+              value: securityProvider.biometricEnabled,
+              onChanged: (value) async {
+                await securityProvider.setBiometricEnabled(value);
+                setState(() {});
+              },
+            ),
+        ],
+      ],
     );
   }
 

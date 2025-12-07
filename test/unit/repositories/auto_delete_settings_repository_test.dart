@@ -38,7 +38,7 @@ void main() {
         );
 
         // Insert custom settings
-        final id = await repository.insertSettings(customSettings);
+        await repository.insertSettings(customSettings);
 
         // Get settings should return the custom settings
         final retrievedSettings = await repository.getSettings();
