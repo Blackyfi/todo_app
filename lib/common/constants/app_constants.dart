@@ -12,6 +12,12 @@ class AppConstants {
   static const String statisticsRoute = '/statistics';
   static const String settingsRoute = '/settings';
   static const String logViewerRoute = '/log-viewer';
+
+  // Shopping Routes
+  static const String shoppingListsRoute = '/shopping-lists';
+  static const String createShoppingListRoute = '/create-shopping-list';
+  static const String editShoppingListRoute = '/edit-shopping-list';
+  static const String shoppingModeRoute = '/shopping-mode';
   
   // Database
   static const String databaseName = 'todo_app.db';

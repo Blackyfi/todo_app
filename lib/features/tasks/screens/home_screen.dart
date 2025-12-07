@@ -387,11 +387,21 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
             tooltip: 'Test Widget Update',
           ),
           mat.IconButton(
+            icon: const mat.Icon(mat.Icons.shopping_cart),
+            onPressed: _navigateToShoppingLists,
+            tooltip: 'Shopping Lists',
+          ),
+          mat.IconButton(
             icon: const mat.Icon(mat.Icons.settings),
             onPressed: _navigateToSettings,
             tooltip: 'Settings',
           ),
         ] : [
+          mat.IconButton(
+            icon: const mat.Icon(mat.Icons.shopping_cart),
+            onPressed: _navigateToShoppingLists,
+            tooltip: 'Shopping Lists',
+          ),
           mat.IconButton(
             icon: const mat.Icon(mat.Icons.settings),
             onPressed: _navigateToSettings,
@@ -467,6 +477,12 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
   void _navigateToSettings() {
     mat.Navigator.of(context).pushNamed(
       app_constants.AppConstants.settingsRoute,
+    );
+  }
+
+  void _navigateToShoppingLists() {
+    mat.Navigator.of(context).pushNamed(
+      app_constants.AppConstants.shoppingListsRoute,
     );
   }
   

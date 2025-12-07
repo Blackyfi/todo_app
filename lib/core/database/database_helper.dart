@@ -108,6 +108,32 @@ class DatabaseHelper {
         )
       ''');
 
+      // Create shopping lists table
+      await db.execute('''
+        CREATE TABLE shoppingLists(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          createdAt INTEGER NOT NULL,
+          lastModifiedAt INTEGER
+        )
+      ''');
+
+      // Create grocery items table
+      await db.execute('''
+        CREATE TABLE groceryItems(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          shoppingListId INTEGER NOT NULL,
+          name TEXT NOT NULL,
+          quantity REAL NOT NULL DEFAULT 1.0,
+          unit TEXT NOT NULL DEFAULT 'pieces',
+          isPurchased INTEGER NOT NULL DEFAULT 0,
+          createdAt INTEGER NOT NULL,
+          purchasedAt INTEGER,
+          displayOrder INTEGER NOT NULL DEFAULT 0,
+          FOREIGN KEY (shoppingListId) REFERENCES shoppingLists (id) ON DELETE CASCADE
+        )
+      ''');
+
       // Insert default categories
       await db.insert('categories', {'name': 'Work', 'color': 0xFF2196F3});
       await db.insert('categories', {'name': 'Personal', 'color': 0xFF4CAF50});

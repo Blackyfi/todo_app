@@ -10,6 +10,10 @@ import 'package:todo_app/features/settings/screens/settings_screen.dart';
 import 'package:todo_app/features/settings/screens/log_viewer_screen.dart';
 import 'package:todo_app/features/widgets/screens/widget_creation_screen.dart';
 import 'package:todo_app/core/widgets/models/widget_config.dart';
+import 'package:todo_app/features/shopping/screens/shopping_lists_screen.dart' as shopping_lists_screen;
+import 'package:todo_app/features/shopping/screens/create_edit_shopping_list_screen.dart' as create_edit_shopping_list_screen;
+import 'package:todo_app/features/shopping/screens/shopping_mode_screen.dart' as shopping_mode_screen;
+import 'package:todo_app/features/shopping/models/shopping_list.dart' as shopping_list_model;
 
 class AppRouter {
   static mat.Route<dynamic> generateRoute(mat.RouteSettings settings) {
@@ -59,7 +63,29 @@ class AppRouter {
         return mat.MaterialPageRoute(
           builder: (_) => WidgetCreationScreen(existingConfig: widgetConfig),
         );
-        
+
+      case app_constants.AppConstants.shoppingListsRoute:
+        return mat.MaterialPageRoute(
+          builder: (_) => const shopping_lists_screen.ShoppingListsScreen(),
+        );
+
+      case app_constants.AppConstants.createShoppingListRoute:
+        return mat.MaterialPageRoute(
+          builder: (_) => const create_edit_shopping_list_screen.CreateEditShoppingListScreen(),
+        );
+
+      case app_constants.AppConstants.editShoppingListRoute:
+        final shoppingList = settings.arguments as shopping_list_model.ShoppingList;
+        return mat.MaterialPageRoute(
+          builder: (_) => create_edit_shopping_list_screen.CreateEditShoppingListScreen(shoppingList: shoppingList),
+        );
+
+      case app_constants.AppConstants.shoppingModeRoute:
+        final shoppingList = settings.arguments as shopping_list_model.ShoppingList;
+        return mat.MaterialPageRoute(
+          builder: (_) => shopping_mode_screen.ShoppingModeScreen(shoppingList: shoppingList),
+        );
+
       default:
         return mat.MaterialPageRoute(
           builder: (_) => mat.Scaffold(

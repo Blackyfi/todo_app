@@ -216,6 +216,162 @@
 - **Voice Input**: System voice input support for task creation
 - **Quick Actions**: Shortcuts and rapid access patterns for power users
 
+## Shopping Lists & Grocery Management
+
+### Core Shopping Features
+
+| Feature | Description |
+|---------|-------------|
+| **Create Shopping Lists** | Create multiple named shopping lists for different shopping trips or stores |
+| **Add Grocery Items** | Add items with name, quantity (number or weight), and customizable units |
+| **Edit Lists Anytime** | Modify list names and items even after saving for maximum flexibility |
+| **Shopping Mode** | Dedicated interface optimized for in-store shopping with large touch targets |
+| **Progress Tracking** | Real-time visual indicators showing purchased vs total items |
+| **Smart Organization** | Automatic separation of purchased and unpurchased items |
+
+### Grocery Item Management
+
+#### Flexible Quantity Entry
+
+- **Numeric Quantities**: Enter whole numbers or decimals (e.g., 2, 1.5, 0.5)
+- **Weight-based Items**: Support for kilogram and gram measurements
+- **Volume Measurements**: Support for liters and milliliters
+- **International Units**: Support for pounds, ounces, and other common units
+- **Count-based Items**: Pieces, dozen, pack, box for discrete items
+
+#### Supported Unit Types
+
+- **Count**: pieces (default)
+- **Metric Weight**: kg, g
+- **Metric Volume**: L, mL
+- **Imperial Weight**: lb, oz
+- **Packaging**: dozen, pack, box
+
+### Shopping Mode Interface
+
+#### Optimized In-Store Experience
+
+- **Large Touch Targets**: Spacious, easy-to-tap buttons for quick checking while shopping
+- **Two-Section Layout**: Clean separation between items to buy and purchased items
+- **Visual Hierarchy**: "TO BUY" section prominently displayed at top
+- **Smart Styling**: Purchased items move to bottom with reduced opacity and strikethrough text
+- **Progress Indicator**: Real-time progress bar showing shopping completion percentage
+
+#### Interactive Features
+
+- **One-Tap Toggle**: Simple tap to mark items as purchased or unpurchased
+- **Visual Feedback**: Immediate visual change with smooth animations
+- **Reversible Actions**: Easily undo purchases by tapping purchased items
+- **Reset Functionality**: Reset all items to unpurchased for list reuse
+- **Pull-to-Refresh**: Refresh list data with standard pull gesture
+
+### List Management & Organization
+
+#### Shopping List Operations
+
+- **Multiple Lists**: Create unlimited shopping lists for different purposes
+- **Named Lists**: Descriptive names like "Weekly Groceries", "Party Supplies", etc.
+- **Last Modified Tracking**: Automatic timestamp tracking for recent changes
+- **Quick Access**: Fast navigation between list view and shopping mode
+- **Deletion Safety**: Confirmation dialogs prevent accidental list deletion
+
+#### Visual Progress Indicators
+
+- **Progress Bar**: Linear progress indicator on each list card
+- **Item Counters**: "X of Y items" display for quick overview
+- **Completion Badge**: Visual checkmark when all items are purchased
+- **Color-Coded Progress**: Different colors for in-progress vs completed lists
+
+### Data Persistence & Synchronization
+
+#### Reliable Storage
+
+- **SQLite Database**: Robust storage with full ACID compliance
+- **Cascade Deletion**: Deleting a list automatically removes all associated items
+- **Modification Tracking**: Automatic lastModifiedAt timestamp updates
+- **Display Order Preservation**: Items maintain their order from creation
+- **Purchase History**: Tracks when each item was marked as purchased
+
+#### Data Integrity
+
+- **Foreign Key Constraints**: Ensures referential integrity between lists and items
+- **Transaction Safety**: All operations wrapped in database transactions
+- **Error Recovery**: Graceful error handling with user-friendly messages
+- **Automatic Updates**: Real-time UI updates after any data change
+
+### User Interface Design
+
+#### Material Design 3 Integration
+
+- **Consistent Theming**: Matches the app's existing Material 3 design language
+- **Adaptive Colors**: Respects system theme (light/dark mode)
+- **Card-based Layout**: Clean, modern card design for lists and items
+- **Smooth Animations**: Fluid transitions between states and screens
+- **Responsive Design**: Works beautifully on all screen sizes
+
+#### Shopping Mode Visual Design
+
+- **Circular Checkboxes**: Large, clear checkboxes with primary color when checked
+- **Grayed-out Purchased Items**: Reduced opacity (50%) for completed items
+- **Strikethrough Text**: Clear visual indicator of purchased status
+- **Well-spaced Layout**: Extra padding (20px) for comfortable touch targets
+- **Section Headers**: Clear "TO BUY" and "PURCHASED" labels with distinct styling
+
+### Workflow & Use Cases
+
+#### Typical Shopping Workflow
+
+1. **Plan**: Create a new shopping list with a descriptive name
+2. **Add Items**: Build your list with quantities and units
+3. **Edit**: Modify items, add forgotten items, adjust quantities
+4. **Shop**: Enter shopping mode for in-store experience
+5. **Check Off**: Tap items as you add them to your cart
+6. **Review**: See purchased items below for verification
+7. **Complete**: All items checked creates a visual completion indicator
+8. **Reuse or Delete**: Reset list for next time or delete when done
+
+#### Advanced Usage Patterns
+
+- **Multiple Store Lists**: Create separate lists for different stores
+- **Category-based Shopping**: Organize items by store sections
+- **Recurring Lists**: Keep and reset weekly grocery lists
+- **Special Occasion Lists**: Party supplies, holiday meals, travel items
+- **Shared Shopping**: One person creates, another shops (future sync feature)
+
+### Navigation & Access
+
+#### Quick Access Points
+
+- **Shopping Cart Icon**: Prominent icon in app bar on all screens
+- **Always Available**: Access shopping lists from Tasks, Categories, or Statistics tabs
+- **Direct Navigation**: One tap from home screen to shopping lists
+- **Breadcrumb Navigation**: Clear back navigation to return to main app
+
+#### Screen Flow
+
+```
+Home Screen → Shopping Lists → Create/Edit List → Shopping Mode
+     ↓             ↓                    ↓                ↓
+  Cart Icon    List Cards         Item Entry      Check Items
+```
+
+### Performance & Optimization
+
+#### Efficient Operations
+
+- **Lazy Loading**: Items loaded only when needed
+- **Batch Operations**: Multiple item changes processed efficiently
+- **Optimized Queries**: Database queries use proper indexing
+- **Minimal Redraws**: UI updates only affected components
+- **Fast Navigation**: Instant screen transitions with no lag
+
+#### Scalability
+
+- **Unlimited Lists**: No arbitrary limits on number of shopping lists
+- **Large Item Counts**: Handles lists with 100+ items smoothly
+- **Efficient Sorting**: Fast sorting by purchase status and display order
+- **Memory Management**: Proper cleanup and disposal of resources
+
 ## Cross-Platform Features
 
 ### Platform-Specific Optimizations
