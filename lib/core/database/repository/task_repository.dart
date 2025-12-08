@@ -270,26 +270,81 @@ class TaskRepository {
   Future<int> toggleTaskCompletion(int taskId, bool completed) async {
     try {
       final task = await getTask(taskId);
-      
+
       if (task == null) {
         await _logger.logWarning('Cannot toggle completion: Task not found: ID=$taskId');
         return 0;
       }
-      
+
       final completedAt = completed ? DateTime.now() : null;
-      
+
       final updatedTask = task.copyWith(
         isCompleted: completed,
         completedAt: completedAt,
       );
-      
+
       final result = await updateTask(updatedTask);
-      
+
       await _logger.logInfo('Task completion toggled: ID=$taskId, Completed=$completed, CompletedAt=${completedAt?.toIso8601String()}');
-      
+
       return result;
     } catch (e, stackTrace) {
       await _logger.logError('Error toggling task completion', e, stackTrace);
+      rethrow;
+    }
+  }
+
+  /// Optimized query for widget display - uses SQL filtering and sorting for better performance
+  /// P2: This replaces in-memory filtering with efficient SQL queries
+  Future<List<task_model.Task>> getTasksForWidget({
+    int? categoryId,
+    bool showCompleted = false,
+    int maxTasks = 20,
+  }) async {
+    try {
+      final db = await _databaseHelper.database;
+
+      // Build WHERE clause
+      final whereConditions = <String>[];
+      final whereArgs = <dynamic>[];
+
+      // Apply category filter
+      if (categoryId != null) {
+        whereConditions.add('categoryId = ?');
+        whereArgs.add(categoryId);
+      }
+
+      // Apply completion filter
+      if (!showCompleted) {
+        whereConditions.add('isCompleted = 0');
+      }
+
+      final where = whereConditions.isNotEmpty ? whereConditions.join(' AND ') : null;
+
+      // Execute optimized query with SQL-level sorting
+      // Sort order: incomplete first, then by priority (high=0, medium=1, low=2), then by due date
+      final maps = await db.query(
+        'tasks',
+        where: where,
+        whereArgs: whereArgs.isNotEmpty ? whereArgs : null,
+        orderBy: 'isCompleted ASC, priority ASC, '
+            'CASE WHEN dueDate IS NULL THEN 1 ELSE 0 END, '
+            'dueDate ASC',
+        limit: maxTasks,
+      );
+
+      final tasks = List.generate(maps.length, (i) {
+        return task_model.Task.fromMap(maps[i]);
+      });
+
+      await _logger.logInfo(
+        'Retrieved tasks for widget: Count=${tasks.length}, '
+        'CategoryFilter=${categoryId != null}, ShowCompleted=$showCompleted, Limit=$maxTasks',
+      );
+
+      return tasks;
+    } catch (e, stackTrace) {
+      await _logger.logError('Error getting tasks for widget', e, stackTrace);
       rethrow;
     }
   }

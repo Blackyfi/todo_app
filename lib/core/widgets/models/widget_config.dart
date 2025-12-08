@@ -79,9 +79,11 @@ class WidgetConfig {
 }
 
 enum WidgetSize {
-  small,
-  medium,
-  large,
+  small,      // 2x2
+  medium,     // 4x2
+  large,      // 4x4
+  extraLarge, // 4x5 - More vertical space
+  wide,       // 5x2 - Extra wide horizontal
 }
 
 extension WidgetSizeExtension on WidgetSize {
@@ -93,17 +95,57 @@ extension WidgetSizeExtension on WidgetSize {
         return 'Medium (4x2)';
       case WidgetSize.large:
         return 'Large (4x4)';
+      case WidgetSize.extraLarge:
+        return 'Extra Large (4x5)';
+      case WidgetSize.wide:
+        return 'Wide (5x2)';
     }
   }
 
   mat.Size get size {
     switch (this) {
       case WidgetSize.small:
-        return const mat.Size(150, 150);
+        return const mat.Size(150, 150);       // 2x2 grid cells
       case WidgetSize.medium:
-        return const mat.Size(300, 150);
+        return const mat.Size(300, 150);       // 4x2 grid cells
       case WidgetSize.large:
-        return const mat.Size(300, 300);
+        return const mat.Size(300, 300);       // 4x4 grid cells
+      case WidgetSize.extraLarge:
+        return const mat.Size(300, 375);       // 4x5 grid cells
+      case WidgetSize.wide:
+        return const mat.Size(375, 150);       // 5x2 grid cells
+    }
+  }
+
+  /// Recommended maximum tasks for each widget size
+  int get recommendedMaxTasks {
+    switch (this) {
+      case WidgetSize.small:
+        return 2;
+      case WidgetSize.medium:
+        return 3;
+      case WidgetSize.large:
+        return 6;
+      case WidgetSize.extraLarge:
+        return 8;
+      case WidgetSize.wide:
+        return 4;
+    }
+  }
+
+  /// Description for each widget size
+  String get description {
+    switch (this) {
+      case WidgetSize.small:
+        return 'Compact size, shows 1-2 tasks';
+      case WidgetSize.medium:
+        return 'Standard size, shows 2-3 tasks';
+      case WidgetSize.large:
+        return 'Large size, shows 4-6 tasks';
+      case WidgetSize.extraLarge:
+        return 'Extra tall, shows 6-8 tasks';
+      case WidgetSize.wide:
+        return 'Wide format, shows 3-4 tasks';
     }
   }
 }

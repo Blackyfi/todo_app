@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart' as mat;
 import 'package:flutter/services.dart' as services;
 import 'package:flutter/foundation.dart' show FlutterError, FlutterErrorDetails, debugPrint;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:todo_app/app.dart' as app;
 import 'package:todo_app/core/logger/logger_service.dart';
@@ -64,9 +65,13 @@ void main() async {
       await _initializeServices(logger);
       
       await logger.logInfo('===== APPLICATION STARTUP COMPLETE =====');
-      
-      // Launch app
-      mat.runApp(app.TodoApp(navigatorKey: navigatorKey));
+
+      // Launch app with Riverpod ProviderScope for reactive state management
+      mat.runApp(
+        ProviderScope(
+          child: app.TodoApp(navigatorKey: navigatorKey),
+        ),
+      );
       
     } catch (e, stackTrace) {
       await logger.logError('CRITICAL ERROR during app startup', e, stackTrace);
