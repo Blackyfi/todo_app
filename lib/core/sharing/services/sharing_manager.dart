@@ -81,9 +81,11 @@ class SharingManager {
     final file = XFile(filePath);
     final text = shareText ?? _getShareText(shareData, password != null);
 
-    final result = await Share.shareXFiles(
-      [file],
-      text: text,
+    final result = await SharePlus.instance.share(
+      ShareParams(
+        files: [file],
+        subject: text,
+      ),
     );
 
     return result;

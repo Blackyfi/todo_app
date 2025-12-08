@@ -12,6 +12,11 @@ import 'package:todo_app/features/widgets/screens/widget_management_screen.dart'
 import 'package:todo_app/core/security/providers/security_provider.dart';
 import 'package:todo_app/features/security/screens/setup_security_screen.dart';
 import 'package:todo_app/features/security/screens/security_info_screen.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:todo_app/core/sharing/widgets/import_dialog.dart';
+import 'package:todo_app/core/sharing/models/share_data.dart';
+import 'package:todo_app/core/database/repository/task_repository.dart';
+import 'package:todo_app/core/database/repository/shopping_repository.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -128,6 +133,126 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  Future<void> _importSharedData() async {
+    try {
+      // Pick file
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['json', 'encrypted'],
+      );
+
+      if (result == null || result.files.single.path == null) {
+        return; // User cancelled
+      }
+
+      final filePath = result.files.single.path!;
+
+      // Show import dialog
+      if (!mounted) return;
+
+      final shareData = await showDialog<ShareData>(
+        context: context,
+        builder: (context) => ImportDialog(filePath: filePath),
+      );
+
+      if (shareData == null) return; // User cancelled import
+
+      // Import the data
+      await _handleImportedData(shareData);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Import failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleImportedData(ShareData shareData) async {
+    try {
+      int importedCount = 0;
+
+      switch (shareData.type) {
+        case ShareDataType.task:
+          final task = shareData.extractTask();
+          if (task != null) {
+            await TaskRepository().insertTask(task);
+            importedCount = 1;
+          }
+          break;
+
+        case ShareDataType.taskList:
+        case ShareDataType.allTasks:
+          final tasks = shareData.extractTaskList();
+          for (final task in tasks) {
+            await TaskRepository().insertTask(task);
+          }
+          importedCount = tasks.length;
+          break;
+
+        case ShareDataType.shoppingList:
+          final list = shareData.extractShoppingList();
+          if (list != null) {
+            await ShoppingRepository().insertShoppingList(list);
+            importedCount = 1;
+          }
+          break;
+
+        case ShareDataType.shoppingListWithItems:
+          final list = shareData.extractShoppingList();
+          final items = shareData.extractGroceryItems();
+          if (list != null) {
+            final listId = await ShoppingRepository().insertShoppingList(list);
+            for (final item in items) {
+              await ShoppingRepository().insertGroceryItem(
+                item.copyWith(shoppingListId: listId),
+              );
+            }
+            importedCount = 1;
+          }
+          break;
+
+        case ShareDataType.allShoppingLists:
+          final listsWithItems = shareData.extractAllShoppingLists();
+          for (final entry in listsWithItems.entries) {
+            final listId = await ShoppingRepository().insertShoppingList(entry.key);
+            for (final item in entry.value) {
+              await ShoppingRepository().insertGroceryItem(
+                item.copyWith(shoppingListId: listId),
+              );
+            }
+          }
+          importedCount = listsWithItems.length;
+          break;
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              importedCount == 1
+                  ? '${shareData.description} imported successfully'
+                  : '$importedCount items imported successfully',
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to import data: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final timeFormatProvider = Provider.of<TimeFormatProvider>(context);
@@ -173,6 +298,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       subtitle: const Text('Create widgets to display tasks on your home screen'),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: _openWidgetManagement,
+                    ),
+                  ],
+                ),
+                _buildSection(
+                  title: 'Import & Export',
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.file_download),
+                      title: const Text('Import Shared Data'),
+                      subtitle: const Text('Import tasks or shopping lists from files'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: _importSharedData,
                     ),
                   ],
                 ),
