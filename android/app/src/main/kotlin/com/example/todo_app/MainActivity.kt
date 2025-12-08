@@ -4,9 +4,11 @@ import android.content.Intent
 import android.os.Bundle
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.plugin.common.MethodChannel
+import io.flutter.plugin.common.EventChannel
 
 class MainActivity : FlutterActivity() {
     private val CHANNEL = "com.example.todo_app/widget"
+    private val widgetEventChannel = WidgetEventChannel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         android.util.Log.d("MainActivity", "========================================")
@@ -19,6 +21,14 @@ class MainActivity : FlutterActivity() {
             android.util.Log.d("MainActivity", "Using transparent theme for background command")
         }
         super.onCreate(savedInstanceState)
+
+        // Initialize widget event channel
+        flutterEngine?.dartExecutor?.binaryMessenger?.let { messenger ->
+            widgetEventChannel.initialize(applicationContext)
+            EventChannel(messenger, WidgetEventChannel.CHANNEL_NAME).setStreamHandler(widgetEventChannel)
+            android.util.Log.d("MainActivity", "Widget EventChannel initialized")
+        }
+
         handleWidgetIntent(intent)
     }
 

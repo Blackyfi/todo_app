@@ -90,12 +90,16 @@ class TodoWidgetProvider : AppWidgetProvider() {
             Log.d(TAG, ">>> HomeWidgetPreferences keys: ${preferences.all.keys}")
             Log.d(TAG, ">>> FlutterSharedPreferences keys: ${flutterPrefs.all.keys}")
 
-            // Try multiple key combinations
-            var configData = preferences.getString(WIDGET_CONFIG_KEY, null)
+            // P0: Try widget-specific keys first, then fall back to generic keys for backward compatibility
+            var configData = preferences.getString("${WIDGET_CONFIG_KEY}_${appWidgetId}", null)
+                ?: preferences.getString("flutter.${WIDGET_CONFIG_KEY}_${appWidgetId}", null)
+                ?: preferences.getString(WIDGET_CONFIG_KEY, null)
                 ?: preferences.getString("flutter.$WIDGET_CONFIG_KEY", null)
                 ?: flutterPrefs.getString("flutter.$WIDGET_CONFIG_KEY", null)
 
-            var tasksData = preferences.getString(WIDGET_DATA_KEY, null)
+            var tasksData = preferences.getString("${WIDGET_DATA_KEY}_${appWidgetId}", null)
+                ?: preferences.getString("flutter.${WIDGET_DATA_KEY}_${appWidgetId}", null)
+                ?: preferences.getString(WIDGET_DATA_KEY, null)
                 ?: preferences.getString("flutter.$WIDGET_DATA_KEY", null)
                 ?: flutterPrefs.getString("flutter.$WIDGET_DATA_KEY", null)
 
@@ -384,7 +388,17 @@ class TodoWidgetProvider : AppWidgetProvider() {
         try {
             Log.d(TAG, "=== HANDLING TOGGLE TASK: TaskID=$taskId, WidgetID=$widgetId ===")
 
-            // CRITICAL FIX: Store the toggle request in SharedPreferences with correct key format
+            // Send command via EventChannel broadcast
+            val commandIntent = Intent(WidgetEventChannel.ACTION_WIDGET_COMMAND).apply {
+                putExtra("command", "toggle_task")
+                putExtra("task_id", taskId)
+                putExtra("widget_id", widgetId)
+                putExtra("timestamp", System.currentTimeMillis())
+            }
+            context.sendBroadcast(commandIntent)
+            Log.d(TAG, "EventChannel broadcast sent for toggle_task")
+
+            // FALLBACK: Also store in SharedPreferences for backward compatibility
             val prefs = context.getSharedPreferences("HomeWidgetPreferences", Context.MODE_PRIVATE)
             prefs.edit()
                 .putString("command", "toggle_task")
@@ -392,8 +406,6 @@ class TodoWidgetProvider : AppWidgetProvider() {
                 .putInt("widget_id", widgetId)
                 .putLong("timestamp", System.currentTimeMillis())
                 .apply()
-
-            Log.d(TAG, "Toggle command stored in SharedPreferences with keys: command, task_id, widget_id, timestamp")
 
             // Also store in flutter-prefixed keys for maximum compatibility
             prefs.edit()
@@ -403,33 +415,23 @@ class TodoWidgetProvider : AppWidgetProvider() {
                 .putLong("flutter.timestamp", System.currentTimeMillis())
                 .apply()
 
-            // CRITICAL: Try to use HomeWidget background callback first (no UI)
-            try {
-                // Use HomeWidget's background execution
-                es.antonborri.home_widget.HomeWidgetBackgroundIntent.getBroadcast(
-                    context,
-                    android.net.Uri.parse("todoapp://widget/toggle?taskId=$taskId&widgetId=$widgetId")
-                )
-                Log.d(TAG, "HomeWidget background callback triggered")
-            } catch (e: Exception) {
-                Log.w(TAG, "HomeWidget callback not available, using fallback: $e")
+            Log.d(TAG, "Fallback: Toggle command also stored in SharedPreferences")
 
-                // Fallback: Wake up the Flutter app silently
-                try {
-                    val launchIntent = Intent(context, MainActivity::class.java).apply {
-                        action = "PROCESS_WIDGET_COMMAND"
-                        putExtra("task_id", taskId)
-                        putExtra("widget_id", widgetId)
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
-                        addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
-                        addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
-                    }
-                    context.startActivity(launchIntent)
-                    Log.d(TAG, "Flutter app wakeup intent sent (silent mode)")
-                } catch (e2: Exception) {
-                    Log.w(TAG, "Could not wake Flutter app: $e2")
+            // Try to wake up Flutter app if not running (for EventChannel to receive the broadcast)
+            try {
+                val launchIntent = Intent(context, MainActivity::class.java).apply {
+                    action = "PROCESS_WIDGET_COMMAND"
+                    putExtra("task_id", taskId)
+                    putExtra("widget_id", widgetId)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
+                    addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
+                    addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
                 }
+                context.startActivity(launchIntent)
+                Log.d(TAG, "Flutter app wakeup intent sent for EventChannel")
+            } catch (e: Exception) {
+                Log.w(TAG, "Could not wake Flutter app: $e")
             }
 
             // Trigger immediate widget refresh to show optimistic update

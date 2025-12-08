@@ -26,7 +26,9 @@ class WidgetService {
 
   bool _isInitialized = false;
   static const platform = MethodChannel('com.example.todo_app/widget');
-  Timer? _commandPoller;
+  static const eventChannel = EventChannel('com.example.todo_app/widget_events');
+  Timer? _commandPoller; // Kept as fallback for backward compatibility
+  StreamSubscription? _eventSubscription;
 
   // Use consistent data keys
   static const String widgetDataKey = 'widget_data';
@@ -40,28 +42,96 @@ class WidgetService {
 
     try {
       await _logger.logInfo('=== Starting WidgetService Initialization ===');
-      
+
       // Set up method channel handler
       platform.setMethodCallHandler(_handleMethodCall);
-      
+
       // Initialize home widget
       try {
         await HomeWidget.setAppGroupId('group.com.example.todo_app');
       } catch (e) {
         await _logger.logWarning('App group not supported on this platform: $e');
       }
-      
+
       // Initialize with default data
       await _initializeDefaultWidgetData();
-      
-      // Start command polling to listen for widget actions
+
+      // Set up EventChannel for real-time widget command updates (P0: replaces polling)
+      _setupEventChannel();
+
+      // Keep polling as fallback for backward compatibility
       _startCommandPolling();
-      
+
       _isInitialized = true;
       await _logger.logInfo('=== WidgetService Initialization Complete ===');
     } catch (e, stackTrace) {
       await _logger.logError('=== WidgetService Initialization Failed ===', e, stackTrace);
       rethrow;
+    }
+  }
+
+  /// Set up EventChannel for real-time widget commands (replaces polling for better performance)
+  void _setupEventChannel() {
+    try {
+      _eventSubscription = eventChannel.receiveBroadcastStream().listen(
+        (dynamic event) async {
+          await _logger.logInfo('=== EventChannel: Received widget command ===');
+
+          if (event is Map) {
+            final command = event['command'] as String?;
+            final taskId = event['taskId'] as int? ?? -1;
+            final widgetId = event['widgetId'] as int? ?? -1;
+            final timestamp = event['timestamp'] as int? ?? 0;
+
+            await _logger.logInfo('Command: $command, TaskID: $taskId, WidgetID: $widgetId');
+
+            // Process command immediately (no polling delay)
+            if (command != null) {
+              await _processWidgetCommand(command, taskId, widgetId, timestamp);
+            }
+          }
+        },
+        onError: (dynamic error) async {
+          await _logger.logError('EventChannel error', error);
+        },
+        cancelOnError: false,
+      );
+
+      _logger.logInfo('EventChannel listener established for real-time widget commands');
+    } catch (e, stackTrace) {
+      _logger.logError('Failed to set up EventChannel, will use polling fallback', e, stackTrace);
+    }
+  }
+
+  /// Process widget command (used by both EventChannel and polling)
+  Future<void> _processWidgetCommand(String command, int taskId, int widgetId, int timestamp) async {
+    try {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final age = now - timestamp;
+
+      await _logger.logInfo('Processing command: $command (age: ${age}ms)');
+
+      // Only process recent commands (within last 60 seconds)
+      if (age < 60000) {
+        switch (command) {
+          case 'toggle_task':
+            await _logger.logInfo('>>> Executing toggle_task for taskId=$taskId');
+            await _handleTaskToggle(taskId);
+            await _logger.logInfo('>>> toggle_task completed');
+            break;
+          case 'refresh_widget':
+            await _logger.logInfo('>>> Executing refresh_widget');
+            await forceWidgetUpdate();
+            await _logger.logInfo('>>> refresh_widget completed');
+            break;
+          default:
+            await _logger.logWarning('>>> Unknown command: $command');
+        }
+      } else {
+        await _logger.logWarning('Command too old, ignoring: $command (age: ${age}ms)');
+      }
+    } catch (e, stackTrace) {
+      await _logger.logError('Error processing widget command', e, stackTrace);
     }
   }
 
@@ -323,7 +393,7 @@ class WidgetService {
   Future<void> _prepareWidgetData(int widgetId) async {
     try {
       await _logger.logInfo('--- Preparing Widget Data for ID: $widgetId ---');
-      
+
       final config = await _widgetConfigRepository.getWidgetConfig(widgetId);
       if (config == null) {
         await _logger.logError('Widget config not found: ID=$widgetId');
@@ -332,19 +402,24 @@ class WidgetService {
 
       final tasks = await _getTasksForWidget(config);
       final categories = await _categoryRepository.getAllCategories();
-      
+
       final widgetData = await _buildWidgetData(config, tasks, categories);
-      
-      // Save data with proper keys
+
+      // Save data with widget-specific keys for multiple widget support
       final dataJson = jsonEncode(widgetData);
       final configJson = jsonEncode(config.toMap());
-      
+
+      // Save with widget-specific keys
+      await _saveWidgetDataSafely('${widgetDataKey}_$widgetId', dataJson);
+      await _saveWidgetDataSafely('${widgetConfigKey}_$widgetId', configJson);
+
+      // Also save to generic keys for backward compatibility (uses first/default widget)
       await _saveWidgetDataSafely(widgetDataKey, dataJson);
       await _saveWidgetDataSafely(widgetConfigKey, configJson);
-      
+
       // CRITICAL: Force immediate widget refresh
       await _updateWidgetDisplay();
-      
+
       await _logger.logInfo('--- Widget Data Preparation Complete for ID: $widgetId ---');
     } catch (e, stackTrace) {
       await _logger.logError('--- Widget Data Preparation Failed ---', e, stackTrace);
@@ -354,61 +429,28 @@ class WidgetService {
 
   Future<List<task_model.Task>> _getTasksForWidget(WidgetConfig config) async {
     try {
-      await _logger.logInfo('--- Getting Tasks for Widget: ${config.name} ---');
-      List<task_model.Task> tasks;
-      
-      // Apply category filter
+      await _logger.logInfo('--- Getting Tasks for Widget: ${config.name} (Optimized SQL Query) ---');
+
+      // P2: Get category ID for filtering
+      int? categoryId;
       if (config.categoryFilter != null) {
         final categories = await _categoryRepository.getAllCategories();
         final category = categories.firstWhere(
           (cat) => cat.name == config.categoryFilter,
           orElse: () => category_model.Category(id: -1, name: '', color: const Color(0xFF000000)),
         );
-        
-        if (category.id != null && category.id! > 0) {
-          tasks = await _taskRepository.getTasksByCategory(category.id!);
-        } else {
-          tasks = await _taskRepository.getAllTasks();
-        }
-      } else {
-        tasks = await _taskRepository.getAllTasks();
+        categoryId = (category.id != null && category.id! > 0) ? category.id : null;
       }
 
-      // Apply completion filter
-      if (!config.showCompleted) {
-        tasks = tasks.where((task) => !task.isCompleted).toList();
-      }
+      // P2: Use optimized SQL query instead of in-memory filtering
+      // This performs filtering, sorting, and limiting at the database level
+      final tasks = await _taskRepository.getTasksForWidget(
+        categoryId: categoryId,
+        showCompleted: config.showCompleted,
+        maxTasks: config.maxTasks,
+      );
 
-      // Sort tasks by priority and due date
-      tasks.sort((a, b) {
-        // Completed tasks go to bottom
-        if (a.isCompleted != b.isCompleted) {
-          return a.isCompleted ? 1 : -1;
-        }
-        
-        // Sort by priority (high = 0, medium = 1, low = 2)
-        if (a.priority != b.priority) {
-          return a.priority.index.compareTo(b.priority.index);
-        }
-        
-        // Sort by due date (earliest first)
-        if (a.dueDate != null && b.dueDate != null) {
-          return a.dueDate!.compareTo(b.dueDate!);
-        } else if (a.dueDate != null) {
-          return -1;
-        } else if (b.dueDate != null) {
-          return 1;
-        }
-        
-        return (a.id ?? 0).compareTo(b.id ?? 0);
-      });
-
-      // Limit to maxTasks
-      if (tasks.length > config.maxTasks) {
-        tasks = tasks.take(config.maxTasks).toList();
-      }
-
-      await _logger.logInfo('Final task count for widget: ${tasks.length}');
+      await _logger.logInfo('Retrieved ${tasks.length} tasks for widget using optimized SQL query');
       return tasks;
     } catch (e, stackTrace) {
       await _logger.logError('Error getting tasks for widget', e, stackTrace);
@@ -513,13 +555,16 @@ class WidgetService {
         return;
       }
 
-      // IMPORTANT: Always use the first widget's config for now (single widget support)
-      // But save data without widget ID so all Android widgets can read it
-      if (configs.isNotEmpty && configs.first.id != null) {
-        await _prepareWidgetData(configs.first.id!);
+      // P0: Update each widget independently with its own configuration
+      await _logger.logInfo('Updating ${configs.length} widget(s) independently');
+      for (final config in configs) {
+        if (config.id != null) {
+          await _logger.logInfo('Updating widget ID: ${config.id}, Name: ${config.name}');
+          await _prepareWidgetData(config.id!);
+        }
       }
 
-      await _logger.logInfo('=== All Widgets Updated: ${configs.length} widgets ===');
+      await _logger.logInfo('=== All Widgets Updated: ${configs.length} widget(s) ===');
     } catch (e, stackTrace) {
       await _logger.logError('=== Update All Widgets Failed ===', e, stackTrace);
       rethrow;
@@ -614,6 +659,8 @@ class WidgetService {
   }
 
   void dispose() {
+    _eventSubscription?.cancel();
+    _eventSubscription = null;
     _commandPoller?.cancel();
     _commandPoller = null;
   }
