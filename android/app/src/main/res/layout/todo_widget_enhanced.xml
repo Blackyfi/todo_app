@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Enhanced widget layout with progress indicators and animations support -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@drawable/widget_background">
+
+    <!-- Header Section -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingBottom="8dp">
+
+        <!-- Widget Title -->
+        <TextView
+            android:id="@+id/widget_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Todo Tasks"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:ellipsize="end"
+            android:maxLines="1" />
+
+        <!-- Action Buttons Container -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <!-- Refresh Button -->
+            <ImageButton
+                android:id="@+id/refresh_button"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@android:drawable/ic_menu_rotate"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Refresh"
+                android:scaleType="centerInside"
+                android:padding="4dp" />
+
+            <!-- Settings Button -->
+            <ImageButton
+                android:id="@+id/settings_button"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@android:drawable/ic_menu_preferences"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Settings"
+                android:scaleType="centerInside"
+                android:padding="4dp"
+                android:layout_marginStart="4dp" />
+
+            <!-- Add Task Button -->
+            <ImageButton
+                android:id="@+id/add_task_button"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@android:drawable/ic_menu_add"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Add Task"
+                android:scaleType="centerInside"
+                android:padding="4dp"
+                android:layout_marginStart="4dp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Progress Section -->
+    <LinearLayout
+        android:id="@+id/progress_section"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingBottom="8dp"
+        android:visibility="visible">
+
+        <!-- Progress Bar -->
+        <ProgressBar
+            android:id="@+id/task_progress_bar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="4dp"
+            android:progress="0"
+            android:max="100"
+            android:progressTint="#4CAF50"
+            android:progressBackgroundTint="#E0E0E0" />
+
+        <!-- Progress Stats -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingTop="4dp">
+
+            <!-- Task Count -->
+            <TextView
+                android:id="@+id/task_count"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="0 tasks"
+                android:textSize="12sp"
+                android:textColor="#666666" />
+
+            <!-- Completion Stats -->
+            <TextView
+                android:id="@+id/completion_stats"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0% complete"
+                android:textSize="12sp"
+                android:textColor="#4CAF50"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Overdue Badge (if any) -->
+        <TextView
+            android:id="@+id/overdue_badge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="⚠️ 2 overdue"
+            android:textSize="11sp"
+            android:textColor="#F44336"
+            android:paddingTop="2dp"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <!-- Divider -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#E0E0E0"
+        android:layout_marginBottom="8dp" />
+
+    <!-- Task List Container -->
+    <LinearLayout
+        android:id="@+id/task_list"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical" />
+
+    <!-- Empty State -->
+    <LinearLayout
+        android:id="@+id/empty_state"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="✓"
+            android:textSize="48sp"
+            android:textColor="#4CAF50"
+            android:alpha="0.3" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="All done!"
+            android:textSize="14sp"
+            android:textColor="#666666"
+            android:paddingTop="8dp" />
+    </LinearLayout>
+
+</LinearLayout>

@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Enhanced task item with better visuals and animation support -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_task_item_container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="8dp"
+    android:background="?android:attr/selectableItemBackground"
+    android:gravity="center_vertical"
+    android:clickable="true"
+    android:focusable="true">
+
+    <!-- Checkbox with Priority Color Indicator -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center">
+
+        <!-- Priority Color Bar -->
+        <View
+            android:id="@+id/priority_color_bar"
+            android:layout_width="3dp"
+            android:layout_height="24dp"
+            android:background="#FF5722"
+            android:layout_marginEnd="8dp"
+            android:visibility="visible" />
+    </LinearLayout>
+
+    <!-- Checkbox -->
+    <TextView
+        android:id="@+id/task_checkbox"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:text="○"
+        android:textSize="20sp"
+        android:textColor="#666666"
+        android:gravity="center"
+        android:layout_marginEnd="12dp" />
+
+    <!-- Task Content -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <!-- Task Title Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <!-- Task Title -->
+            <TextView
+                android:id="@+id/task_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Task title"
+                android:textSize="14sp"
+                android:textColor="#000000"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:textStyle="normal" />
+
+            <!-- Priority Badge -->
+            <TextView
+                android:id="@+id/priority_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="HIGH"
+                android:textSize="9sp"
+                android:textColor="#FFFFFF"
+                android:background="@drawable/priority_badge_background"
+                android:paddingStart="6dp"
+                android:paddingEnd="6dp"
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp"
+                android:layout_marginStart="8dp"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <!-- Task Description -->
+        <TextView
+            android:id="@+id/task_description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Task description"
+            android:textSize="12sp"
+            android:textColor="#666666"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:paddingTop="2dp"
+            android:visibility="gone" />
+
+        <!-- Metadata Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingTop="4dp"
+            android:gravity="center_vertical">
+
+            <!-- Category Badge -->
+            <TextView
+                android:id="@+id/category_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Work"
+                android:textSize="10sp"
+                android:textColor="#FFFFFF"
+                android:background="@drawable/category_badge_background"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp"
+                android:visibility="gone" />
+
+            <!-- Due Date -->
+            <TextView
+                android:id="@+id/due_date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Today"
+                android:textSize="11sp"
+                android:textColor="#666666"
+                android:drawableStart="@android:drawable/ic_menu_recent_history"
+                android:drawablePadding="4dp"
+                android:layout_marginStart="8dp"
+                android:visibility="gone" />
+
+            <!-- Status Indicator -->
+            <TextView
+                android:id="@+id/status_indicator"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="OVERDUE"
+                android:textSize="10sp"
+                android:textColor="#F44336"
+                android:textStyle="bold"
+                android:layout_marginStart="8dp"
+                android:visibility="gone" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Quick Action Menu Icon (for future expansion) -->
+    <ImageView
+        android:id="@+id/quick_action_icon"
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:src="@android:drawable/ic_menu_more"
+        android:alpha="0.3"
+        android:layout_marginStart="8dp"
+        android:visibility="gone" />
+
+</LinearLayout>
