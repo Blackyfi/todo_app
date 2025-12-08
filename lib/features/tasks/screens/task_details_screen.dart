@@ -7,6 +7,8 @@ import 'package:todo_app/core/database/repository/category_repository.dart' as c
 import 'package:todo_app/core/database/repository/notification_repository.dart' as notification_repository;
 import 'package:todo_app/core/notifications/models/notification_settings.dart' as notification_model;
 import 'package:todo_app/features/tasks/widgets/task_detail_sections.dart';
+import 'package:todo_app/core/sharing/models/share_data.dart';
+import 'package:todo_app/core/sharing/widgets/share_dialog.dart';
 
 class TaskDetailsScreen extends mat.StatefulWidget {
   final task_model.Task task;
@@ -134,6 +136,18 @@ class _TaskDetailsScreenState extends mat.State<TaskDetailsScreen> {
       }
     });
   }
+
+  Future<void> _shareTask() async {
+    final shareData = ShareData.fromTask(widget.task);
+
+    await mat.showDialog(
+      context: context,
+      builder: (context) => ShareDialog(
+        shareData: shareData,
+        title: 'Share "${widget.task.title}"',
+      ),
+    );
+  }
   
   @override
   mat.Widget build(mat.BuildContext context) {
@@ -141,6 +155,11 @@ class _TaskDetailsScreenState extends mat.State<TaskDetailsScreen> {
       appBar: mat.AppBar(
         title: const mat.Text('Task Details'),
         actions: [
+          mat.IconButton(
+            icon: const mat.Icon(mat.Icons.share),
+            onPressed: _shareTask,
+            tooltip: 'Share task',
+          ),
           mat.IconButton(
             icon: const mat.Icon(mat.Icons.edit),
             onPressed: _navigateToEditTask,
