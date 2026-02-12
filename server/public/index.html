@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo Sync Server Dashboard</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header>
+        <h1>📊 Todo Sync Server Dashboard</h1>
+        <div class="status-indicator">
+            <span class="status-dot online" id="status-dot"></span>
+            <span id="status-text">Server Online</span>
+            <span style="margin-left: 20px;">
+                <a href="/tests.html" style="color: white; text-decoration: none; padding: 8px 16px; background: rgba(255,255,255,0.2); border-radius: 8px;">🧪 Run Tests</a>
+            </span>
+        </div>
+    </header>
+
+    <main class="dashboard-grid">
+        <!-- Server Status -->
+        <section class="panel">
+            <h2>🖥️ Server Status</h2>
+            <div class="metrics">
+                <div class="metric">
+                    <span class="label">Uptime</span>
+                    <span class="value" id="uptime">Loading...</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Memory</span>
+                    <span class="value" id="memory">Loading...</span>
+                </div>
+                <div class="metric">
+                    <span class="label">CPU</span>
+                    <span class="value" id="cpu">Loading...</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Database Size</span>
+                    <span class="value" id="db-size">Loading...</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Users -->
+        <section class="panel">
+            <h2>👥 Users</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="total-users">0</div>
+                    <div class="stat-label">Total Users</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="active-users">0</div>
+                    <div class="stat-label">Active (24h)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="new-users">0</div>
+                    <div class="stat-label">New (7d)</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Devices -->
+        <section class="panel">
+            <h2>📱 Devices</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="total-devices">0</div>
+                    <div class="stat-label">Total Devices</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="active-devices">0</div>
+                    <div class="stat-label">Active (24h)</div>
+                </div>
+            </div>
+            <div id="device-types" class="device-types"></div>
+        </section>
+
+        <!-- Sync Activity -->
+        <section class="panel">
+            <h2>🔄 Sync Activity</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="total-syncs">0</div>
+                    <div class="stat-label">Syncs Today</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="success-rate">0%</div>
+                    <div class="stat-label">Success Rate</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="failed-syncs">0</div>
+                    <div class="stat-label">Failed</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Database -->
+        <section class="panel">
+            <h2>💾 Database</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="total-tasks">0</div>
+                    <div class="stat-label">Total Tasks</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="completed-tasks">0%</div>
+                    <div class="stat-label">Completed</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>Last updated: <span id="last-update">Never</span></p>
+        <p>Auto-refresh every 30 seconds</p>
+    </footer>
+
+    <script src="/js/dashboard.js"></script>
+</body>
+</html>

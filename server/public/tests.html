@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo Sync Server - Tests</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .test-controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .test-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .test-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        .test-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .test-output {
+            background: #1f2937;
+            color: #10b981;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            max-height: 500px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            line-height: 1.5;
+        }
+        .test-output .error {
+            color: #ef4444;
+        }
+        .test-output .success {
+            color: #10b981;
+        }
+        .test-output .warning {
+            color: #f59e0b;
+        }
+        .test-output .info {
+            color: #3b82f6;
+        }
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .test-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .summary-card {
+            padding: 16px;
+            background: #f3f4f6;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .summary-number {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .summary-number.passed { color: #10b981; }
+        .summary-number.failed { color: #ef4444; }
+        .summary-number.total { color: #3b82f6; }
+        .summary-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🧪 Test Runner</h1>
+        <div class="status-indicator">
+            <a href="/index.html" style="color: white; text-decoration: none;">← Back to Dashboard</a>
+        </div>
+    </header>
+
+    <main style="max-width: 1200px; margin: 0 auto;">
+        <section class="panel">
+            <h2>Unit Tests</h2>
+
+            <div class="test-controls">
+                <button class="test-btn" onclick="runAllTests()" id="runAllBtn">
+                    🚀 Run All Tests
+                </button>
+                <button class="test-btn" onclick="runUserTests()" id="runUserBtn">
+                    👤 User Tests
+                </button>
+                <button class="test-btn" onclick="runTaskTests()" id="runTaskBtn">
+                    ✅ Task Tests
+                </button>
+                <button class="test-btn" onclick="runValidationTests()" id="runValidationBtn">
+                    🔍 Validation Tests
+                </button>
+                <button class="test-btn" onclick="clearOutput()" style="background: #6b7280;">
+                    🗑️ Clear
+                </button>
+            </div>
+
+            <div class="test-summary" id="testSummary" style="display: none;">
+                <div class="summary-card">
+                    <div class="summary-number total" id="totalTests">0</div>
+                    <div class="summary-label">Total Tests</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-number passed" id="passedTests">0</div>
+                    <div class="summary-label">Passed</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-number failed" id="failedTests">0</div>
+                    <div class="summary-label">Failed</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-number" id="duration">0s</div>
+                    <div class="summary-label">Duration</div>
+                </div>
+            </div>
+
+            <div class="test-output" id="testOutput">
+                <span class="info">Ready to run tests! Click a button above to start.</span>
+            </div>
+        </section>
+
+        <section class="panel" style="margin-top: 20px;">
+            <h2>📖 Test Documentation</h2>
+            <div style="line-height: 1.8;">
+                <h3>Available Test Suites:</h3>
+                <ul>
+                    <li><strong>User Tests:</strong> User creation, authentication, password verification</li>
+                    <li><strong>Task Tests:</strong> Task CRUD, conflict resolution, statistics</li>
+                    <li><strong>Validation Tests:</strong> Username, email, password validation</li>
+                    <li><strong>Encryption Tests:</strong> JWT generation, verification, token hashing</li>
+                </ul>
+
+                <h3>Command Line:</h3>
+                <div class="test-output" style="margin-top: 12px; max-height: 150px;">
+# Run all tests
+npm test
+
+# Run specific test file
+npm test user.test.js
+
+# Run with coverage
+npm test -- --coverage
+
+# Watch mode
+npm test -- --watch
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        let isRunning = false;
+
+        function setRunning(running) {
+            isRunning = running;
+            const buttons = document.querySelectorAll('.test-btn');
+            buttons.forEach(btn => {
+                if (!btn.textContent.includes('Clear')) {
+                    btn.disabled = running;
+                }
+            });
+        }
+
+        function addOutput(text, className = '') {
+            const output = document.getElementById('testOutput');
+            const span = document.createElement('span');
+            span.className = className;
+            span.textContent = text + '\n';
+            output.appendChild(span);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function clearOutput() {
+            const output = document.getElementById('testOutput');
+            output.innerHTML = '<span class="info">Output cleared. Ready to run tests!</span>';
+            document.getElementById('testSummary').style.display = 'none';
+        }
+
+        function updateSummary(results) {
+            document.getElementById('testSummary').style.display = 'grid';
+            document.getElementById('totalTests').textContent = results.total || 0;
+            document.getElementById('passedTests').textContent = results.passed || 0;
+            document.getElementById('failedTests').textContent = results.failed || 0;
+            document.getElementById('duration').textContent = (results.duration || 0) + 's';
+        }
+
+        async function runTests(testFile = '') {
+            if (isRunning) return;
+
+            setRunning(true);
+            clearOutput();
+
+            const startTime = Date.now();
+            addOutput('🚀 Starting tests...', 'info');
+            addOutput('━'.repeat(60), 'info');
+
+            try {
+                const response = await fetch('/api/test/run', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ testFile })
+                });
+
+                const result = await response.json();
+                const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+
+                if (result.success) {
+                    addOutput('\n' + result.output, '');
+
+                    // Parse Jest output to extract summary
+                    const passMatch = result.output.match(/(\d+) passed/);
+                    const failMatch = result.output.match(/(\d+) failed/);
+                    const totalMatch = result.output.match(/Tests:\s+(\d+)/);
+
+                    updateSummary({
+                        total: totalMatch ? parseInt(totalMatch[1]) : 0,
+                        passed: passMatch ? parseInt(passMatch[1]) : 0,
+                        failed: failMatch ? parseInt(failMatch[1]) : 0,
+                        duration: duration
+                    });
+
+                    if (failMatch) {
+                        addOutput('\n❌ Some tests failed!', 'error');
+                    } else {
+                        addOutput('\n✅ All tests passed!', 'success');
+                    }
+                } else {
+                    addOutput('\n❌ Error running tests:', 'error');
+                    addOutput(result.error || 'Unknown error', 'error');
+                }
+            } catch (error) {
+                addOutput('\n❌ Failed to run tests:', 'error');
+                addOutput(error.message, 'error');
+                addOutput('\n⚠️  Make sure the server is running and npm test is configured.', 'warning');
+            } finally {
+                setRunning(false);
+            }
+        }
+
+        async function runAllTests() {
+            await runTests('');
+        }
+
+        async function runUserTests() {
+            await runTests('user.test.js');
+        }
+
+        async function runTaskTests() {
+            await runTests('task.test.js');
+        }
+
+        async function runValidationTests() {
+            await runTests('validation.test.js');
+        }
+    </script>
+</body>
+</html>

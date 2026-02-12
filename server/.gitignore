@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Environment variables
+.env
+
+# Database
+data/*.db
+data/*.db-shm
+data/*.db-wal
+
+# Logs
+logs/*.log
+*.log
+
+# SSL certificates (except example)
+ssl/*.pem
+ssl/*.key
+ssl/*.crt
+
+# Backups
+backups/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# PM2
+.pm2/
+pids/
+
+# Temporary files
+tmp/
+temp/
