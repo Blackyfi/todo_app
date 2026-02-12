@@ -8,7 +8,8 @@ class Task {
   final bool isCompleted;
   final int? categoryId; // Changed to nullable
   final Priority priority;
-  final DateTime? completedAt; // New field
+  final DateTime? completedAt;
+  final DateTime? updatedAt;
 
   Task({
     this.id,
@@ -16,9 +17,10 @@ class Task {
     this.description = '',
     this.dueDate,
     this.isCompleted = false,
-    this.categoryId, // Made optional
+    this.categoryId,
     this.priority = Priority.medium,
-    this.completedAt, // New field
+    this.completedAt,
+    this.updatedAt,
   });
 
   Task copyWith({
@@ -29,7 +31,8 @@ class Task {
     bool? isCompleted,
     int? categoryId,
     Priority? priority,
-    DateTime? completedAt, // Add this parameter
+    DateTime? completedAt,
+    DateTime? updatedAt,
   }) {
     return Task(
       id: id ?? this.id,
@@ -37,9 +40,10 @@ class Task {
       description: description ?? this.description,
       dueDate: dueDate ?? this.dueDate,
       isCompleted: isCompleted ?? this.isCompleted,
-      categoryId: categoryId, // Will be set to null if explicitly passed as null
+      categoryId: categoryId,
       priority: priority ?? this.priority,
-      completedAt: completedAt ?? this.completedAt, // Set the completedAt
+      completedAt: completedAt ?? this.completedAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
@@ -52,7 +56,9 @@ class Task {
       'isCompleted': isCompleted ? 1 : 0,
       'categoryId': categoryId,
       'priority': priority.index,
-      'completedAt': completedAt?.millisecondsSinceEpoch, // Add this field
+      'completedAt': completedAt?.millisecondsSinceEpoch,
+      'updatedAt': updatedAt?.millisecondsSinceEpoch ??
+          DateTime.now().millisecondsSinceEpoch,
     };
   }
 
@@ -69,7 +75,10 @@ class Task {
       priority: Priority.values[map['priority'] ?? 1],
       completedAt: map['completedAt'] != null
           ? DateTime.fromMillisecondsSinceEpoch(map['completedAt'])
-          : null, // Set completedAt from the database
+          : null,
+      updatedAt: map['updatedAt'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(map['updatedAt'])
+          : null,
     );
   }
 }
