@@ -54,34 +54,15 @@ class _TodoAppState extends mat.State<TodoApp> with mat.WidgetsBindingObserver {
 
     // Check if security is enabled and user needs to unlock
     if (_securityProvider.isSecurityEnabled && !_securityProvider.isAuthenticated) {
-      // Show unlock screen
-      mat.WidgetsBinding.instance.addPostFrameCallback((_) async {
-        await _showUnlockScreen();
-      });
+      // Don't set _isUnlocked to true, let the builder show unlock screen
+      setState(() {});
     } else {
       setState(() => _isUnlocked = true);
     }
   }
 
-  Future<void> _showUnlockScreen() async {
-    final result = await mat.Navigator.of(context).push<bool>(
-      mat.MaterialPageRoute(
-        builder: (context) => ChangeNotifierProvider.value(
-          value: _securityProvider,
-          child: const UnlockScreen(),
-        ),
-        fullscreenDialog: true,
-      ),
-    );
-
-    if (result == true) {
-      setState(() => _isUnlocked = true);
-    } else {
-      // User cancelled unlock, exit app
-      mat.WidgetsBinding.instance.addPostFrameCallback((_) {
-        mat.Navigator.of(context).pop();
-      });
-    }
+  void _onUnlockSuccess() {
+    setState(() => _isUnlocked = true);
   }
 
   @override
@@ -121,15 +102,50 @@ class _TodoAppState extends mat.State<TodoApp> with mat.WidgetsBindingObserver {
         builder: (context, child) {
           // Show unlock screen if security is enabled and not authenticated
           if (!_isUnlocked) {
-            return const mat.Scaffold(
-              body: mat.Center(
-                child: mat.CircularProgressIndicator(),
-              ),
+            return _UnlockWrapper(
+              onUnlockSuccess: _onUnlockSuccess,
             );
           }
           return child ?? const mat.SizedBox.shrink();
         },
       ),
     );
+  }
+}
+
+/// Wrapper widget that shows the unlock screen and handles authentication
+class _UnlockWrapper extends mat.StatefulWidget {
+  final mat.VoidCallback onUnlockSuccess;
+
+  const _UnlockWrapper({required this.onUnlockSuccess});
+
+  @override
+  mat.State<_UnlockWrapper> createState() => _UnlockWrapperState();
+}
+
+class _UnlockWrapperState extends mat.State<_UnlockWrapper> {
+  @override
+  mat.Widget build(mat.BuildContext context) {
+    final securityProvider = context.watch<SecurityProvider>();
+
+    // If user becomes authenticated through the unlock screen,
+    // notify parent to rebuild with main app
+    if (securityProvider.isAuthenticated) {
+      mat.WidgetsBinding.instance.addPostFrameCallback((_) {
+        // Only call callback if widget is still mounted
+        if (mounted) {
+          widget.onUnlockSuccess();
+        }
+      });
+      // Return a loading indicator while transitioning to prevent
+      // showing unlock screen after authentication
+      return const mat.Scaffold(
+        body: mat.Center(
+          child: mat.CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    return const UnlockScreen();
   }
 }
