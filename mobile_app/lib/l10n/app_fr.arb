@@ -1,0 +1,323 @@
+{
+  "@@locale": "fr",
+  
+  "appName": "Application Todo",
+  
+  "allTasks": "Toutes",
+  
+  "completedTasks": "Terminées",
+  
+  "incompleteTasks": "Non terminées",
+  
+  "todayTasks": "Aujourd'hui",
+  
+  "upcomingTasks": "À venir",
+  
+  "tasks": "Tâches",
+  
+  "categories": "Catégories",
+  
+  "statistics": "Statistiques",
+  
+  "settings": "Paramètres",
+  
+  "addTask": "Ajouter une tâche",
+  
+  "editTask": "Modifier la tâche",
+  
+  "deleteTask": "Supprimer la tâche",
+  
+  "taskTitle": "Titre",
+  
+  "taskDescription": "Description",
+  
+  "category": "Catégorie",
+  
+  "priority": "Priorité",
+  
+  "dueDate": "Date d'échéance",
+  
+  "dueTime": "Heure d'échéance",
+  
+  "reminder": "Rappel",
+  
+  "save": "Enregistrer",
+  
+  "cancel": "Annuler",
+  
+  "delete": "Supprimer",
+  
+  "ok": "OK",
+  
+  "yes": "Oui",
+  
+  "no": "Non",
+  
+  "noTasksFound": "Aucune tâche trouvée",
+  
+  "noTasksDescription": "Ajoutez votre première tâche pour commencer !",
+  
+  "noCategoriesFound": "Aucune catégorie trouvée",
+  
+  "noCategoriesDescription": "Créez une catégorie pour organiser vos tâches",
+  
+  "deleteTaskConfirmation": "Êtes-vous sûr de vouloir supprimer cette tâche ?",
+  
+  "deleteCategoryConfirmation": "Êtes-vous sûr de vouloir supprimer cette catégorie ?",
+  
+  "taskDeleted": "Tâche supprimée",
+  
+  "taskAdded": "Tâche ajoutée",
+  
+  "taskUpdated": "Tâche mise à jour",
+  
+  "categoryAdded": "Catégorie ajoutée",
+  
+  "categoryUpdated": "Catégorie mise à jour",
+  
+  "categoryDeleted": "Catégorie supprimée",
+  
+  "categoryName": "Nom de la catégorie",
+  
+  "categoryColor": "Couleur",
+  
+  "addCategory": "Ajouter une catégorie",
+  
+  "editCategory": "Modifier la catégorie",
+  
+  "high": "Haute",
+  
+  "medium": "Moyenne",
+  
+  "low": "Basse",
+  
+  "none": "Aucune",
+  
+  "taskDetails": "Détails de la tâche",
+  
+  "markAsComplete": "Marquer comme terminée",
+  
+  "markAsIncomplete": "Marquer comme non terminée",
+  
+  "noCategory": "Aucune catégorie",
+  
+  "noPriority": "Aucune priorité",
+  
+  "noDueDate": "Aucune date d'échéance",
+  
+  "noReminder": "Aucun rappel",
+  
+  "enterTaskTitle": "Entrez le titre de la tâche",
+  
+  "enterTaskDescription": "Entrez la description de la tâche (facultatif)",
+  
+  "enterCategoryName": "Entrez le nom de la catégorie",
+  
+  "selectCategory": "Sélectionner une catégorie",
+  
+  "selectPriority": "Sélectionner une priorité",
+  
+  "selectDate": "Sélectionner une date",
+  
+  "selectTime": "Sélectionner une heure",
+  
+  "statisticsTitle": "Statistiques",
+  
+  "tasksSummary": "Résumé des tâches",
+  
+  "totalTasks": "Total des tâches",
+  
+  "completedTasksCount": "Terminées",
+  
+  "incompleteTasksCount": "Non terminées",
+  
+  "tasksByCategory": "Tâches par catégorie",
+  
+  "tasksByPriority": "Tâches par priorité",
+  
+  "completionRate": "Taux de complétion",
+  
+  "weeklyProgress": "Progrès hebdomadaire",
+  
+  "settingsTitle": "Paramètres",
+  
+  "general": "Général",
+  
+  "theme": "Thème",
+  
+  "language": "Langue",
+  
+  "notifications": "Notifications",
+  
+  "security": "Sécurité",
+  
+  "about": "À propos",
+  
+  "version": "Version",
+  
+  "license": "Licence",
+  
+  "lightTheme": "Clair",
+  
+  "darkTheme": "Sombre",
+  
+  "systemTheme": "Système",
+  
+  "timeFormat": "Format de l'heure",
+  
+  "twentyFourHour": "24 heures",
+  
+  "twelveHour": "12 heures",
+  
+  "european": "Européen",
+  
+  "logViewer": "Visualiseur de journaux",
+  
+  "viewLogs": "Voir les journaux",
+  
+  "exportLogs": "Exporter les journaux",
+  
+  "clearLogs": "Effacer les journaux",
+  
+  "noLogsFound": "Aucun journal trouvé",
+  
+  "shoppingLists": "Listes de courses",
+  
+  "addShoppingList": "Ajouter une liste de courses",
+  
+  "editShoppingList": "Modifier la liste de courses",
+  
+  "deleteShoppingList": "Supprimer la liste de courses",
+  
+  "listName": "Nom de la liste",
+  
+  "itemName": "Nom de l'article",
+  
+  "quantity": "Quantité",
+  
+  "unit": "Unité",
+  
+  "addItem": "Ajouter un article",
+  
+  "shoppingMode": "Mode courses",
+  
+  "securitySettings": "Paramètres de sécurité",
+  
+  "passwordProtection": "Protection par mot de passe",
+  
+  "pinProtection": "Protection par code PIN",
+  
+  "biometricAuthentication": "Authentification biométrique",
+  
+  "changePassword": "Changer le mot de passe",
+  
+  "changePIN": "Changer le code PIN",
+  
+  "enterPassword": "Entrez le mot de passe",
+  
+  "enterPIN": "Entrez le code PIN",
+  
+  "confirmPassword": "Confirmer le mot de passe",
+  
+  "confirmPIN": "Confirmer le code PIN",
+  
+  "unlockApp": "Déverrouiller l'application",
+  
+  "syncSettings": "Paramètres de synchronisation",
+  
+  "serverAddress": "Adresse du serveur",
+  
+  "port": "Port",
+  
+  "username": "Nom d'utilisateur",
+  
+  "password": "Mot de passe",
+  
+  "connect": "Connecter",
+  
+  "disconnect": "Déconnecter",
+  
+  "syncNow": "Synchroniser maintenant",
+  
+  "lastSyncTime": "Dernière synchronisation",
+  
+  "syncStatus": "État de synchronisation",
+  
+  "connected": "Connecté",
+  
+  "disconnected": "Déconnecté",
+  
+  "syncing": "Synchronisation",
+  
+  "syncComplete": "Synchronisation terminée",
+  
+  "syncFailed": "Échec de la synchronisation",
+  
+  "widgetSettings": "Paramètres du widget",
+  
+  "widgetManagement": "Gestion des widgets",
+  
+  "createWidget": "Créer un widget",
+  
+  "editWidget": "Modifier le widget",
+  
+  "deleteWidget": "Supprimer le widget",
+  
+  "widgetName": "Nom du widget",
+  
+  "widgetSize": "Taille du widget",
+  
+  "small": "Petit",
+  
+  "large": "Grand",
+  
+  "showCompleted": "Afficher les terminées",
+  
+  "showCategories": "Afficher les catégories",
+  
+  "showPriority": "Afficher la priorité",
+  
+  "maxTasks": "Nombre maximum de tâches",
+  
+  "generalErrorMessage": "Une erreur s'est produite. Veuillez réessayer.",
+  
+  "networkErrorMessage": "Erreur réseau. Veuillez vérifier votre connexion.",
+  
+  "databaseErrorMessage": "Erreur de base de données. Veuillez redémarrer l'application.",
+  
+  "syncNetworkError": "Impossible de se connecter. Vérifiez votre connexion Internet.",
+  
+  "syncAuthError": "Échec de l'authentification. Veuillez vous reconnecter.",
+  
+  "syncServerError": "Erreur du serveur. Veuillez réessayer plus tard.",
+  
+  "syncConflictError": "Certains éléments avaient des conflits et ont été résolus automatiquement.",
+  
+  "search": "Rechercher",
+  
+  "searchTasks": "Rechercher des tâches",
+  
+  "filter": "Filtrer",
+  
+  "sort": "Trier",
+  
+  "sortBy": "Trier par",
+  
+  "dateCreated": "Date de création",
+  
+  "dateModified": "Date de modification",
+  
+  "alphabetical": "Alphabétique",
+  
+  "atTime": "À l'heure",
+  
+  "fifteenMinutesBefore": "15 minutes avant",
+  
+  "thirtyMinutesBefore": "30 minutes avant",
+  
+  "oneHourBefore": "1 heure avant",
+  
+  "oneDayBefore": "1 jour avant",
+  
+  "custom": "Personnalisé"
+}

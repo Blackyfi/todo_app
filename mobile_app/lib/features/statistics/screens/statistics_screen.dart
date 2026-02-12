@@ -7,6 +7,7 @@ import 'package:todo_app/core/database/repository/category_repository.dart' as c
 import 'package:todo_app/features/statistics/widgets/summary_card.dart' as summary_card;
 import 'package:todo_app/features/statistics/widgets/chart_cards.dart' as chart_cards;
 import 'package:todo_app/features/statistics/utils/statistics_helpers.dart' as statistics_helpers;
+import 'package:todo_app/l10n/app_localizations.dart';
 
 class StatisticsScreen extends mat.StatefulWidget {
   const StatisticsScreen({super.key});
@@ -60,9 +61,11 @@ class _StatisticsScreenState extends mat.State<StatisticsScreen> {
   
   @override
   mat.Widget build(mat.BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
     return mat.Scaffold(
       appBar: mat.AppBar(
-        title: const mat.Text('Statistics'),
+        title: mat.Text(l10n.statistics),
       ),
       body: _isLoading
           ? const mat.Center(child: mat.CircularProgressIndicator())
