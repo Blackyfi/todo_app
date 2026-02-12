@@ -6,6 +6,7 @@ import 'package:todo_app/core/database/repository/category_repository.dart' as c
 import 'package:todo_app/core/database/repository/task_repository.dart' as task_repository;
 import 'package:todo_app/features/categories/widgets/category_dialog.dart';
 import 'package:todo_app/features/categories/widgets/category_list_item.dart';
+import 'package:todo_app/l10n/app_localizations.dart';
 
 class CategoriesScreen extends mat.StatefulWidget {
   const CategoriesScreen({super.key});
@@ -102,6 +103,7 @@ class _CategoriesScreenState extends mat.State<CategoriesScreen> {
   }
   
   Future<void> _deleteCategory(category_model.Category category) async {
+    final l10n = AppLocalizations.of(context)!;
     final taskCount = _taskCountsByCategory[category.id] ?? 0;
     
     final confirmed = await mat.showDialog<bool>(
@@ -116,12 +118,12 @@ class _CategoriesScreenState extends mat.State<CategoriesScreen> {
         actions: [
           mat.TextButton(
             onPressed: () => mat.Navigator.of(context).pop(false),
-            child: const mat.Text('CANCEL'),
+            child: mat.Text(l10n.cancel),
           ),
           mat.TextButton(
             onPressed: () => mat.Navigator.of(context).pop(true),
             child: mat.Text(
-              'DELETE',
+              l10n.delete,
               style: mat.TextStyle(color: mat.Theme.of(context).colorScheme.error),
             ),
           ),
@@ -136,8 +138,8 @@ class _CategoriesScreenState extends mat.State<CategoriesScreen> {
         
         if (mounted) {
           mat.ScaffoldMessenger.of(context).showSnackBar(
-            const mat.SnackBar(
-              content: mat.Text('Category deleted'),
+            mat.SnackBar(
+              content: mat.Text(l10n.categoryDeleted),
             ),
           );
         }
@@ -155,17 +157,19 @@ class _CategoriesScreenState extends mat.State<CategoriesScreen> {
   
   @override
   mat.Widget build(mat.BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
     return mat.Scaffold(
       appBar: mat.AppBar(
-        title: const mat.Text('Categories'),
+        title: mat.Text(l10n.categories),
       ),
       body: _isLoading
           ? const mat.Center(child: mat.CircularProgressIndicator())
           : _categories.isEmpty
               ? empty_state.EmptyState(
-                  message: 'No categories found',
+                  message: l10n.noCategoriesFound,
                   icon: mat.Icons.category,
-                  actionLabel: 'Add Category',
+                  actionLabel: l10n.addCategory,
                   onActionPressed: () => _showAddEditCategoryDialog(),
                 )
               : mat.ListView.builder(

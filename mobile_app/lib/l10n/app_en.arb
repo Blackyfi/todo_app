@@ -1,0 +1,803 @@
+{
+  "@@locale": "en",
+  
+  "appName": "Todo App",
+  "@appName": {
+    "description": "The name of the application"
+  },
+  
+  "allTasks": "All",
+  "@allTasks": {
+    "description": "Filter option for all tasks"
+  },
+  
+  "completedTasks": "Completed",
+  "@completedTasks": {
+    "description": "Filter option for completed tasks"
+  },
+  
+  "incompleteTasks": "Incomplete",
+  "@incompleteTasks": {
+    "description": "Filter option for incomplete tasks"
+  },
+  
+  "todayTasks": "Today",
+  "@todayTasks": {
+    "description": "Filter option for today's tasks"
+  },
+  
+  "upcomingTasks": "Upcoming",
+  "@upcomingTasks": {
+    "description": "Filter option for upcoming tasks"
+  },
+  
+  "tasks": "Tasks",
+  "@tasks": {
+    "description": "Label for tasks section"
+  },
+  
+  "categories": "Categories",
+  "@categories": {
+    "description": "Label for categories section"
+  },
+  
+  "statistics": "Statistics",
+  "@statistics": {
+    "description": "Label for statistics section"
+  },
+  
+  "settings": "Settings",
+  "@settings": {
+    "description": "Label for settings section"
+  },
+  
+  "addTask": "Add Task",
+  "@addTask": {
+    "description": "Button to add a new task"
+  },
+  
+  "editTask": "Edit Task",
+  "@editTask": {
+    "description": "Button to edit a task"
+  },
+  
+  "deleteTask": "Delete Task",
+  "@deleteTask": {
+    "description": "Button to delete a task"
+  },
+  
+  "taskTitle": "Title",
+  "@taskTitle": {
+    "description": "Label for task title field"
+  },
+  
+  "taskDescription": "Description",
+  "@taskDescription": {
+    "description": "Label for task description field"
+  },
+  
+  "category": "Category",
+  "@category": {
+    "description": "Label for category field"
+  },
+  
+  "priority": "Priority",
+  "@priority": {
+    "description": "Label for priority field"
+  },
+  
+  "dueDate": "Due Date",
+  "@dueDate": {
+    "description": "Label for due date field"
+  },
+  
+  "dueTime": "Due Time",
+  "@dueTime": {
+    "description": "Label for due time field"
+  },
+  
+  "reminder": "Reminder",
+  "@reminder": {
+    "description": "Label for reminder field"
+  },
+  
+  "save": "Save",
+  "@save": {
+    "description": "Save button label"
+  },
+  
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Cancel button label"
+  },
+  
+  "delete": "Delete",
+  "@delete": {
+    "description": "Delete button label"
+  },
+  
+  "ok": "OK",
+  "@ok": {
+    "description": "OK button label"
+  },
+  
+  "yes": "Yes",
+  "@yes": {
+    "description": "Yes button label"
+  },
+  
+  "no": "No",
+  "@no": {
+    "description": "No button label"
+  },
+  
+  "noTasksFound": "No tasks found",
+  "@noTasksFound": {
+    "description": "Message when no tasks are found"
+  },
+  
+  "noTasksDescription": "Add your first task to get started!",
+  "@noTasksDescription": {
+    "description": "Description when no tasks are found"
+  },
+  
+  "noCategoriesFound": "No categories found",
+  "@noCategoriesFound": {
+    "description": "Message when no categories are found"
+  },
+  
+  "noCategoriesDescription": "Create a category to organize your tasks",
+  "@noCategoriesDescription": {
+    "description": "Description when no categories are found"
+  },
+  
+  "deleteTaskConfirmation": "Are you sure you want to delete this task?",
+  "@deleteTaskConfirmation": {
+    "description": "Confirmation message for deleting a task"
+  },
+  
+  "deleteCategoryConfirmation": "Are you sure you want to delete this category?",
+  "@deleteCategoryConfirmation": {
+    "description": "Confirmation message for deleting a category"
+  },
+  
+  "taskDeleted": "Task deleted",
+  "@taskDeleted": {
+    "description": "Message shown when a task is deleted"
+  },
+  
+  "taskAdded": "Task added",
+  "@taskAdded": {
+    "description": "Message shown when a task is added"
+  },
+  
+  "taskUpdated": "Task updated",
+  "@taskUpdated": {
+    "description": "Message shown when a task is updated"
+  },
+  
+  "categoryAdded": "Category added",
+  "@categoryAdded": {
+    "description": "Message shown when a category is added"
+  },
+  
+  "categoryUpdated": "Category updated",
+  "@categoryUpdated": {
+    "description": "Message shown when a category is updated"
+  },
+  
+  "categoryDeleted": "Category deleted",
+  "@categoryDeleted": {
+    "description": "Message shown when a category is deleted"
+  },
+  
+  "categoryName": "Category Name",
+  "@categoryName": {
+    "description": "Label for category name field"
+  },
+  
+  "categoryColor": "Color",
+  "@categoryColor": {
+    "description": "Label for category color field"
+  },
+  
+  "addCategory": "Add Category",
+  "@addCategory": {
+    "description": "Button to add a category"
+  },
+  
+  "editCategory": "Edit Category",
+  "@editCategory": {
+    "description": "Button to edit a category"
+  },
+  
+  "high": "High",
+  "@high": {
+    "description": "High priority label"
+  },
+  
+  "medium": "Medium",
+  "@medium": {
+    "description": "Medium priority label"
+  },
+  
+  "low": "Low",
+  "@low": {
+    "description": "Low priority label"
+  },
+  
+  "none": "None",
+  "@none": {
+    "description": "None option label"
+  },
+  
+  "taskDetails": "Task Details",
+  "@taskDetails": {
+    "description": "Title for task details screen"
+  },
+  
+  "markAsComplete": "Mark as Complete",
+  "@markAsComplete": {
+    "description": "Button to mark task as complete"
+  },
+  
+  "markAsIncomplete": "Mark as Incomplete",
+  "@markAsIncomplete": {
+    "description": "Button to mark task as incomplete"
+  },
+  
+  "noCategory": "No Category",
+  "@noCategory": {
+    "description": "Label when no category is selected"
+  },
+  
+  "noPriority": "No Priority",
+  "@noPriority": {
+    "description": "Label when no priority is selected"
+  },
+  
+  "noDueDate": "No Due Date",
+  "@noDueDate": {
+    "description": "Label when no due date is set"
+  },
+  
+  "noReminder": "No Reminder",
+  "@noReminder": {
+    "description": "Label when no reminder is set"
+  },
+  
+  "enterTaskTitle": "Enter task title",
+  "@enterTaskTitle": {
+    "description": "Hint text for task title field"
+  },
+  
+  "enterTaskDescription": "Enter task description (optional)",
+  "@enterTaskDescription": {
+    "description": "Hint text for task description field"
+  },
+  
+  "enterCategoryName": "Enter category name",
+  "@enterCategoryName": {
+    "description": "Hint text for category name field"
+  },
+  
+  "selectCategory": "Select Category",
+  "@selectCategory": {
+    "description": "Label for category selection"
+  },
+  
+  "selectPriority": "Select Priority",
+  "@selectPriority": {
+    "description": "Label for priority selection"
+  },
+  
+  "selectDate": "Select Date",
+  "@selectDate": {
+    "description": "Label for date selection"
+  },
+  
+  "selectTime": "Select Time",
+  "@selectTime": {
+    "description": "Label for time selection"
+  },
+  
+  "statisticsTitle": "Statistics",
+  "@statisticsTitle": {
+    "description": "Title for statistics screen"
+  },
+  
+  "tasksSummary": "Tasks Summary",
+  "@tasksSummary": {
+    "description": "Label for tasks summary section"
+  },
+  
+  "totalTasks": "Total Tasks",
+  "@totalTasks": {
+    "description": "Label for total tasks count"
+  },
+  
+  "completedTasksCount": "Completed",
+  "@completedTasksCount": {
+    "description": "Label for completed tasks count"
+  },
+  
+  "incompleteTasksCount": "Incomplete",
+  "@incompleteTasksCount": {
+    "description": "Label for incomplete tasks count"
+  },
+  
+  "tasksByCategory": "Tasks by Category",
+  "@tasksByCategory": {
+    "description": "Label for tasks by category chart"
+  },
+  
+  "tasksByPriority": "Tasks by Priority",
+  "@tasksByPriority": {
+    "description": "Label for tasks by priority chart"
+  },
+  
+  "completionRate": "Completion Rate",
+  "@completionRate": {
+    "description": "Label for completion rate"
+  },
+  
+  "weeklyProgress": "Weekly Progress",
+  "@weeklyProgress": {
+    "description": "Label for weekly progress"
+  },
+  
+  "settingsTitle": "Settings",
+  "@settingsTitle": {
+    "description": "Title for settings screen"
+  },
+  
+  "general": "General",
+  "@general": {
+    "description": "Label for general settings section"
+  },
+  
+  "theme": "Theme",
+  "@theme": {
+    "description": "Label for theme setting"
+  },
+  
+  "language": "Language",
+  "@language": {
+    "description": "Label for language setting"
+  },
+  
+  "notifications": "Notifications",
+  "@notifications": {
+    "description": "Label for notifications setting"
+  },
+  
+  "security": "Security",
+  "@security": {
+    "description": "Label for security setting"
+  },
+  
+  "about": "About",
+  "@about": {
+    "description": "Label for about section"
+  },
+  
+  "version": "Version",
+  "@version": {
+    "description": "Label for app version"
+  },
+  
+  "license": "License",
+  "@license": {
+    "description": "Label for license information"
+  },
+  
+  "lightTheme": "Light",
+  "@lightTheme": {
+    "description": "Light theme option"
+  },
+  
+  "darkTheme": "Dark",
+  "@darkTheme": {
+    "description": "Dark theme option"
+  },
+  
+  "systemTheme": "System",
+  "@systemTheme": {
+    "description": "System theme option"
+  },
+  
+  "timeFormat": "Time Format",
+  "@timeFormat": {
+    "description": "Label for time format setting"
+  },
+  
+  "twentyFourHour": "24-hour",
+  "@twentyFourHour": {
+    "description": "24-hour time format option"
+  },
+  
+  "twelveHour": "12-hour",
+  "@twelveHour": {
+    "description": "12-hour time format option"
+  },
+  
+  "european": "European",
+  "@european": {
+    "description": "European time format option"
+  },
+  
+  "logViewer": "Log Viewer",
+  "@logViewer": {
+    "description": "Label for log viewer"
+  },
+  
+  "viewLogs": "View Logs",
+  "@viewLogs": {
+    "description": "Button to view logs"
+  },
+  
+  "exportLogs": "Export Logs",
+  "@exportLogs": {
+    "description": "Button to export logs"
+  },
+  
+  "clearLogs": "Clear Logs",
+  "@clearLogs": {
+    "description": "Button to clear logs"
+  },
+  
+  "noLogsFound": "No logs found",
+  "@noLogsFound": {
+    "description": "Message when no logs are found"
+  },
+  
+  "shoppingLists": "Shopping Lists",
+  "@shoppingLists": {
+    "description": "Label for shopping lists section"
+  },
+  
+  "addShoppingList": "Add Shopping List",
+  "@addShoppingList": {
+    "description": "Button to add a shopping list"
+  },
+  
+  "editShoppingList": "Edit Shopping List",
+  "@editShoppingList": {
+    "description": "Button to edit a shopping list"
+  },
+  
+  "deleteShoppingList": "Delete Shopping List",
+  "@deleteShoppingList": {
+    "description": "Button to delete a shopping list"
+  },
+  
+  "listName": "List Name",
+  "@listName": {
+    "description": "Label for shopping list name"
+  },
+  
+  "itemName": "Item Name",
+  "@itemName": {
+    "description": "Label for shopping item name"
+  },
+  
+  "quantity": "Quantity",
+  "@quantity": {
+    "description": "Label for quantity"
+  },
+  
+  "unit": "Unit",
+  "@unit": {
+    "description": "Label for unit"
+  },
+  
+  "addItem": "Add Item",
+  "@addItem": {
+    "description": "Button to add an item"
+  },
+  
+  "shoppingMode": "Shopping Mode",
+  "@shoppingMode": {
+    "description": "Label for shopping mode"
+  },
+  
+  "securitySettings": "Security Settings",
+  "@securitySettings": {
+    "description": "Label for security settings"
+  },
+  
+  "passwordProtection": "Password Protection",
+  "@passwordProtection": {
+    "description": "Label for password protection"
+  },
+  
+  "pinProtection": "PIN Protection",
+  "@pinProtection": {
+    "description": "Label for PIN protection"
+  },
+  
+  "biometricAuthentication": "Biometric Authentication",
+  "@biometricAuthentication": {
+    "description": "Label for biometric authentication"
+  },
+  
+  "changePassword": "Change Password",
+  "@changePassword": {
+    "description": "Button to change password"
+  },
+  
+  "changePIN": "Change PIN",
+  "@changePIN": {
+    "description": "Button to change PIN"
+  },
+  
+  "enterPassword": "Enter Password",
+  "@enterPassword": {
+    "description": "Hint for password field"
+  },
+  
+  "enterPIN": "Enter PIN",
+  "@enterPIN": {
+    "description": "Hint for PIN field"
+  },
+  
+  "confirmPassword": "Confirm Password",
+  "@confirmPassword": {
+    "description": "Label for confirm password field"
+  },
+  
+  "confirmPIN": "Confirm PIN",
+  "@confirmPIN": {
+    "description": "Label for confirm PIN field"
+  },
+  
+  "unlockApp": "Unlock App",
+  "@unlockApp": {
+    "description": "Title for unlock screen"
+  },
+  
+  "syncSettings": "Sync Settings",
+  "@syncSettings": {
+    "description": "Label for sync settings"
+  },
+  
+  "serverAddress": "Server Address",
+  "@serverAddress": {
+    "description": "Label for server address field"
+  },
+  
+  "port": "Port",
+  "@port": {
+    "description": "Label for port field"
+  },
+  
+  "username": "Username",
+  "@username": {
+    "description": "Label for username field"
+  },
+  
+  "password": "Password",
+  "@password": {
+    "description": "Label for password field"
+  },
+  
+  "connect": "Connect",
+  "@connect": {
+    "description": "Button to connect to server"
+  },
+  
+  "disconnect": "Disconnect",
+  "@disconnect": {
+    "description": "Button to disconnect from server"
+  },
+  
+  "syncNow": "Sync Now",
+  "@syncNow": {
+    "description": "Button to sync now"
+  },
+  
+  "lastSyncTime": "Last Sync",
+  "@lastSyncTime": {
+    "description": "Label for last sync time"
+  },
+  
+  "syncStatus": "Sync Status",
+  "@syncStatus": {
+    "description": "Label for sync status"
+  },
+  
+  "connected": "Connected",
+  "@connected": {
+    "description": "Status: connected"
+  },
+  
+  "disconnected": "Disconnected",
+  "@disconnected": {
+    "description": "Status: disconnected"
+  },
+  
+  "syncing": "Syncing",
+  "@syncing": {
+    "description": "Status: syncing"
+  },
+  
+  "syncComplete": "Sync Complete",
+  "@syncComplete": {
+    "description": "Message: sync complete"
+  },
+  
+  "syncFailed": "Sync Failed",
+  "@syncFailed": {
+    "description": "Message: sync failed"
+  },
+  
+  "widgetSettings": "Widget Settings",
+  "@widgetSettings": {
+    "description": "Label for widget settings"
+  },
+  
+  "widgetManagement": "Widget Management",
+  "@widgetManagement": {
+    "description": "Label for widget management"
+  },
+  
+  "createWidget": "Create Widget",
+  "@createWidget": {
+    "description": "Button to create a widget"
+  },
+  
+  "editWidget": "Edit Widget",
+  "@editWidget": {
+    "description": "Button to edit a widget"
+  },
+  
+  "deleteWidget": "Delete Widget",
+  "@deleteWidget": {
+    "description": "Button to delete a widget"
+  },
+  
+  "widgetName": "Widget Name",
+  "@widgetName": {
+    "description": "Label for widget name"
+  },
+  
+  "widgetSize": "Widget Size",
+  "@widgetSize": {
+    "description": "Label for widget size"
+  },
+  
+  "small": "Small",
+  "@small": {
+    "description": "Small size option"
+  },
+  
+  "large": "Large",
+  "@large": {
+    "description": "Large size option"
+  },
+  
+  "showCompleted": "Show Completed",
+  "@showCompleted": {
+    "description": "Option to show completed tasks"
+  },
+  
+  "showCategories": "Show Categories",
+  "@showCategories": {
+    "description": "Option to show categories"
+  },
+  
+  "showPriority": "Show Priority",
+  "@showPriority": {
+    "description": "Option to show priority"
+  },
+  
+  "maxTasks": "Max Tasks",
+  "@maxTasks": {
+    "description": "Label for maximum tasks to display"
+  },
+  
+  "generalErrorMessage": "Something went wrong. Please try again.",
+  "@generalErrorMessage": {
+    "description": "General error message"
+  },
+  
+  "networkErrorMessage": "Network error. Please check your connection.",
+  "@networkErrorMessage": {
+    "description": "Network error message"
+  },
+  
+  "databaseErrorMessage": "Database error. Please restart the app.",
+  "@databaseErrorMessage": {
+    "description": "Database error message"
+  },
+  
+  "syncNetworkError": "Unable to connect. Check your internet connection.",
+  "@syncNetworkError": {
+    "description": "Sync network error message"
+  },
+  
+  "syncAuthError": "Authentication failed. Please log in again.",
+  "@syncAuthError": {
+    "description": "Sync authentication error message"
+  },
+  
+  "syncServerError": "Server error. Please try again later.",
+  "@syncServerError": {
+    "description": "Sync server error message"
+  },
+  
+  "syncConflictError": "Some items had conflicts and were resolved automatically.",
+  "@syncConflictError": {
+    "description": "Sync conflict error message"
+  },
+  
+  "search": "Search",
+  "@search": {
+    "description": "Search label"
+  },
+  
+  "searchTasks": "Search tasks",
+  "@searchTasks": {
+    "description": "Hint for search tasks field"
+  },
+  
+  "filter": "Filter",
+  "@filter": {
+    "description": "Filter label"
+  },
+  
+  "sort": "Sort",
+  "@sort": {
+    "description": "Sort label"
+  },
+  
+  "sortBy": "Sort By",
+  "@sortBy": {
+    "description": "Sort by label"
+  },
+  
+  "dateCreated": "Date Created",
+  "@dateCreated": {
+    "description": "Sort option: date created"
+  },
+  
+  "dateModified": "Date Modified",
+  "@dateModified": {
+    "description": "Sort option: date modified"
+  },
+  
+  "alphabetical": "Alphabetical",
+  "@alphabetical": {
+    "description": "Sort option: alphabetical"
+  },
+  
+  "atTime": "At Time",
+  "@atTime": {
+    "description": "Reminder option: at time"
+  },
+  
+  "fifteenMinutesBefore": "15 Minutes Before",
+  "@fifteenMinutesBefore": {
+    "description": "Reminder option: 15 minutes before"
+  },
+  
+  "thirtyMinutesBefore": "30 Minutes Before",
+  "@thirtyMinutesBefore": {
+    "description": "Reminder option: 30 minutes before"
+  },
+  
+  "oneHourBefore": "1 Hour Before",
+  "@oneHourBefore": {
+    "description": "Reminder option: 1 hour before"
+  },
+  
+  "oneDayBefore": "1 Day Before",
+  "@oneDayBefore": {
+    "description": "Reminder option: 1 day before"
+  },
+  
+  "custom": "Custom",
+  "@custom": {
+    "description": "Custom option"
+  }
+}

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart' as mat;
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:todo_app/common/constants/app_constants.dart' as app_constants;
 import 'package:todo_app/common/theme/app_theme.dart' as app_theme;
@@ -11,6 +12,7 @@ import 'package:todo_app/features/security/screens/unlock_screen.dart';
 import 'package:todo_app/app_initializer.dart';
 import 'package:todo_app/main.dart' show globalDataChangeNotifier;
 import 'package:todo_app/features/sync/services/sync_provider.dart' as sync_provider;
+import 'package:todo_app/l10n/app_localizations.dart';
 
 class TodoApp extends mat.StatefulWidget {
   final mat.GlobalKey<mat.NavigatorState> navigatorKey;
@@ -96,6 +98,16 @@ class _TodoAppState extends mat.State<TodoApp> with mat.WidgetsBindingObserver {
         theme: app_theme.AppTheme.lightTheme,
         darkTheme: app_theme.AppTheme.darkTheme,
         themeMode: _themeMode,
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          mat.Locale('en'),
+          mat.Locale('fr'),
+        ],
         onGenerateRoute: routes.AppRouter.generateRoute,
         initialRoute: app_constants.AppConstants.homeRoute,
         debugShowCheckedModeBanner: false,
