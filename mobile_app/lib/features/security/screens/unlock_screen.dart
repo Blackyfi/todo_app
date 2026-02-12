@@ -35,11 +35,9 @@ class _UnlockScreenState extends State<UnlockScreen> {
 
     if (!securityProvider.biometricEnabled) return;
 
-    final success = await securityProvider.authenticateWithBiometric();
-
-    if (success && mounted) {
-      Navigator.of(context).pop(true);
-    }
+    await securityProvider.authenticateWithBiometric();
+    // No need to pop - the _UnlockWrapper will detect authentication
+    // state change and trigger the parent to rebuild
   }
 
   Future<void> _unlock() async {
@@ -60,15 +58,17 @@ class _UnlockScreenState extends State<UnlockScreen> {
     final securityProvider = context.read<SecurityProvider>();
     final success = await securityProvider.verifyCredential(credential);
 
-    setState(() => _isLoading = false);
+    if (mounted) {
+      setState(() => _isLoading = false);
 
-    if (success && mounted) {
-      Navigator.of(context).pop(true);
-    } else {
-      setState(() {
-        _errorMessage = 'Incorrect ${securityProvider.authType == AuthType.pin ? "PIN" : "password"}';
-        _credentialController.clear();
-      });
+      if (!success) {
+        setState(() {
+          _errorMessage = 'Incorrect ${securityProvider.authType == AuthType.pin ? "PIN" : "password"}';
+          _credentialController.clear();
+        });
+      }
+      // If success, no need to pop - the _UnlockWrapper will detect
+      // authentication state change and trigger the parent to rebuild
     }
   }
 
