@@ -1,7 +1,6 @@
 import 'dart:async' show TimeoutException;
 import 'dart:convert' as convert;
 import 'dart:io' as io;
-import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:todo_app/core/logger/logger_service.dart';
 import 'package:todo_app/common/constants/app_constants.dart'
@@ -33,26 +32,19 @@ class SyncHttpClient {
   }
 
   /// Store the API token securely.
-  Future<void> saveToken(String token) async {
-    await _secureStorage.write(
-      key: app_constants.AppConstants.syncTokenKey,
-      value: token,
-    );
-  }
+  Future<void> saveToken(String token) => _secureStorage.write(
+        key: app_constants.AppConstants.syncTokenKey, value: token,
+      );
 
   /// Read the stored API token.
-  Future<String?> getToken() async {
-    return _secureStorage.read(
-      key: app_constants.AppConstants.syncTokenKey,
-    );
-  }
+  Future<String?> getToken() => _secureStorage.read(
+        key: app_constants.AppConstants.syncTokenKey,
+      );
 
   /// Remove the stored API token.
-  Future<void> clearToken() async {
-    await _secureStorage.delete(
-      key: app_constants.AppConstants.syncTokenKey,
-    );
-  }
+  Future<void> clearToken() => _secureStorage.delete(
+        key: app_constants.AppConstants.syncTokenKey,
+      );
 
   /// Build common headers with optional auth token.
   Future<Map<String, String>> _headers({bool auth = true}) async {

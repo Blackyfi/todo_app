@@ -37,20 +37,17 @@ class SyncProvider extends ChangeNotifier {
   bool get isAuthenticated => _settings.isAuthenticated;
   bool get isSyncing => _status.state == status_model.SyncState.syncing;
 
-  /// Load settings from the database.
+  /// Load settings and start auto-sync timer.
   Future<void> initialize() async {
     if (_initialized) return;
     _initialized = true;
-
     try {
       _settings = await _settingsRepo.getSettings();
       final queueCount = await _queueRepo.getPendingCount();
       _status = _status.copyWith(
         queuedItemsCount: queueCount,
         lastSyncTime: _settings.lastSyncTimestamp != null
-            ? DateTime.fromMillisecondsSinceEpoch(
-                _settings.lastSyncTimestamp!,
-              )
+            ? DateTime.fromMillisecondsSinceEpoch(_settings.lastSyncTimestamp!)
             : null,
         state: _settings.lastSyncTimestamp != null
             ? status_model.SyncState.synced
@@ -63,43 +60,33 @@ class SyncProvider extends ChangeNotifier {
     }
   }
 
-  /// Save updated settings and reconfigure timers.
-  Future<void> updateSettings(settings_model.SyncSettings newSettings) async {
-    await _settingsRepo.saveSettings(newSettings);
+  Future<void> updateSettings(settings_model.SyncSettings s) async {
+    await _settingsRepo.saveSettings(s);
     _settings = await _settingsRepo.getSettings();
     _startAutoSync();
     notifyListeners();
   }
 
-  /// Test the server connection.
   Future<sync_response.SyncResponse> testConnection(
-    settings_model.SyncSettings settings,
-  ) {
-    return _syncService.testConnection(settings);
-  }
+    settings_model.SyncSettings s,
+  ) => _syncService.testConnection(s);
 
-  /// Log in to the server.
   Future<sync_response.SyncResponse> login({
     required String username,
     required String password,
   }) async {
     final deviceId = await device_helper.DeviceInfoHelper.getDeviceId();
     final deviceName = await device_helper.DeviceInfoHelper.getDeviceName();
-    final deviceType = device_helper.DeviceInfoHelper.getDeviceType();
-
     final response = await _syncService.login(
       username: username,
       password: password,
       deviceId: deviceId,
       deviceName: deviceName,
-      deviceType: deviceType,
+      deviceType: device_helper.DeviceInfoHelper.getDeviceType(),
     );
-
     if (response.success) {
       _settings = _settings.copyWith(
-        username: username,
-        deviceId: deviceId,
-        deviceName: deviceName,
+        username: username, deviceId: deviceId, deviceName: deviceName,
       );
       await _settingsRepo.saveSettings(_settings);
       notifyListeners();
@@ -107,20 +94,14 @@ class SyncProvider extends ChangeNotifier {
     return response;
   }
 
-  /// Register a new account.
   Future<sync_response.SyncResponse> register({
     required String username,
     required String password,
     String? email,
-  }) {
-    return _syncService.register(
-      username: username,
-      password: password,
-      email: email,
-    );
-  }
+  }) => _syncService.register(
+        username: username, password: password, email: email,
+      );
 
-  /// Log out and clear credentials.
   Future<void> logout() async {
     await _syncService.logout();
     _settings = _settings.copyWith(username: '');
@@ -130,24 +111,22 @@ class SyncProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Perform a full manual sync (upload then download).
+  /// Perform a full sync (upload then download).
   Future<void> syncNow() async {
-    if (isSyncing) return;
-    if (!_settings.isConfigured || !_settings.isAuthenticated) return;
-
+    if (isSyncing || !_settings.isConfigured || !_settings.isAuthenticated) {
+      return;
+    }
     final deviceId = _settings.deviceId;
     if (deviceId == null) return;
 
-    _setStatus(status_model.SyncState.syncing);
+    _status = _status.copyWith(state: status_model.SyncState.syncing);
+    notifyListeners();
 
     try {
-      // Check connectivity
-      final result = await connectivity.Connectivity().checkConnectivity();
-      if (result.contains(connectivity.ConnectivityResult.none)) {
+      final conn = await connectivity.Connectivity().checkConnectivity();
+      if (conn.contains(connectivity.ConnectivityResult.none)) {
         throw sync_service.SyncException('No internet connection');
       }
-
-      // Upload first, then download
       await _syncService.upload(deviceId);
       await _syncService.download(deviceId);
 
@@ -155,15 +134,11 @@ class SyncProvider extends ChangeNotifier {
       _settings = _settings.copyWith(
         lastSyncTimestamp: now.millisecondsSinceEpoch,
       );
-      await _settingsRepo.updateLastSyncTimestamp(
-        now.millisecondsSinceEpoch,
-      );
-
-      final queueCount = await _queueRepo.getPendingCount();
+      await _settingsRepo.updateLastSyncTimestamp(now.millisecondsSinceEpoch);
       _status = status_model.SyncStatus(
         state: status_model.SyncState.synced,
         lastSyncTime: now,
-        queuedItemsCount: queueCount,
+        queuedItemsCount: await _queueRepo.getPendingCount(),
       );
       await _logger.logInfo('Sync completed successfully');
     } catch (e) {
@@ -176,26 +151,18 @@ class SyncProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Clear the offline sync queue.
   Future<void> clearQueue() async {
     await _queueRepo.clearAll();
     _status = _status.copyWith(queuedItemsCount: 0);
     notifyListeners();
   }
 
-  /// Reset sync data (clear timestamp so next sync is full).
   Future<void> resetSyncData() async {
     _settings = _settings.copyWith(lastSyncTimestamp: 0);
     await _settingsRepo.saveSettings(_settings);
     _status = _status.copyWith(
-      state: status_model.SyncState.idle,
-      lastSyncTime: null,
+      state: status_model.SyncState.idle, lastSyncTime: null,
     );
-    notifyListeners();
-  }
-
-  void _setStatus(status_model.SyncState state) {
-    _status = _status.copyWith(state: state);
     notifyListeners();
   }
 
@@ -203,8 +170,7 @@ class SyncProvider extends ChangeNotifier {
     _stopAutoSync();
     if (_settings.autoSyncEnabled && _settings.syncInterval > 0) {
       _autoSyncTimer = Timer.periodic(
-        Duration(minutes: _settings.syncInterval),
-        (_) => syncNow(),
+        Duration(minutes: _settings.syncInterval), (_) => syncNow(),
       );
     }
   }

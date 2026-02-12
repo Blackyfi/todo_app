@@ -1,12 +1,14 @@
-import 'dart:convert' as convert;
 import 'package:todo_app/core/logger/logger_service.dart';
-import 'package:todo_app/core/database/database_helper.dart' as db_helper;
 import 'package:todo_app/features/sync/models/sync_settings.dart'
     as settings_model;
 import 'package:todo_app/features/sync/models/sync_response.dart'
     as sync_response;
 import 'package:todo_app/features/sync/services/sync_http_client.dart'
     as http_client;
+import 'package:todo_app/features/sync/services/sync_merge_helper.dart'
+    as merge_helper;
+import 'package:todo_app/features/sync/services/sync_upload_builder.dart'
+    as upload_builder;
 import 'package:todo_app/features/sync/repositories/sync_settings_repository.dart'
     as settings_repo;
 import 'package:todo_app/features/sync/utils/sync_conflict_resolver.dart'
@@ -22,9 +24,10 @@ class SyncService {
   final http_client.SyncHttpClient _http = http_client.SyncHttpClient();
   final settings_repo.SyncSettingsRepository _settingsRepo =
       settings_repo.SyncSettingsRepository();
-  final db_helper.DatabaseHelper _dbHelper = db_helper.DatabaseHelper();
+  final merge_helper.SyncMergeHelper _merger = merge_helper.SyncMergeHelper();
+  final upload_builder.SyncUploadBuilder _uploader =
+      upload_builder.SyncUploadBuilder();
 
-  /// Configure the HTTP client from stored settings.
   Future<void> _ensureConfigured() async {
     final settings = await _settingsRepo.getSettings();
     _http.configure(
@@ -33,7 +36,7 @@ class SyncService {
     );
   }
 
-  /// Test the connection to the server.
+  /// Test the connection to the server's health endpoint.
   Future<sync_response.SyncResponse> testConnection(
     settings_model.SyncSettings settings,
   ) async {
@@ -44,7 +47,7 @@ class SyncService {
     return _http.get('/health');
   }
 
-  /// Register / login with the server.
+  /// Authenticate with the server and store the JWT token.
   Future<sync_response.SyncResponse> login({
     required String username,
     required String password,
@@ -93,7 +96,7 @@ class SyncService {
     );
   }
 
-  /// Log out: discard local token.
+  /// Discard the local token.
   Future<void> logout() async {
     await _http.clearToken();
     await _logger.logInfo('User logged out, token cleared');
@@ -103,10 +106,8 @@ class SyncService {
   Future<sync_response.UploadResult> upload(String deviceId) async {
     await _ensureConfigured();
     final settings = await _settingsRepo.getSettings();
-    final since = settings.lastSyncTimestamp;
-
-    final categories = await _getLocalCategories(since);
-    final tasks = await _getLocalTasks(since);
+    final categories = await _uploader.getCategories(settings.lastSyncTimestamp);
+    final tasks = await _uploader.getTasks(settings.lastSyncTimestamp);
 
     if (categories.isEmpty && tasks.isEmpty) {
       await _logger.logInfo('Upload: nothing to send');
@@ -132,32 +133,26 @@ class SyncService {
     if (!response.success) {
       throw SyncException(response.message ?? 'Upload failed');
     }
-
     return sync_response.UploadResult.fromData(response.data!);
   }
 
-  /// Download changes from server and merge locally.
+  /// Download server changes and merge into local database.
   Future<resolver.MergeResult> download(String deviceId) async {
     await _ensureConfigured();
     final settings = await _settingsRepo.getSettings();
     final since = settings.lastSyncTimestamp;
 
     final params = <String, String>{'device_id': deviceId};
-    if (since != null) {
-      // Convert ms to seconds for server
-      params['since'] = (since ~/ 1000).toString();
-    }
+    if (since != null) params['since'] = (since ~/ 1000).toString();
 
     final response = await _http.get('/sync/download', queryParams: params);
     if (!response.success || response.data == null) {
       throw SyncException(response.message ?? 'Download failed');
     }
 
-    final downloadData =
-        sync_response.DownloadResult.fromData(response.data!);
-
-    final catResult = await _mergeCategories(downloadData.categories);
-    final taskResult = await _mergeTasks(downloadData.tasks);
+    final data = sync_response.DownloadResult.fromData(response.data!);
+    final catResult = await _merger.mergeCategories(data.categories);
+    final taskResult = await _merger.mergeTasks(data.tasks);
 
     return resolver.MergeResult(
       inserted: catResult.inserted + taskResult.inserted,
@@ -166,152 +161,6 @@ class SyncService {
       skipped: catResult.skipped + taskResult.skipped,
     );
   }
-
-  // --- Private helpers ---
-
-  Future<List<Map<String, dynamic>>> _getLocalCategories(int? sinceMs) async {
-    final db = await _dbHelper.database;
-    final rows = sinceMs != null
-        ? await db.query(
-            'categories',
-            where: 'updatedAt > ?',
-            whereArgs: [sinceMs],
-          )
-        : await db.query('categories');
-
-    return rows.map((r) {
-      return {
-        'client_id': r['id'],
-        'name': r['name'],
-        'color': r['color'],
-        'updated_at': _msToSec(r['updatedAt'] as int?),
-        'deleted': 0,
-      };
-    }).toList();
-  }
-
-  Future<List<Map<String, dynamic>>> _getLocalTasks(int? sinceMs) async {
-    final db = await _dbHelper.database;
-    final rows = sinceMs != null
-        ? await db.query(
-            'tasks',
-            where: 'updatedAt > ?',
-            whereArgs: [sinceMs],
-          )
-        : await db.query('tasks');
-
-    return rows.map((r) {
-      return {
-        'client_id': r['id'],
-        'title': r['title'],
-        'description': r['description'] ?? '',
-        'due_date': _msToSec(r['dueDate'] as int?),
-        'is_completed': r['isCompleted'],
-        'completed_at': _msToSec(r['completedAt'] as int?),
-        'category_id': r['categoryId'],
-        'priority': r['priority'],
-        'updated_at': _msToSec(r['updatedAt'] as int?),
-        'deleted': 0,
-      };
-    }).toList();
-  }
-
-  Future<resolver.MergeResult> _mergeCategories(
-    List<Map<String, dynamic>> serverCats,
-  ) async {
-    final db = await _dbHelper.database;
-
-    return resolver.SyncConflictResolver.mergeEntities(
-      serverEntities: serverCats,
-      entityType: 'category',
-      findLocal: (clientId) async {
-        final rows = await db.query(
-          'categories',
-          where: 'id = ?',
-          whereArgs: [clientId],
-        );
-        return rows.isNotEmpty ? rows.first : null;
-      },
-      insertLocal: (entity) async {
-        await db.insert('categories', {
-          'name': entity['name'],
-          'color': entity['color'],
-          'updatedAt': _secToMs(entity['updated_at'] as int?),
-        });
-      },
-      updateLocal: (entity) async {
-        final clientId = entity['client_id'] as int;
-        await db.update(
-          'categories',
-          {
-            'name': entity['name'],
-            'color': entity['color'],
-            'updatedAt': _secToMs(entity['updated_at'] as int?),
-          },
-          where: 'id = ?',
-          whereArgs: [clientId],
-        );
-      },
-      deleteLocal: (clientId) async {
-        await db.delete('categories', where: 'id = ?', whereArgs: [clientId]);
-      },
-    );
-  }
-
-  Future<resolver.MergeResult> _mergeTasks(
-    List<Map<String, dynamic>> serverTasks,
-  ) async {
-    final db = await _dbHelper.database;
-
-    return resolver.SyncConflictResolver.mergeEntities(
-      serverEntities: serverTasks,
-      entityType: 'task',
-      findLocal: (clientId) async {
-        final rows = await db.query(
-          'tasks',
-          where: 'id = ?',
-          whereArgs: [clientId],
-        );
-        return rows.isNotEmpty ? rows.first : null;
-      },
-      insertLocal: (entity) async {
-        await db.insert('tasks', {
-          'title': entity['title'],
-          'description': entity['description'] ?? '',
-          'dueDate': _secToMs(entity['due_date'] as int?),
-          'isCompleted': entity['is_completed'] ?? 0,
-          'completedAt': _secToMs(entity['completed_at'] as int?),
-          'categoryId': entity['category_id'],
-          'priority': entity['priority'] ?? 1,
-          'updatedAt': _secToMs(entity['updated_at'] as int?),
-        });
-      },
-      updateLocal: (entity) async {
-        final clientId = entity['client_id'] as int;
-        await db.update(
-          'tasks',
-          {
-            'title': entity['title'],
-            'description': entity['description'] ?? '',
-            'dueDate': _secToMs(entity['due_date'] as int?),
-            'isCompleted': entity['is_completed'] ?? 0,
-            'completedAt': _secToMs(entity['completed_at'] as int?),
-            'categoryId': entity['category_id'],
-            'priority': entity['priority'] ?? 1,
-            'updatedAt': _secToMs(entity['updated_at'] as int?),
-          },
-          where: 'id = ?',
-          whereArgs: [clientId],
-        );
-      },
-      deleteLocal: (clientId) async {
-        await db.delete('tasks', where: 'id = ?', whereArgs: [clientId]);
-      },
-    );
-  }
-
-  int? _msToSec(int? ms) => ms != null ? ms ~/ 1000 : null;
-  int? _secToMs(int? sec) => sec != null ? sec * 1000 : null;
 }
 
 /// Exception thrown when a sync operation fails.
