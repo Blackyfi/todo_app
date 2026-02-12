@@ -97,11 +97,8 @@ class _TodoAppState extends mat.State<TodoApp> with mat.WidgetsBindingObserver {
         builder: (context, child) {
           // Show unlock screen if security is enabled and not authenticated
           if (!_isUnlocked) {
-            return ChangeNotifierProvider.value(
-              value: _securityProvider,
-              child: _UnlockWrapper(
-                onUnlockSuccess: _onUnlockSuccess,
-              ),
+            return _UnlockWrapper(
+              onUnlockSuccess: _onUnlockSuccess,
             );
           }
           return child ?? const mat.SizedBox.shrink();
