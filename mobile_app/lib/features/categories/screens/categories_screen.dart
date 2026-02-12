@@ -109,7 +109,7 @@ class _CategoriesScreenState extends mat.State<CategoriesScreen> {
     final confirmed = await mat.showDialog<bool>(
       context: context,
       builder: (context) => mat.AlertDialog(
-        title: mat.Text('${l10n.delete} ${l10n.category}'),
+        title: const mat.Text('Delete Category'),
         content: mat.Text(
           taskCount > 0
               ? 'Are you sure you want to delete "${category.name}"? This category contains $taskCount task(s) and deleting it will also delete all associated tasks.'
