@@ -109,11 +109,16 @@ class _TodoAppState extends mat.State<TodoApp> with mat.WidgetsBindingObserver {
 }
 
 /// Wrapper widget that shows the unlock screen and handles authentication
-class _UnlockWrapper extends mat.StatelessWidget {
+class _UnlockWrapper extends mat.StatefulWidget {
   final mat.VoidCallback onUnlockSuccess;
 
   const _UnlockWrapper({required this.onUnlockSuccess});
 
+  @override
+  mat.State<_UnlockWrapper> createState() => _UnlockWrapperState();
+}
+
+class _UnlockWrapperState extends mat.State<_UnlockWrapper> {
   @override
   mat.Widget build(mat.BuildContext context) {
     final securityProvider = context.watch<SecurityProvider>();
@@ -122,8 +127,18 @@ class _UnlockWrapper extends mat.StatelessWidget {
     // notify parent to rebuild with main app
     if (securityProvider.isAuthenticated) {
       mat.WidgetsBinding.instance.addPostFrameCallback((_) {
-        onUnlockSuccess();
+        // Only call callback if widget is still mounted
+        if (mounted) {
+          widget.onUnlockSuccess();
+        }
       });
+      // Return a loading indicator while transitioning to prevent
+      // showing unlock screen after authentication
+      return const mat.Scaffold(
+        body: mat.Center(
+          child: mat.CircularProgressIndicator(),
+        ),
+      );
     }
 
     return const UnlockScreen();
