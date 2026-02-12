@@ -696,7 +696,7 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
     return mat.Card(
       margin: const mat.EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       color: isSelected 
-          ? theme.colorScheme.primaryContainer.withAlpha(77)
+          ? theme.colorScheme.primaryContainer.withOpacity(0.3)
           : null,
       child: mat.InkWell(
         onTap: () => _toggleTaskSelection(task.id!),
@@ -726,7 +726,7 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
                                   ? mat.TextDecoration.lineThrough
                                   : null,
                               color: task.isCompleted
-                                  ? theme.colorScheme.onSurface.withAlpha(128)
+                                  ? theme.colorScheme.onSurface.withOpacity(0.5)
                                   : null,
                               fontWeight: mat.FontWeight.bold,
                             ),
@@ -743,7 +743,7 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
                         task.description,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: task.isCompleted
-                              ? theme.colorScheme.onSurface.withAlpha(128)
+                              ? theme.colorScheme.onSurface.withOpacity(0.5)
                               : null,
                           decoration: task.isCompleted
                               ? mat.TextDecoration.lineThrough
@@ -760,7 +760,7 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
                           mat.Container(
                             padding: const mat.EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                             decoration: mat.BoxDecoration(
-                              color: category.color.withAlpha(51),
+                              color: category.color.withOpacity(0.2),
                               borderRadius: mat.BorderRadius.circular(8),
                             ),
                             child: mat.Text(
@@ -778,13 +778,13 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
                           mat.Icon(
                             mat.Icons.access_time,
                             size: 14,
-                            color: theme.colorScheme.onSurface.withAlpha(179),
+                            color: theme.colorScheme.onSurface.withOpacity(0.7),
                           ),
                           const mat.SizedBox(width: 4),
                           mat.Text(
                             _formatDueDate(task.dueDate!),
                             style: mat.TextStyle(
-                              color: theme.colorScheme.onSurface.withAlpha(179),
+                              color: theme.colorScheme.onSurface.withOpacity(0.7),
                               fontSize: 12,
                             ),
                           ),
