@@ -426,12 +426,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Column(
         children: [
           RadioListTile<TimeFormat>(
-            title: Text(l10n.european),
+            title: Text('${l10n.european} (${l10n.twentyFourHour})'),
             subtitle: const Text('Example: 14:30'),
             value: TimeFormat.european,
           ),
           RadioListTile<TimeFormat>(
-            title: Text(l10n.twelveHour),
+            title: Text('${l10n.twelveHour}'),
             subtitle: const Text('Example: 2:30 PM'),
             value: TimeFormat.american,
           ),

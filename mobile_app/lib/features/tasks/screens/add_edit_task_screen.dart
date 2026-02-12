@@ -319,7 +319,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
               ),
             ),
             child: Text(
-              _isEditMode ? l10n.taskUpdated : l10n.taskAdded,
+              _isEditMode ? l10n.editTask : l10n.addTask,
               style: const TextStyle(fontSize: 16),
             ),
           ),
