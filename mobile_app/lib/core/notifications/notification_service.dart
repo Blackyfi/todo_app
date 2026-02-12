@@ -202,6 +202,7 @@ class NotificationService {
         'Task Reminders',
         description: 'Notifications for task reminders',
         importance: flutter_notifications.Importance.high,
+        playSound: true,
       );
       
       final androidPlugin = flutterLocalNotificationsPlugin

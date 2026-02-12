@@ -92,8 +92,11 @@ class NotificationScheduler {
             channelDescription: 'Notifications for task reminders',
             importance: flutter_notifications.Importance.high,
             priority: flutter_notifications.Priority.high,
+            playSound: true,
           ),
-          iOS: flutter_notifications.DarwinNotificationDetails(),
+          iOS: flutter_notifications.DarwinNotificationDetails(
+            presentSound: true,
+          ),
         ),
         androidScheduleMode: flutter_notifications.AndroidScheduleMode.exactAllowWhileIdle,
         payload: task.title, // Add the task title as the payload
@@ -142,8 +145,11 @@ class NotificationScheduler {
               channelDescription: 'Notifications for task reminders',
               importance: flutter_notifications.Importance.high,
               priority: flutter_notifications.Priority.high,
+              playSound: true,
             ),
-            iOS: flutter_notifications.DarwinNotificationDetails(),
+            iOS: flutter_notifications.DarwinNotificationDetails(
+              presentSound: true,
+            ),
           ),
           payload: task.title, // Add task title as payload
         );
