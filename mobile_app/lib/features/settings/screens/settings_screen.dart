@@ -20,6 +20,7 @@ import 'package:todo_app/core/database/repository/shopping_repository.dart';
 import 'package:todo_app/features/sync/services/sync_provider.dart' as sync_provider;
 import 'package:todo_app/features/sync/screens/sync_settings_screen.dart' as sync_screen;
 import 'package:todo_app/features/sync/models/sync_status.dart' as sync_status;
+import 'package:todo_app/l10n/app_localizations.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -258,18 +259,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final timeFormatProvider = Provider.of<TimeFormatProvider>(context);
     
     return Scaffold(
-      appBar: const AppBarWithTime(
-        title: 'Settings',
+      appBar: AppBarWithTime(
+        title: l10n.settings,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
               children: [
                 _buildSection(
-                  title: 'Security & Privacy',
+                  title: l10n.security,
                   children: [
                     _buildSecuritySettings(),
                   ],
@@ -281,19 +283,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ],
                 ),
                 _buildSection(
-                  title: 'Appearance',
+                  title: l10n.theme,
                   children: [
                     _buildThemeSelector(),
                   ],
                 ),
                 _buildSection(
-                  title: 'Preferences',
+                  title: l10n.general,
                   children: [
                     _buildTimeFormatSelector(timeFormatProvider),
                   ],
                 ),
                 _buildSection(
-                  title: 'Notifications', // Add this section
+                  title: l10n.notifications, // Add this section
                   children: [
                     _buildNotificationSettings(),
                   ],
@@ -327,7 +329,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   children: [
                     ListTile(
                       leading: const Icon(Icons.bug_report),
-                      title: const Text('View Logs'),
+                      title: Text(l10n.viewLogs),
                       subtitle: const Text('View application error logs'),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () {
@@ -341,16 +343,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ],
                 ),
                 _buildSection(
-                  title: 'About',
+                  title: l10n.about,
                   children: [
                     ListTile(
                       leading: const Icon(Icons.info),
-                      title: const Text('Version'),
+                      title: Text(l10n.version),
                       subtitle: Text(_appVersion),
                     ),
                     ListTile(
                       leading: const Icon(Icons.description),
-                      title: const Text('License'),
+                      title: Text(l10n.license),
                       subtitle: const Text('MIT License'),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () {
@@ -391,21 +393,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildThemeSelector() {
+    final l10n = AppLocalizations.of(context)!;
+    
     return RadioGroup<ThemeMode>(
       groupValue: _themeMode,
       onChanged: (value) => _setThemeMode(value!),
       child: Column(
         children: [
           RadioListTile<ThemeMode>(
-            title: const Text('System Theme'),
+            title: Text(l10n.systemTheme),
             value: ThemeMode.system,
           ),
           RadioListTile<ThemeMode>(
-            title: const Text('Light Theme'),
+            title: Text(l10n.lightTheme),
             value: ThemeMode.light,
           ),
           RadioListTile<ThemeMode>(
-            title: const Text('Dark Theme'),
+            title: Text(l10n.darkTheme),
             value: ThemeMode.dark,
           ),
         ],
@@ -414,18 +418,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
   
   Widget _buildTimeFormatSelector(TimeFormatProvider provider) {
+    final l10n = AppLocalizations.of(context)!;
+    
     return RadioGroup<TimeFormat>(
       groupValue: provider.timeFormat,
       onChanged: (value) => provider.setTimeFormat(value!),
       child: Column(
         children: [
           RadioListTile<TimeFormat>(
-            title: const Text('European Time (24-hour)'),
+            title: Text(l10n.european),
             subtitle: const Text('Example: 14:30'),
             value: TimeFormat.european,
           ),
           RadioListTile<TimeFormat>(
-            title: const Text('American Time (12-hour)'),
+            title: Text(l10n.twelveHour),
             subtitle: const Text('Example: 2:30 PM'),
             value: TimeFormat.american,
           ),

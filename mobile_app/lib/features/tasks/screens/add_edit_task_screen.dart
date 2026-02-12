@@ -11,6 +11,7 @@ import 'package:todo_app/features/tasks/widgets/task_form_fields.dart';
 import 'package:todo_app/features/tasks/widgets/notification_option_picker.dart';
 import 'package:todo_app/features/tasks/utils/task_form_helpers.dart';
 import 'package:todo_app/core/logger/logger_service.dart';
+import 'package:todo_app/l10n/app_localizations.dart';
 
 class AddEditTaskScreen extends StatefulWidget {
   final task_model.Task? task;
@@ -246,9 +247,11 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
   
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEditMode ? 'Edit Task' : 'Add Task'),
+        title: Text(_isEditMode ? l10n.editTask : l10n.addTask),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -316,7 +319,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
               ),
             ),
             child: Text(
-              _isEditMode ? 'Update Task' : 'Create Task',
+              _isEditMode ? l10n.taskUpdated : l10n.taskAdded,
               style: const TextStyle(fontSize: 16),
             ),
           ),

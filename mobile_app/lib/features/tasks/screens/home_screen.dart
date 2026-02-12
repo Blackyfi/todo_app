@@ -16,6 +16,7 @@ import 'package:todo_app/features/statistics/screens/statistics_screen.dart';
 import 'package:todo_app/core/widgets/services/widget_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:todo_app/main.dart' show globalDataChangeNotifier;
+import 'package:todo_app/l10n/app_localizations.dart';
 
 class HomeScreen extends mat.StatefulWidget {
   const HomeScreen({super.key});
@@ -260,8 +261,9 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
       await _logger.logInfo('Task deleted: ID=$taskId');
       
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         mat.ScaffoldMessenger.of(context).showSnackBar(
-          const mat.SnackBar(content: mat.Text('Task deleted')),
+          mat.SnackBar(content: mat.Text(l10n.taskDeleted)),
         );
       }
     } catch (e, stackTrace) {
@@ -345,11 +347,12 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
 
   @override
   mat.Widget build(mat.BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final filteredTasks = _getFilteredTasks();
     
     return mat.Scaffold(
       appBar: mat.AppBar(
-        title: const mat.Text('Todo App'),
+        title: mat.Text(l10n.appName),
         actions: _tabController.index == 0 ? [
           mat.PopupMenuButton<String>(
             onSelected: (value) {
@@ -358,25 +361,25 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
               });
             },
             itemBuilder: (context) => [
-              const mat.PopupMenuItem(
+              mat.PopupMenuItem(
                 value: app_constants.AppConstants.allTasks,
-                child: mat.Text('All Tasks'),
+                child: mat.Text(l10n.allTasks),
               ),
-              const mat.PopupMenuItem(
+              mat.PopupMenuItem(
                 value: app_constants.AppConstants.completedTasks,
-                child: mat.Text('Completed'),
+                child: mat.Text(l10n.completedTasks),
               ),
-              const mat.PopupMenuItem(
+              mat.PopupMenuItem(
                 value: app_constants.AppConstants.incompleteTasks,
-                child: mat.Text('Incomplete'),
+                child: mat.Text(l10n.incompleteTasks),
               ),
-              const mat.PopupMenuItem(
+              mat.PopupMenuItem(
                 value: app_constants.AppConstants.todayTasks,
-                child: mat.Text('Today'),
+                child: mat.Text(l10n.todayTasks),
               ),
-              const mat.PopupMenuItem(
+              mat.PopupMenuItem(
                 value: app_constants.AppConstants.upcomingTasks,
-                child: mat.Text('Upcoming'),
+                child: mat.Text(l10n.upcomingTasks),
               ),
             ],
           ),
@@ -389,23 +392,23 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
           mat.IconButton(
             icon: const mat.Icon(mat.Icons.shopping_cart),
             onPressed: _navigateToShoppingLists,
-            tooltip: 'Shopping Lists',
+            tooltip: l10n.shoppingLists,
           ),
           mat.IconButton(
             icon: const mat.Icon(mat.Icons.settings),
             onPressed: _navigateToSettings,
-            tooltip: 'Settings',
+            tooltip: l10n.settings,
           ),
         ] : [
           mat.IconButton(
             icon: const mat.Icon(mat.Icons.shopping_cart),
             onPressed: _navigateToShoppingLists,
-            tooltip: 'Shopping Lists',
+            tooltip: l10n.shoppingLists,
           ),
           mat.IconButton(
             icon: const mat.Icon(mat.Icons.settings),
             onPressed: _navigateToSettings,
-            tooltip: 'Settings',
+            tooltip: l10n.settings,
           ),
         ],
         bottom: mat.TabBar(
@@ -413,10 +416,10 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
           onTap: (index) {
             setState(() {}); // Refresh to update app bar actions
           },
-          tabs: const [
-            mat.Tab(text: 'Tasks'),
-            mat.Tab(text: 'Categories'),
-            mat.Tab(text: 'Statistics'),
+          tabs: [
+            mat.Tab(text: l10n.tasks),
+            mat.Tab(text: l10n.categories),
+            mat.Tab(text: l10n.statistics),
           ],
         ),
       ),
@@ -430,9 +433,9 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
                   onRefresh: _loadData,
                   child: filteredTasks.isEmpty
                       ? empty_state.EmptyState(
-                          message: 'No tasks found',
+                          message: l10n.noTasksFound,
                           icon: mat.Icons.task_alt,
-                          actionLabel: 'Add Task',
+                          actionLabel: l10n.addTask,
                           onActionPressed: _navigateToAddTask,
                         )
                       : mat.ListView.builder(

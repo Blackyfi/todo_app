@@ -9,6 +9,7 @@ import 'package:todo_app/core/notifications/models/notification_settings.dart' a
 import 'package:todo_app/features/tasks/widgets/task_detail_sections.dart';
 import 'package:todo_app/core/sharing/models/share_data.dart';
 import 'package:todo_app/core/sharing/widgets/share_dialog.dart';
+import 'package:todo_app/l10n/app_localizations.dart';
 
 class TaskDetailsScreen extends mat.StatefulWidget {
   final task_model.Task task;
@@ -87,20 +88,21 @@ class _TaskDetailsScreenState extends mat.State<TaskDetailsScreen> {
   }
   
   Future<void> _deleteTask() async {
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await mat.showDialog<bool>(
       context: context,
       builder: (context) => mat.AlertDialog(
-        title: const mat.Text('Delete Task'),
-        content: const mat.Text('Are you sure you want to delete this task?'),
+        title: mat.Text(l10n.deleteTask),
+        content: mat.Text(l10n.deleteTaskConfirmation),
         actions: [
           mat.TextButton(
             onPressed: () => mat.Navigator.of(context).pop(false),
-            child: const mat.Text('CANCEL'),
+            child: mat.Text(l10n.cancel),
           ),
           mat.TextButton(
             onPressed: () => mat.Navigator.of(context).pop(true),
             child: mat.Text(
-              'DELETE',
+              l10n.delete,
               style: mat.TextStyle(color: mat.Theme.of(context).colorScheme.error),
             ),
           ),
@@ -151,9 +153,11 @@ class _TaskDetailsScreenState extends mat.State<TaskDetailsScreen> {
   
   @override
   mat.Widget build(mat.BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
     return mat.Scaffold(
       appBar: mat.AppBar(
-        title: const mat.Text('Task Details'),
+        title: mat.Text(l10n.taskDetails),
         actions: [
           mat.IconButton(
             icon: const mat.Icon(mat.Icons.share),
@@ -192,7 +196,7 @@ class _TaskDetailsScreenState extends mat.State<TaskDetailsScreen> {
               ),
             ),
             child: mat.Text(
-              widget.task.isCompleted ? 'Mark as Incomplete' : 'Mark as Complete',
+              widget.task.isCompleted ? l10n.markAsIncomplete : l10n.markAsComplete,
               style: const mat.TextStyle(fontSize: 16),
             ),
           ),
