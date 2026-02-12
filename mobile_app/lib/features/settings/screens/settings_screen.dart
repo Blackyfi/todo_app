@@ -17,6 +17,9 @@ import 'package:todo_app/core/sharing/widgets/import_dialog.dart';
 import 'package:todo_app/core/sharing/models/share_data.dart';
 import 'package:todo_app/core/database/repository/task_repository.dart';
 import 'package:todo_app/core/database/repository/shopping_repository.dart';
+import 'package:todo_app/features/sync/services/sync_provider.dart' as sync_provider;
+import 'package:todo_app/features/sync/screens/sync_settings_screen.dart' as sync_screen;
+import 'package:todo_app/features/sync/models/sync_status.dart' as sync_status;
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -269,6 +272,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   title: 'Security & Privacy',
                   children: [
                     _buildSecuritySettings(),
+                  ],
+                ),
+                _buildSection(
+                  title: 'Sync',
+                  children: [
+                    _buildSyncSettings(),
                   ],
                 ),
                 _buildSection(
@@ -527,6 +536,61 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ],
     );
+  }
+
+  Widget _buildSyncSettings() {
+    final sp = context.watch<sync_provider.SyncProvider>();
+    final state = sp.status.state;
+    final isError = state == sync_status.SyncState.error;
+    final isSynced = state == sync_status.SyncState.synced;
+
+    return Column(
+      children: [
+        ListTile(
+          leading: Icon(
+            isSynced
+                ? Icons.cloud_done
+                : isError
+                    ? Icons.cloud_off
+                    : Icons.cloud_queue,
+            color: isSynced
+                ? Colors.green
+                : isError
+                    ? Colors.red
+                    : null,
+          ),
+          title: Text(sp.isAuthenticated
+              ? 'Sync enabled (${sp.settings.username})'
+              : 'Server Synchronization'),
+          subtitle: Text(
+            sp.isAuthenticated
+                ? isSynced
+                    ? 'Last synced: ${_formatSyncTime(sp.status.lastSyncTime)}'
+                    : isError
+                        ? 'Sync error - tap to configure'
+                        : 'Tap to configure'
+                : 'Sync your data across devices',
+          ),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const sync_screen.SyncSettingsScreen(),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  String _formatSyncTime(DateTime? time) {
+    if (time == null) return 'Never';
+    final diff = DateTime.now().difference(time);
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inHours < 1) return '${diff.inMinutes}m ago';
+    if (diff.inDays < 1) return '${diff.inHours}h ago';
+    return '${diff.inDays}d ago';
   }
 
   Widget _buildAutoDeleteSection() {

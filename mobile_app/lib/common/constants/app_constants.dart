@@ -19,9 +19,12 @@ class AppConstants {
   static const String editShoppingListRoute = '/edit-shopping-list';
   static const String shoppingModeRoute = '/shopping-mode';
   
+  // Sync Routes
+  static const String syncSettingsRoute = '/sync-settings';
+
   // Database
   static const String databaseName = 'todo_app.db';
-  static const int databaseVersion = 1;
+  static const int databaseVersion = 2;
   
   // Shared Preferences Keys
   static const String themePreference = 'theme_preference';
@@ -55,4 +58,22 @@ class AppConstants {
   // Logging
   static const String logDirectoryName = 'logs';
   static const String logFilePrefix = 'app_log_';
+
+  // Sync
+  static const int defaultSyncPort = 8443;
+  static const int httpTimeoutSeconds = 30;
+  static const int uploadTimeoutSeconds = 60;
+  static const int maxSyncRetries = 5;
+  static const String syncTokenKey = 'sync_api_token';
+  static const String syncDeviceIdKey = 'sync_device_id';
+
+  // Sync Error Messages
+  static const String syncNetworkError =
+      'Unable to connect. Check your internet connection.';
+  static const String syncAuthError =
+      'Authentication failed. Please log in again.';
+  static const String syncServerError =
+      'Server error. Please try again later.';
+  static const String syncConflictError =
+      'Some items had conflicts and were resolved automatically.';
 }

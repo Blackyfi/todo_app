@@ -10,6 +10,7 @@ import 'package:todo_app/core/security/providers/security_provider.dart';
 import 'package:todo_app/features/security/screens/unlock_screen.dart';
 import 'package:todo_app/app_initializer.dart';
 import 'package:todo_app/main.dart' show globalDataChangeNotifier;
+import 'package:todo_app/features/sync/services/sync_provider.dart' as sync_provider;
 
 class TodoApp extends mat.StatefulWidget {
   final mat.GlobalKey<mat.NavigatorState> navigatorKey;
@@ -26,6 +27,7 @@ class _TodoAppState extends mat.State<TodoApp> with mat.WidgetsBindingObserver {
   final mat.ThemeMode _themeMode = mat.ThemeMode.system;
   final _timeFormatProvider = TimeFormatProvider();
   final _securityProvider = SecurityProvider();
+  final _syncProvider = sync_provider.SyncProvider();
   final _appInitializer = AppInitializer();
   bool _isUnlocked = false;
 
@@ -47,6 +49,8 @@ class _TodoAppState extends mat.State<TodoApp> with mat.WidgetsBindingObserver {
       _notificationService,
       _timeFormatProvider,
     );
+
+    _syncProvider.initialize();
 
     // Check if security is enabled and user needs to unlock
     if (_securityProvider.isSecurityEnabled && !_securityProvider.isAuthenticated) {
@@ -103,6 +107,7 @@ class _TodoAppState extends mat.State<TodoApp> with mat.WidgetsBindingObserver {
       providers: [
         ChangeNotifierProvider.value(value: _timeFormatProvider),
         ChangeNotifierProvider.value(value: _securityProvider),
+        ChangeNotifierProvider.value(value: _syncProvider),
       ],
       child: mat.MaterialApp(
         navigatorKey: widget.navigatorKey,

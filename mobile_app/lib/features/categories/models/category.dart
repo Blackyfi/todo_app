@@ -4,22 +4,26 @@ class Category {
   final int? id;
   final String name;
   final mat.Color color;
+  final DateTime? updatedAt;
 
   Category({
     this.id,
     required this.name,
     required this.color,
+    this.updatedAt,
   });
 
   Category copyWith({
     int? id,
     String? name,
     mat.Color? color,
+    DateTime? updatedAt,
   }) {
     return Category(
       id: id ?? this.id,
       name: name ?? this.name,
       color: color ?? this.color,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
@@ -28,6 +32,8 @@ class Category {
       'id': id,
       'name': name,
       'color': color.toARGB32(),
+      'updatedAt': updatedAt?.millisecondsSinceEpoch ??
+          DateTime.now().millisecondsSinceEpoch,
     };
   }
 
@@ -36,6 +42,9 @@ class Category {
       id: map['id'],
       name: map['name'],
       color: mat.Color(map['color']),
+      updatedAt: map['updatedAt'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(map['updatedAt'])
+          : null,
     );
   }
 

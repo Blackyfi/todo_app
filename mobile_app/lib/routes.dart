@@ -14,6 +14,7 @@ import 'package:todo_app/features/shopping/screens/shopping_lists_screen.dart' a
 import 'package:todo_app/features/shopping/screens/create_edit_shopping_list_screen.dart' as create_edit_shopping_list_screen;
 import 'package:todo_app/features/shopping/screens/shopping_mode_screen.dart' as shopping_mode_screen;
 import 'package:todo_app/features/shopping/models/shopping_list.dart' as shopping_list_model;
+import 'package:todo_app/features/sync/screens/sync_settings_screen.dart' as sync_settings_screen;
 
 class AppRouter {
   static mat.Route<dynamic> generateRoute(mat.RouteSettings settings) {
@@ -84,6 +85,11 @@ class AppRouter {
         final shoppingList = settings.arguments as shopping_list_model.ShoppingList;
         return mat.MaterialPageRoute(
           builder: (_) => shopping_mode_screen.ShoppingModeScreen(shoppingList: shoppingList),
+        );
+
+      case app_constants.AppConstants.syncSettingsRoute:
+        return mat.MaterialPageRoute(
+          builder: (_) => const sync_settings_screen.SyncSettingsScreen(),
         );
 
       default:
