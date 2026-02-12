@@ -75,6 +75,7 @@ class NotificationServiceFallback {
         'Task Reminders',
         description: 'Notifications for task reminders',
         importance: flutter_notifications.Importance.high,
+        playSound: true,
       );
       
       final androidPlugin = flutterLocalNotificationsPlugin
@@ -132,8 +133,11 @@ class NotificationServiceFallback {
               channelDescription: 'Notifications for task reminders',
               importance: flutter_notifications.Importance.high,
               priority: flutter_notifications.Priority.high,
+              playSound: true,
             ),
-            iOS: flutter_notifications.DarwinNotificationDetails(),
+            iOS: flutter_notifications.DarwinNotificationDetails(
+              presentSound: true,
+            ),
           ),
           androidScheduleMode: flutter_notifications.AndroidScheduleMode.exactAllowWhileIdle,
         );
@@ -155,8 +159,11 @@ class NotificationServiceFallback {
               channelDescription: 'Notifications for task reminders',
               importance: flutter_notifications.Importance.high,
               priority: flutter_notifications.Priority.high,
+              playSound: true,
             ),
-            iOS: flutter_notifications.DarwinNotificationDetails(),
+            iOS: flutter_notifications.DarwinNotificationDetails(
+              presentSound: true,
+            ),
           ),
         );
       }
@@ -179,8 +186,11 @@ class NotificationServiceFallback {
             channelDescription: 'Notifications for task reminders',
             importance: flutter_notifications.Importance.high,
             priority: flutter_notifications.Priority.high,
+            playSound: true,
           ),
-          iOS: flutter_notifications.DarwinNotificationDetails(),
+          iOS: flutter_notifications.DarwinNotificationDetails(
+            presentSound: true,
+          ),
         ),
       );
       await _logger.logInfo('Test notification shown (Fallback)');
