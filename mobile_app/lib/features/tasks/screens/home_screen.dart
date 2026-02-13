@@ -17,6 +17,10 @@ import 'package:todo_app/core/widgets/services/widget_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:todo_app/main.dart' show globalDataChangeNotifier;
 import 'package:todo_app/l10n/app_localizations.dart';
+import 'package:todo_app/core/sharing/models/share_data.dart';
+import 'package:todo_app/core/sharing/widgets/share_dialog.dart';
+import 'package:todo_app/common/widgets/priority_badge.dart' as priority_badge;
+import 'package:intl/intl.dart' as intl;
 
 class HomeScreen extends mat.StatefulWidget {
   const HomeScreen({super.key});
@@ -36,6 +40,10 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
   List<category_model.Category> _categories = [];
   String _currentFilter = app_constants.AppConstants.allTasks;
   bool _isLoading = true;
+  
+  // Selection mode state
+  bool _isSelectionMode = false;
+  final Set<int> _selectedTaskIds = {};
   
   late mat.TabController _tabController;
   
@@ -352,13 +360,43 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
     
     return mat.Scaffold(
       appBar: mat.AppBar(
-        title: mat.Text(l10n.appName),
-        actions: _tabController.index == 0 ? [
+        title: _isSelectionMode 
+            ? mat.Text('${_selectedTaskIds.length} selected')
+            : mat.Text(l10n.appName),
+        leading: _isSelectionMode 
+            ? mat.IconButton(
+                icon: const mat.Icon(mat.Icons.close),
+                onPressed: _toggleSelectionMode,
+              )
+            : null,
+        actions: _isSelectionMode ? [
+          // Selection mode actions
+          mat.IconButton(
+            icon: const mat.Icon(mat.Icons.select_all),
+            onPressed: _selectedTaskIds.length == _getFilteredTasks().length 
+                ? _deselectAllTasks 
+                : _selectAllTasks,
+            tooltip: _selectedTaskIds.length == _getFilteredTasks().length 
+                ? 'Deselect All' 
+                : 'Select All',
+          ),
+          mat.IconButton(
+            icon: const mat.Icon(mat.Icons.share),
+            onPressed: _shareSelectedTasks,
+            tooltip: 'Share Selected',
+          ),
+        ] : _tabController.index == 0 ? [
           mat.PopupMenuButton<String>(
             onSelected: (value) {
-              setState(() {
-                _currentFilter = value;
-              });
+              if (value == 'share_all') {
+                _shareAllTasks();
+              } else if (value == 'select_tasks') {
+                _toggleSelectionMode();
+              } else {
+                setState(() {
+                  _currentFilter = value;
+                });
+              }
             },
             itemBuilder: (context) => [
               mat.PopupMenuItem(
@@ -380,6 +418,27 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
               mat.PopupMenuItem(
                 value: app_constants.AppConstants.upcomingTasks,
                 child: mat.Text(l10n.upcomingTasks),
+              ),
+              const mat.PopupMenuDivider(),
+              const mat.PopupMenuItem(
+                value: 'select_tasks',
+                child: mat.Row(
+                  children: [
+                    mat.Icon(mat.Icons.checklist),
+                    mat.SizedBox(width: 8),
+                    mat.Text('Select Tasks'),
+                  ],
+                ),
+              ),
+              const mat.PopupMenuItem(
+                value: 'share_all',
+                child: mat.Row(
+                  children: [
+                    mat.Icon(mat.Icons.share),
+                    mat.SizedBox(width: 8),
+                    mat.Text('Share All Tasks'),
+                  ],
+                ),
               ),
             ],
           ),
@@ -445,13 +504,19 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
                             final task = filteredTasks[index];
                             final category = _getCategoryForTask(task);
                             
-                            return task_card.TaskCard(
-                              task: task,
-                              category: category, // Can be null now
-                              onTap: () => _navigateToTaskDetails(task),
-                              onCompletedChanged: (_) => _toggleTaskCompletion(task),
-                              onDelete: () => _deleteTask(task.id!),
-                            );
+                            if (_isSelectionMode) {
+                              // In selection mode, show card with checkbox
+                              return _buildSelectableTaskCard(task, category);
+                            } else {
+                              // Normal mode - regular task card
+                              return task_card.TaskCard(
+                                task: task,
+                                category: category, // Can be null now
+                                onTap: () => _navigateToTaskDetails(task),
+                                onCompletedChanged: (_) => _toggleTaskCompletion(task),
+                                onDelete: () => _deleteTask(task.id!),
+                              );
+                            }
                           },
                         ),
                 ),
@@ -526,6 +591,220 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
         color: mat.Colors.grey,
       ),
     );
+  }
+
+  // ============================================================================
+  // SELECTION MODE METHODS
+  // ============================================================================
+
+  void _toggleSelectionMode() {
+    setState(() {
+      _isSelectionMode = !_isSelectionMode;
+      if (!_isSelectionMode) {
+        _selectedTaskIds.clear();
+      }
+    });
+  }
+
+  void _toggleTaskSelection(int taskId) {
+    setState(() {
+      if (_selectedTaskIds.contains(taskId)) {
+        _selectedTaskIds.remove(taskId);
+      } else {
+        _selectedTaskIds.add(taskId);
+      }
+    });
+  }
+
+  void _selectAllTasks() {
+    final filteredTasks = _getFilteredTasks();
+    setState(() {
+      _selectedTaskIds.clear();
+      _selectedTaskIds.addAll(filteredTasks.map((t) => t.id!));
+    });
+  }
+
+  void _deselectAllTasks() {
+    setState(() {
+      _selectedTaskIds.clear();
+    });
+  }
+
+  bool _isTaskSelected(int taskId) {
+    return _selectedTaskIds.contains(taskId);
+  }
+
+  // ============================================================================
+  // SHARING METHODS
+  // ============================================================================
+
+  Future<void> _shareSelectedTasks() async {
+    if (_selectedTaskIds.isEmpty) {
+      mat.ScaffoldMessenger.of(context).showSnackBar(
+        const mat.SnackBar(
+          content: mat.Text('Please select at least one task to share'),
+        ),
+      );
+      return;
+    }
+
+    final selectedTasks = _tasks.where((task) => _selectedTaskIds.contains(task.id)).toList();
+    final shareData = ShareData.fromTaskList(selectedTasks);
+
+    await mat.showDialog(
+      context: context,
+      builder: (context) => ShareDialog(
+        shareData: shareData,
+        title: 'Share ${selectedTasks.length} Task${selectedTasks.length > 1 ? "s" : ""}',
+      ),
+    );
+
+    // Exit selection mode after sharing
+    _toggleSelectionMode();
+  }
+
+  Future<void> _shareAllTasks() async {
+    if (_tasks.isEmpty) {
+      mat.ScaffoldMessenger.of(context).showSnackBar(
+        const mat.SnackBar(
+          content: mat.Text('No tasks to share'),
+        ),
+      );
+      return;
+    }
+
+    final shareData = ShareData.fromAllTasks(_tasks);
+
+    await mat.showDialog(
+      context: context,
+      builder: (context) => ShareDialog(
+        shareData: shareData,
+        title: 'Share All Tasks (${_tasks.length})',
+      ),
+    );
+  }
+
+  // ============================================================================
+  // WIDGET BUILDERS
+  // ============================================================================
+
+  mat.Widget _buildSelectableTaskCard(task_model.Task task, category_model.Category? category) {
+    final theme = mat.Theme.of(context);
+    final isSelected = _isTaskSelected(task.id!);
+    final categoryColor = category?.color ?? theme.colorScheme.primary;
+
+    return mat.Card(
+      margin: const mat.EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      color: isSelected 
+          ? theme.colorScheme.primaryContainer.withOpacity(0.3)
+          : null,
+      child: mat.InkWell(
+        onTap: () => _toggleTaskSelection(task.id!),
+        borderRadius: mat.BorderRadius.circular(16),
+        child: mat.Padding(
+          padding: const mat.EdgeInsets.all(16.0),
+          child: mat.Row(
+            crossAxisAlignment: mat.CrossAxisAlignment.start,
+            children: [
+              mat.Checkbox(
+                value: isSelected,
+                onChanged: (_) => _toggleTaskSelection(task.id!),
+                activeColor: categoryColor,
+              ),
+              const mat.SizedBox(width: 8),
+              mat.Expanded(
+                child: mat.Column(
+                  crossAxisAlignment: mat.CrossAxisAlignment.start,
+                  children: [
+                    mat.Row(
+                      children: [
+                        mat.Expanded(
+                          child: mat.Text(
+                            task.title,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              decoration: task.isCompleted
+                                  ? mat.TextDecoration.lineThrough
+                                  : null,
+                              color: task.isCompleted
+                                  ? theme.colorScheme.onSurface.withOpacity(0.5)
+                                  : null,
+                              fontWeight: mat.FontWeight.bold,
+                            ),
+                            maxLines: 1,
+                            overflow: mat.TextOverflow.ellipsis,
+                          ),
+                        ),
+                        priority_badge.PriorityBadge(priority: task.priority),
+                      ],
+                    ),
+                    if (task.description.isNotEmpty) ...[
+                      const mat.SizedBox(height: 8),
+                      mat.Text(
+                        task.description,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: task.isCompleted
+                              ? theme.colorScheme.onSurface.withOpacity(0.5)
+                              : null,
+                          decoration: task.isCompleted
+                              ? mat.TextDecoration.lineThrough
+                              : null,
+                        ),
+                        maxLines: 2,
+                        overflow: mat.TextOverflow.ellipsis,
+                      ),
+                    ],
+                    const mat.SizedBox(height: 8),
+                    mat.Row(
+                      children: [
+                        if (category != null) 
+                          mat.Container(
+                            padding: const mat.EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: mat.BoxDecoration(
+                              color: category.color.withOpacity(0.2),
+                              borderRadius: mat.BorderRadius.circular(8),
+                            ),
+                            child: mat.Text(
+                              category.name,
+                              style: mat.TextStyle(
+                                color: category.color,
+                                fontSize: 12,
+                                fontWeight: mat.FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        if (category != null && task.dueDate != null)
+                          const mat.SizedBox(width: 8),
+                        if (task.dueDate != null) ...[
+                          mat.Icon(
+                            mat.Icons.access_time,
+                            size: 14,
+                            color: theme.colorScheme.onSurface.withOpacity(0.7),
+                          ),
+                          const mat.SizedBox(width: 4),
+                          mat.Text(
+                            _formatDueDate(task.dueDate!),
+                            style: mat.TextStyle(
+                              color: theme.colorScheme.onSurface.withOpacity(0.7),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _formatDueDate(DateTime dueDate) {
+    final dateFormat = intl.DateFormat('MMM d, yyyy');
+    final timeFormat = intl.DateFormat('h:mm a');
+    return '${dateFormat.format(dueDate)} · ${timeFormat.format(dueDate)}';
   }
 
   Future<void> _checkNotificationPermissions() async {
