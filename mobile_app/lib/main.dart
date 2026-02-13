@@ -30,6 +30,16 @@ void main() async {
   
   // Set up error handling
   FlutterError.onError = (FlutterErrorDetails details) {
+    // Filter known Flutter framework error: Overlay.of null check fails when
+    // text selection handles are shown during widget tree rebuilds (e.g. unlock
+    // screen transition). This is a benign framework-level timing issue.
+    final exceptionStr = details.exception.toString();
+    if (exceptionStr.contains('Null check operator used on a null value') &&
+        details.stack != null &&
+        details.stack.toString().contains('Overlay.of')) {
+      debugPrint('Suppressed known Flutter Overlay.of null check error');
+      return;
+    }
     FlutterError.presentError(details);
     _reportError(details.exception, details.stack, logger);
   };
@@ -205,6 +215,15 @@ void _setupWidgetActionHandling(WidgetService widgetService, LoggerService logge
 }
 
 void _reportError(dynamic error, StackTrace? stackTrace, LoggerService logger) async {
+  // Filter known Flutter framework Overlay.of null check error (benign timing issue
+  // during widget tree rebuilds, e.g. unlock screen transition)
+  if (error.toString().contains('Null check operator used on a null value') &&
+      stackTrace != null &&
+      stackTrace.toString().contains('Overlay.of')) {
+    debugPrint('Suppressed known Flutter Overlay.of null check error');
+    return;
+  }
+
   try {
     await logger.logError('Uncaught exception', error, stackTrace);
     debugPrint('ERROR: $error');
