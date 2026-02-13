@@ -482,7 +482,9 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
           ],
         ),
       ),
-      body: _isLoading
+      body: mat.SafeArea(
+        top: false,
+        child: _isLoading
           ? const mat.Center(child: mat.CircularProgressIndicator())
           : mat.TabBarView(
               controller: _tabController,
@@ -528,6 +530,7 @@ class _HomeScreenState extends mat.State<HomeScreen> with mat.SingleTickerProvid
                 const StatisticsScreen(),
               ],
             ),
+      ),
       floatingActionButton: _tabController.index == 0 ? mat.FloatingActionButton(
         onPressed: _navigateToAddTask,
         child: const mat.Icon(mat.Icons.add),

@@ -67,7 +67,9 @@ class _StatisticsScreenState extends mat.State<StatisticsScreen> {
       appBar: mat.AppBar(
         title: mat.Text(l10n.statistics),
       ),
-      body: _isLoading
+      body: mat.SafeArea(
+        top: false,
+        child: _isLoading
           ? const mat.Center(child: mat.CircularProgressIndicator())
           : mat.RefreshIndicator(
               onRefresh: _loadData,
@@ -104,6 +106,7 @@ class _StatisticsScreenState extends mat.State<StatisticsScreen> {
                 ),
               ),
             ),
+      ),
     );
   }
 }
