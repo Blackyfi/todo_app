@@ -59,7 +59,7 @@ class AdvancedSection extends mat.StatelessWidget {
     mat.BuildContext context,
     String title,
     String message,
-    VoidCallback action,
+    mat.VoidCallback action,
   ) {
     mat.showDialog(
       context: context,

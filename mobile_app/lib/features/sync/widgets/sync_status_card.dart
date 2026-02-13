@@ -7,7 +7,7 @@ import 'package:todo_app/features/sync/models/sync_status.dart'
 class SyncStatusCard extends mat.StatelessWidget {
   final status_model.SyncStatus status;
   final bool isSyncing;
-  final VoidCallback? onSyncNow;
+  final mat.VoidCallback? onSyncNow;
 
   const SyncStatusCard({
     super.key,
