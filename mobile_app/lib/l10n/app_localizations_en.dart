@@ -1,9 +1,12 @@
-// Generated file. Do not edit manually.
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
+
+// ignore_for_file: type=lint
 
 /// The translations for English (`en`).
 class AppLocalizationsEn extends AppLocalizations {
-  AppLocalizationsEn([super.locale = 'en']);
+  AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
   String get appName => 'Todo App';
@@ -93,13 +96,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noCategoriesFound => 'No categories found';
 
   @override
-  String get noCategoriesDescription => 'Create a category to organize your tasks';
+  String get noCategoriesDescription =>
+      'Create a category to organize your tasks';
 
   @override
-  String get deleteTaskConfirmation => 'Are you sure you want to delete this task?';
+  String get deleteTaskConfirmation =>
+      'Are you sure you want to delete this task?';
 
   @override
-  String get deleteCategoryConfirmation => 'Are you sure you want to delete this category?';
+  String get deleteCategoryConfirmation =>
+      'Are you sure you want to delete this category?';
 
   @override
   String get taskDeleted => 'Task deleted';
@@ -426,13 +432,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get generalErrorMessage => 'Something went wrong. Please try again.';
 
   @override
-  String get networkErrorMessage => 'Network error. Please check your connection.';
+  String get networkErrorMessage =>
+      'Network error. Please check your connection.';
 
   @override
   String get databaseErrorMessage => 'Database error. Please restart the app.';
 
   @override
-  String get syncNetworkError => 'Unable to connect. Check your internet connection.';
+  String get syncNetworkError =>
+      'Unable to connect. Check your internet connection.';
 
   @override
   String get syncAuthError => 'Authentication failed. Please log in again.';
@@ -441,7 +449,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncServerError => 'Server error. Please try again later.';
 
   @override
-  String get syncConflictError => 'Some items had conflicts and were resolved automatically.';
+  String get syncConflictError =>
+      'Some items had conflicts and were resolved automatically.';
 
   @override
   String get search => 'Search';
@@ -484,5 +493,4 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get custom => 'Custom';
-
 }

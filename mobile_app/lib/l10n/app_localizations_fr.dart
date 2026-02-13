@@ -1,9 +1,12 @@
-// Generated file. Do not edit manually.
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
+
+// ignore_for_file: type=lint
 
 /// The translations for French (`fr`).
 class AppLocalizationsFr extends AppLocalizations {
-  AppLocalizationsFr([super.locale = 'fr']);
+  AppLocalizationsFr([String locale = 'fr']) : super(locale);
 
   @override
   String get appName => 'Application Todo';
@@ -87,19 +90,23 @@ class AppLocalizationsFr extends AppLocalizations {
   String get noTasksFound => 'Aucune tâche trouvée';
 
   @override
-  String get noTasksDescription => 'Ajoutez votre première tâche pour commencer !';
+  String get noTasksDescription =>
+      'Ajoutez votre première tâche pour commencer !';
 
   @override
   String get noCategoriesFound => 'Aucune catégorie trouvée';
 
   @override
-  String get noCategoriesDescription => 'Créez une catégorie pour organiser vos tâches';
+  String get noCategoriesDescription =>
+      'Créez une catégorie pour organiser vos tâches';
 
   @override
-  String get deleteTaskConfirmation => 'Êtes-vous sûr de vouloir supprimer cette tâche ?';
+  String get deleteTaskConfirmation =>
+      'Êtes-vous sûr de vouloir supprimer cette tâche ?';
 
   @override
-  String get deleteCategoryConfirmation => 'Êtes-vous sûr de vouloir supprimer cette catégorie ?';
+  String get deleteCategoryConfirmation =>
+      'Êtes-vous sûr de vouloir supprimer cette catégorie ?';
 
   @override
   String get taskDeleted => 'Tâche supprimée';
@@ -168,7 +175,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get enterTaskTitle => 'Entrez le titre de la tâche';
 
   @override
-  String get enterTaskDescription => 'Entrez la description de la tâche (facultatif)';
+  String get enterTaskDescription =>
+      'Entrez la description de la tâche (facultatif)';
 
   @override
   String get enterCategoryName => 'Entrez le nom de la catégorie';
@@ -423,25 +431,32 @@ class AppLocalizationsFr extends AppLocalizations {
   String get maxTasks => 'Nombre maximum de tâches';
 
   @override
-  String get generalErrorMessage => 'Une erreur s\'est produite. Veuillez réessayer.';
+  String get generalErrorMessage =>
+      'Une erreur s\'est produite. Veuillez réessayer.';
 
   @override
-  String get networkErrorMessage => 'Erreur réseau. Veuillez vérifier votre connexion.';
+  String get networkErrorMessage =>
+      'Erreur réseau. Veuillez vérifier votre connexion.';
 
   @override
-  String get databaseErrorMessage => 'Erreur de base de données. Veuillez redémarrer l\'application.';
+  String get databaseErrorMessage =>
+      'Erreur de base de données. Veuillez redémarrer l\'application.';
 
   @override
-  String get syncNetworkError => 'Impossible de se connecter. Vérifiez votre connexion Internet.';
+  String get syncNetworkError =>
+      'Impossible de se connecter. Vérifiez votre connexion Internet.';
 
   @override
-  String get syncAuthError => 'Échec de l\'authentification. Veuillez vous reconnecter.';
+  String get syncAuthError =>
+      'Échec de l\'authentification. Veuillez vous reconnecter.';
 
   @override
-  String get syncServerError => 'Erreur du serveur. Veuillez réessayer plus tard.';
+  String get syncServerError =>
+      'Erreur du serveur. Veuillez réessayer plus tard.';
 
   @override
-  String get syncConflictError => 'Certains éléments avaient des conflits et ont été résolus automatiquement.';
+  String get syncConflictError =>
+      'Certains éléments avaient des conflits et ont été résolus automatiquement.';
 
   @override
   String get search => 'Rechercher';
@@ -484,5 +499,4 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get custom => 'Personnalisé';
-
 }
