@@ -54,10 +54,7 @@ class _AuthFormState extends mat.State<AuthForm> {
       String? error;
       if (_isRegisterMode) {
         error = await widget.onRegister(user, pass);
-        if (error == null) {
-          // Auto-login after successful registration
-          error = await widget.onLogin(user, pass);
-        }
+        error ??= await widget.onLogin(user, pass);
       } else {
         error = await widget.onLogin(user, pass);
       }

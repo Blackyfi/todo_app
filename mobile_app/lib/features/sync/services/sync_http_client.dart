@@ -68,7 +68,7 @@ class SyncHttpClient {
       seconds: app_constants.AppConstants.httpTimeoutSeconds,
     );
     if (_acceptSelfSigned) {
-      client.badCertificateCallback = (_, __, ___) => true;
+      client.badCertificateCallback = (_, _, _) => true;
     }
     return client;
   }
