@@ -150,7 +150,9 @@ class WidgetManagementScreen extends ConsumerWidget {
           ) ?? const SizedBox.shrink(),
         ],
       ),
-      body: isSupported.when(
+      body: SafeArea(
+        top: false,
+        child: isSupported.when(
         data: (supported) {
           if (!supported) {
             return _buildUnsupportedView(context);
@@ -188,6 +190,7 @@ class WidgetManagementScreen extends ConsumerWidget {
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => _buildUnsupportedView(context),
+      ),
       ),
       floatingActionButton: isSupported.whenOrNull(
         data: (supported) => supported
