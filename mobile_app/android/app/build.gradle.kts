@@ -8,7 +8,7 @@ plugins {
 android {
     namespace = "com.example.todo_app"
     compileSdk = 36  // Updated for version 19 (API level 36 is still not stable as of today - 09 june 2025)
-    ndkVersion = "27.0.12077973"
+    ndkVersion = "28.2.13676358"
 
     compileOptions {
         // Enable desugaring
