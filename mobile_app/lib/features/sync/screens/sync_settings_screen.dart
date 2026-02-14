@@ -22,9 +22,11 @@ class SyncSettingsScreen extends mat.StatelessWidget {
 
     return mat.Scaffold(
       appBar: mat.AppBar(title: const mat.Text('Sync Settings')),
-      body: mat.ListView(
-        padding: const mat.EdgeInsets.only(bottom: 32),
-        children: [
+      body: mat.SafeArea(
+        top: false,
+        child: mat.ListView(
+          padding: const mat.EdgeInsets.only(bottom: 32),
+          children: [
           mat.Padding(
             padding: const mat.EdgeInsets.all(16),
             child: status_card.SyncStatusCard(
@@ -82,6 +84,7 @@ class SyncSettingsScreen extends mat.StatelessWidget {
             advanced.AdvancedSection(provider: sp),
           ],
         ],
+        ),
       ),
     );
   }

@@ -266,7 +266,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       appBar: AppBarWithTime(
         title: l10n.settings,
       ),
-      body: _isLoading
+      body: SafeArea(
+        top: false,
+        child: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
               children: [
@@ -369,6 +371,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ],
             ),
+      ),
     );
   }
 
