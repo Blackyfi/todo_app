@@ -126,9 +126,11 @@ class _SetupSecurityScreenState extends State<SetupSecurityScreen> {
       appBar: AppBar(
         title: const Text('Setup Security'),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
+      body: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Card(
@@ -248,6 +250,7 @@ class _SetupSecurityScreenState extends State<SetupSecurityScreen> {
               ),
             ],
           ],
+        ),
         ),
       ),
     );

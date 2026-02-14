@@ -163,30 +163,33 @@ class _CategoriesScreenState extends mat.State<CategoriesScreen> {
       appBar: mat.AppBar(
         title: mat.Text(l10n.categories),
       ),
-      body: _isLoading
-          ? const mat.Center(child: mat.CircularProgressIndicator())
-          : _categories.isEmpty
-              ? empty_state.EmptyState(
-                  message: l10n.noCategoriesFound,
-                  icon: mat.Icons.category,
-                  actionLabel: l10n.addCategory,
-                  onActionPressed: () => _showAddEditCategoryDialog(),
-                )
-              : mat.ListView.builder(
-                  itemCount: _categories.length,
-                  padding: const mat.EdgeInsets.symmetric(vertical: 8),
-                  itemBuilder: (context, index) {
-                    final category = _categories[index];
-                    final taskCount = _taskCountsByCategory[category.id] ?? 0;
-                    
-                    return CategoryListItem(
-                      category: category,
-                      taskCount: taskCount,
-                      onEdit: () => _showAddEditCategoryDialog(category),
-                      onDelete: () => _deleteCategory(category),
-                    );
-                  },
-                ),
+      body: mat.SafeArea(
+        top: false,
+        child: _isLoading
+            ? const mat.Center(child: mat.CircularProgressIndicator())
+            : _categories.isEmpty
+                ? empty_state.EmptyState(
+                    message: l10n.noCategoriesFound,
+                    icon: mat.Icons.category,
+                    actionLabel: l10n.addCategory,
+                    onActionPressed: () => _showAddEditCategoryDialog(),
+                  )
+                : mat.ListView.builder(
+                    itemCount: _categories.length,
+                    padding: const mat.EdgeInsets.symmetric(vertical: 8),
+                    itemBuilder: (context, index) {
+                      final category = _categories[index];
+                      final taskCount = _taskCountsByCategory[category.id] ?? 0;
+
+                      return CategoryListItem(
+                        category: category,
+                        taskCount: taskCount,
+                        onEdit: () => _showAddEditCategoryDialog(category),
+                        onDelete: () => _deleteCategory(category),
+                      );
+                    },
+                  ),
+      ),
       floatingActionButton: mat.FloatingActionButton(
         onPressed: () => _showAddEditCategoryDialog(),
         child: const mat.Icon(mat.Icons.add),

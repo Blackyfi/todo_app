@@ -18,11 +18,13 @@ class SecurityInfoScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Security Information'),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+      body: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
             if (isSetupComplete) ...[
               Card(
                 color: Colors.green.shade50,
@@ -240,6 +242,7 @@ class SecurityInfoScreen extends StatelessWidget {
               ),
             ),
           ],
+        ),
         ),
       ),
     );

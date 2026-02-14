@@ -114,31 +114,34 @@ class _ShoppingListsScreenState extends State<ShoppingListsScreen> {
         title: const Text('Shopping Lists'),
         elevation: 0,
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _shoppingLists.isEmpty
-              ? EmptyState(
-                  message: 'No shopping lists yet',
-                  icon: Icons.shopping_basket_outlined,
-                  actionLabel: 'Create Your First List',
-                  onActionPressed: _createNewList,
-                )
-              : RefreshIndicator(
-                  onRefresh: _loadShoppingLists,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _shoppingLists.length,
-                    itemBuilder: (context, index) {
-                      final list = _shoppingLists[index];
-                      return ShoppingListCard(
-                        shoppingList: list,
-                        onTap: () => _openList(list),
-                        onShop: () => _openShoppingMode(list),
-                        onDelete: () => _deleteList(list),
-                      );
-                    },
+      body: SafeArea(
+        top: false,
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : _shoppingLists.isEmpty
+                ? EmptyState(
+                    message: 'No shopping lists yet',
+                    icon: Icons.shopping_basket_outlined,
+                    actionLabel: 'Create Your First List',
+                    onActionPressed: _createNewList,
+                  )
+                : RefreshIndicator(
+                    onRefresh: _loadShoppingLists,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _shoppingLists.length,
+                      itemBuilder: (context, index) {
+                        final list = _shoppingLists[index];
+                        return ShoppingListCard(
+                          shoppingList: list,
+                          onTap: () => _openList(list),
+                          onShop: () => _openShoppingMode(list),
+                          onDelete: () => _deleteList(list),
+                        );
+                      },
+                    ),
                   ),
-                ),
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _createNewList,
         icon: const Icon(Icons.add),
