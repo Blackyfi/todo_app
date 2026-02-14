@@ -136,7 +136,9 @@ class _ShoppingModeScreenState extends State<ShoppingModeScreen> {
             ),
         ],
       ),
-      body: _isLoading
+      body: SafeArea(
+        top: false,
+        child: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
@@ -252,6 +254,7 @@ class _ShoppingModeScreenState extends State<ShoppingModeScreen> {
                 ),
               ],
             ),
+      ),
     );
   }
 }
